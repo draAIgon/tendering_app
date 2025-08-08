@@ -11,8 +11,102 @@ import logging
 from collections import defaultdict
 import hashlib
 
+import requests
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+# Importaciones para OLLAMA
+try:
+    from langchain_ollama import OllamaEmbeddings
+    OLLAMA_AVAILABLE = True
+except ImportError:
+    OLLAMA_AVAILABLE = False
+    logger.warning("OllamaEmbeddings no disponible. Instala: pip install langchain-ollama")
+
+def verificar_ollama():
+    """Verifica si OLLAMA está disponible y funcionando"""
+    try:
+        response = requests.get("http://localhost:11434/api/version", timeout=5)
+        if response.status_code == 200:
+            version_info = response.json()
+            logger.info(f"OLLAMA disponible - Versión: {version_info.get('version', 'desconocida')}")
+            return True
+    except requests.exceptions.RequestException:
+        pass
+    
+    logger.warning("OLLAMA no está ejecutándose en http://localhost:11434")
+    logger.info("Para instalar OLLAMA:")
+    logger.info("1. Descarga desde: https://ollama.ai/download")
+    logger.info("2. Ejecuta: ollama serve")
+    logger.info("3. Descarga modelo embeddings: ollama pull nomic-embed-text")
+    return False
+
+def listar_modelos_ollama():
+    """Lista los modelos disponibles en OLLAMA"""
+    try:
+        response = requests.get("http://localhost:11434/api/tags", timeout=5)
+        if response.status_code == 200:
+            modelos = response.json()
+            modelos_disponibles = [modelo['name'] for modelo in modelos.get('models', [])]
+            logger.info(f"Modelos OLLAMA disponibles: {modelos_disponibles}")
+            return modelos_disponibles
+    except requests.exceptions.RequestException as e:
+        logger.error(f"Error obteniendo modelos OLLAMA: {e}")
+    return []
+
+def get_embeddings_provider(provider="auto", model=None):
+    """
+    Obtiene el proveedor de embeddings según configuración
+    
+    Args:
+        provider: "openai", "ollama", o "auto" (detecta automáticamente)
+        model: modelo específico a usar
+    
+    Returns:
+        Instancia de embeddings configurada
+    """
+    if provider == "auto":
+        # Prioridad: OLLAMA si está disponible, sino OpenAI
+        if OLLAMA_AVAILABLE and verificar_ollama():
+            provider = "ollama"
+        else:
+            provider = "openai"
+    
+    if provider == "ollama":
+        if not OLLAMA_AVAILABLE:
+            raise ImportError("OLLAMA no está instalado. pip install langchain-ollama")
+        
+        if not verificar_ollama():
+            raise ConnectionError("OLLAMA no está ejecutándose")
+        
+        # Modelo por defecto para embeddings
+        if not model:
+            modelos = listar_modelos_ollama()
+            if "nomic-embed-text:latest" in modelos:
+                model = "nomic-embed-text"
+            elif any("embed" in m for m in modelos):
+                model = next(m for m in modelos if "embed" in m)
+            else:
+                logger.warning("No se encontró modelo de embeddings. Descargando nomic-embed-text...")
+                import subprocess
+                subprocess.run(["ollama", "pull", "nomic-embed-text"], check=True)
+                model = "nomic-embed-text"
+        
+        logger.info(f"Usando OLLAMA con modelo: {model}")
+        return OllamaEmbeddings(model=model)
+    
+    elif provider == "openai":
+        api_key = os.getenv("OPENAI_API_KEY")
+        if not api_key:
+            raise ValueError("Configura la variable OPENAI_API_KEY para usar OpenAI")
+        
+        model = model or "text-embedding-3-small"
+        logger.info(f"Usando OpenAI con modelo: {model}")
+        return OpenAIEmbeddings(model=model, openai_api_key=api_key)
+    
+    else:
+        raise ValueError(f"Proveedor no soportado: {provider}. Use 'openai', 'ollama' o 'auto'")
 
 def to_pdf_if_needed(path: Path) -> Path:
     path = Path(path)
@@ -152,7 +246,18 @@ def make_id(doc: Document) -> str:
     base = f"{doc.metadata['source']}_{doc.metadata['section']}_{doc.page_content[:100]}"
     return hashlib.sha1(base.encode("utf-8")).hexdigest()
 
-def build_embeddings(carpeta_lawdata, ruta_db, collection_name="Licitaciones"):
+def build_embeddings(carpeta_lawdata, ruta_db, collection_name="Licitaciones", 
+                     provider="auto", model=None):
+    """
+    Construye embeddings de documentos usando OpenAI o OLLAMA
+    
+    Args:
+        carpeta_lawdata: Carpeta con documentos PDF/DOC/DOCX
+        ruta_db: Ruta donde guardar la base vectorial
+        collection_name: Nombre de la colección
+        provider: "openai", "ollama", o "auto" (detecta automáticamente)
+        model: Modelo específico a usar (opcional)
+    """
     carpeta = Path(carpeta_lawdata)
     ruta_db = Path(ruta_db)
 
@@ -194,11 +299,8 @@ def build_embeddings(carpeta_lawdata, ruta_db, collection_name="Licitaciones"):
         logger.error("No se crearon documentos")
         return None
 
-    api_key = os.getenv("OPENAI_API_KEY")
-    if not api_key:
-        raise ValueError("Configura la variable OPENAI_API_KEY")
-
-    embeddings = OpenAIEmbeddings(model="text-embedding-3-small", openai_api_key=api_key)
+    # Usar el nuevo sistema de embeddings
+    embeddings = get_embeddings_provider(provider=provider, model=model)
 
     ids = [make_id(doc) for doc in all_docs]
     db = Chroma(collection_name=collection_name, persist_directory=str(ruta_db), embedding=embeddings)
@@ -231,15 +333,37 @@ def verificar_dependencias():
     
     dependencias_ok = True
     
-    # 1. Verificar OpenAI API Key
-    if not os.getenv("OPENAI_API_KEY"):
-        logger.error("OPENAI_API_KEY no configurada")
+    # 1. Verificar proveedores de embeddings
+    logger.info("\nProveedores de Embeddings:")
+    
+    # OpenAI
+    openai_ok = bool(os.getenv("OPENAI_API_KEY"))
+    if openai_ok:
+        logger.info("OpenAI API configurada")
+    else:
+        logger.warning("OpenAI API no configurada")
         logger.info("Configura: export OPENAI_API_KEY='tu-api-key'")
+    
+    # OLLAMA
+    ollama_ok = OLLAMA_AVAILABLE and verificar_ollama()
+    if ollama_ok:
+        modelos = listar_modelos_ollama()
+        if any("embed" in m for m in modelos):
+            logger.info("OLLAMA con modelo de embeddings disponible")
+        else:
+            logger.warning("OLLAMA sin modelo de embeddings")
+            logger.info("   Ejecuta: ollama pull nomic-embed-text")
+    
+    # Al menos uno debe estar disponible
+    if not (openai_ok or ollama_ok):
+        logger.error("Ningún proveedor de embeddings disponible")
         dependencias_ok = False
     else:
-        logger.info("OPENAI_API_KEY configurada")
+        provider_recomendado = "OLLAMA (gratis)" if ollama_ok else "OpenAI"
+        logger.info(f"Proveedor recomendado: {provider_recomendado}")
     
     # 2. Verificar LibreOffice
+    logger.info("\nConversión de Documentos:")
     soffice_bin = os.getenv("SOFFICE_BIN", "soffice")
     try:
         subprocess.run([soffice_bin, "--version"], 
@@ -250,21 +374,21 @@ def verificar_dependencias():
         logger.info("Instala LibreOffice o configura SOFFICE_BIN")
         dependencias_ok = False
     
-    # 3. Verificar OCR (opcional)
+    logger.info("\nOCR (Opcional para PDFs escaneados):")
     try:
         import pytesseract
         from PIL import Image
         pytesseract.get_tesseract_version()
         logger.info("OCR (tesseract) disponible")
     except ImportError:
-        logger.warning("OCR no disponible (opcional para PDFs escaneados)")
-        logger.info("Para OCR: pip install pytesseract pillow")
+        logger.warning("OCR no disponible")
+        logger.info("   Para instalar: pip install pytesseract pillow")
     except pytesseract.TesseractNotFoundError:
-        logger.warning("Tesseract no encontrado (opcional)")
-        logger.info("Instala tesseract-ocr en tu sistema")
+        logger.warning("Tesseract no encontrado")
+        logger.info("   Instala tesseract-ocr en tu sistema")
     
     if dependencias_ok:
-        logger.info("Todas las dependencias principales están OK")
+        logger.info("\n¡Todas las dependencias principales están OK!")
     else:
         logger.error("Faltan dependencias críticas")
     
