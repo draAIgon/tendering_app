@@ -16,6 +16,9 @@ from Embedding import get_embeddings_provider
 from langchain_chroma import Chroma
 from langchain.schema import Document
 
+# Importar database manager para ubicaciones estandarizadas
+from ..db_manager import get_standard_db_path
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -129,11 +132,18 @@ class RiskAnalyzerAgent:
     }
     
     def __init__(self, vector_db_path: Optional[Path] = None):
-        self.vector_db_path = vector_db_path or Path("./risk_analysis_db")
+        # Use standardized database path
+        if vector_db_path:
+            self.vector_db_path = vector_db_path
+        else:
+            self.vector_db_path = get_standard_db_path('risk_analysis', 'global')
+            
         self.embeddings_provider = None
         self.vector_db = None
         self.risk_assessment = {}
         self.mitigation_strategies = {}
+        
+        logger.info(f"RiskAnalyzerAgent iniciado con DB: {self.vector_db_path}")
         
     def initialize_embeddings(self, provider="auto", model=None):
         """Inicializa el sistema de embeddings para análisis semántico de riesgos"""
@@ -241,7 +251,9 @@ class RiskAnalyzerAgent:
     
     def analyze_document_risks(self, document_path: Optional[str] = None, 
                              content: Optional[str] = None,
-                             document_type: str = "RFP") -> Dict[str, Any]:
+                             document_type: str = "RFP",
+                             doc_type: Optional[str] = None,
+                             doc_id: Optional[str] = None) -> Dict[str, Any]:
         """
         Análisis completo de riesgos de un documento
         
@@ -249,10 +261,16 @@ class RiskAnalyzerAgent:
             document_path: Ruta al documento
             content: Contenido del documento
             document_type: Tipo de documento (RFP, Proposal, Contract)
+            doc_type: Alias para document_type (para compatibilidad)
+            doc_id: ID del documento (opcional)
             
         Returns:
             Análisis completo de riesgos
         """
+        
+        # Support both parameter names for compatibility
+        if doc_type:
+            document_type = doc_type
         
         if not content and not document_path:
             raise ValueError("Debe proporcionar content o document_path")

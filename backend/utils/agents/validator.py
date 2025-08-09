@@ -1,7 +1,7 @@
 import re
 import logging
 from pathlib import Path
-from typing import List, Dict, Optional, Any, Tuple
+from typing import List, Dict, Optional, Tuple, Any
 from datetime import datetime, timedelta
 from collections import defaultdict
 import json
@@ -14,6 +14,9 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
 from Embedding import get_embeddings_provider
 from langchain_chroma import Chroma
 from langchain.schema import Document
+
+# Importar database manager para ubicaciones estandarizadas
+from ..db_manager import get_standard_db_path
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -85,12 +88,19 @@ class ComplianceValidationAgent:
     }
     
     def __init__(self, vector_db_path: Optional[Path] = None, use_embeddings: bool = True):
-        self.vector_db_path = vector_db_path or Path("./validation_db")
+        # Use standardized database path
+        if vector_db_path:
+            self.vector_db_path = vector_db_path
+        else:
+            self.vector_db_path = get_standard_db_path('validation', 'global')
+            
         self.use_embeddings = use_embeddings
         self.embeddings_provider = None
         self.vector_db = None
         self.validation_results = {}
         self.compliance_issues = []
+        
+        logger.info(f"ComplianceValidationAgent iniciado con DB: {self.vector_db_path}")
         
     def initialize_embeddings(self, provider="auto", model=None):
         """Inicializa el sistema de embeddings para validación semántica"""

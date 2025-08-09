@@ -16,6 +16,9 @@ from Embedding import get_embeddings_provider
 from langchain_chroma import Chroma
 from langchain.schema import Document
 
+# Importar database manager para ubicaciones estandarizadas  
+from ..db_manager import get_standard_db_path
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -56,11 +59,18 @@ class ComparatorAgent:
     }
     
     def __init__(self, vector_db_path: Optional[Path] = None):
-        self.vector_db_path = vector_db_path or Path("./comparator_db")
+        # Use standardized database path
+        if vector_db_path:
+            self.vector_db_path = vector_db_path
+        else:
+            self.vector_db_path = get_standard_db_path('comparison', 'global')
+            
         self.embeddings_provider = None
         self.vector_db = None
-        self.documents = {}
         self.comparison_results = {}
+        self.cached_embeddings = {}
+        
+        logger.info(f"ComparatorAgent iniciado con DB: {self.vector_db_path}")
         
     def initialize_embeddings(self, provider="auto", model=None):
         """Inicializa el sistema de embeddings para comparaciones semánticas"""

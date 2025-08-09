@@ -13,6 +13,9 @@ from .agents.risk_analyzer import RiskAnalyzerAgent
 from .agents.reporter import ReportGenerationAgent
 from .agents.comparator import ComparatorAgent
 
+# Importar database manager
+from .db_manager import get_standard_db_path, get_analysis_path
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -116,6 +119,9 @@ class BiddingAnalysisSystem:
             'errors': []
         }
         
+        # Initialize content variable
+        content = ""
+        
         try:
             # 1. Extracción de documento
             logger.info("Etapa 1: Extrayendo contenido del documento...")
@@ -143,11 +149,27 @@ class BiddingAnalysisSystem:
             try:
                 logger.info("Etapa 2: Clasificando documento...")
                 
-                classification_result = self.classifier.classify_document(
-                    content=content,
-                    doc_type=document_type,
-                    metadata={'document_path': document_path}
+                # Create a temporary file for the document classifier
+                import tempfile
+                import os
+                
+                # Save content to temporary file
+                with tempfile.NamedTemporaryFile(mode='w', suffix='.txt', delete=False, encoding='utf-8') as tmp_file:
+                    tmp_file.write(content)
+                    temp_path = tmp_file.name
+                
+                # Set document path and process
+                original_path = self.classifier.document_path
+                self.classifier.document_path = temp_path
+                
+                classification_result = self.classifier.process_document(
+                    provider="auto", 
+                    force_rebuild=True
                 )
+                
+                # Clean up
+                self.classifier.document_path = original_path
+                os.unlink(temp_path)
                 
                 analysis_result['stages']['classification'] = {
                     'status': 'completed',
@@ -165,8 +187,8 @@ class BiddingAnalysisSystem:
             try:
                 logger.info("Etapa 3: Validando cumplimiento...")
                 
-                validation_result = self.validator.validate_compliance(
-                    document_content=content,
+                validation_result = self.validator.validate_document(
+                    content=content,
                     document_type=document_type
                 )
                 
@@ -188,7 +210,7 @@ class BiddingAnalysisSystem:
                 
                 risk_result = self.risk_analyzer.analyze_document_risks(
                     content=content,
-                    doc_type=document_type,
+                    document_type=document_type,
                     doc_id=document_id
                 )
                 
@@ -202,17 +224,62 @@ class BiddingAnalysisSystem:
                 logger.error(error_msg)
                 analysis_result['errors'].append(error_msg)
                 analysis_result['stages']['risk_analysis'] = {'status': 'failed', 'error': str(e)}
+                analysis_result['errors'].append(error_msg)
+                analysis_result['stages']['risk_analysis'] = {'status': 'failed', 'error': str(e)}
         
         # 5. Generar resumen y métricas
         analysis_result['summary'] = self._generate_analysis_summary(analysis_result)
         
-        # Almacenar resultado
+        # Almacenar resultado en memoria
         self.processed_documents[document_id] = document_path
         self.analysis_results[document_id] = analysis_result
+        
+        # Guardar resultado en disco para persistencia
+        self._save_analysis_to_disk(document_id, analysis_result)
         
         logger.info(f"Análisis completado para documento {document_id}")
         
         return analysis_result
+    
+    def _save_analysis_to_disk(self, document_id: str, analysis_result: Dict[str, Any]) -> bool:
+        """
+        Guarda los resultados de análisis en disco para persistencia
+        
+        Args:
+            document_id: ID del documento
+            analysis_result: Resultado del análisis
+            
+        Returns:
+            True si se guardó exitosamente, False en caso contrario
+        """
+        try:
+            # Usar path estandarizado para resultados de análisis
+            analysis_db_path = get_analysis_path(document_id)
+            analysis_db_path.mkdir(parents=True, exist_ok=True)
+            
+            # Guardar resultado principal
+            result_file = analysis_db_path / "analysis_result.json"
+            with open(result_file, 'w', encoding='utf-8') as f:
+                json.dump(analysis_result, f, ensure_ascii=False, indent=2)
+            
+            # Guardar resumen separado para búsqueda rápida
+            if 'summary' in analysis_result:
+                summary_file = analysis_db_path / "analysis_summary.json"
+                summary_data = {
+                    'document_id': document_id,
+                    'timestamp': analysis_result.get('analysis_timestamp'),
+                    'summary': analysis_result['summary'],
+                    'status': analysis_result.get('status', 'unknown')
+                }
+                with open(summary_file, 'w', encoding='utf-8') as f:
+                    json.dump(summary_data, f, ensure_ascii=False, indent=2)
+            
+            logger.info(f"Análisis guardado en disco: {analysis_db_path}")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Error guardando análisis en disco: {e}")
+            return False
 
     def compare_proposals(self, proposal_paths: List[str], 
                          comparison_criteria: Optional[Dict] = None) -> Dict[str, Any]:
@@ -345,15 +412,31 @@ class BiddingAnalysisSystem:
             if not analysis_data:
                 raise ValueError("No hay datos de análisis disponibles para los documentos especificados")
             
-            # Generar reporte usando ReportGenerationAgent
-            report = self.reporter.generate_report(
-                analysis_data=analysis_data,
-                report_type=report_type,
-                metadata={
-                    'generated_by': 'BiddingAnalysisSystem',
-                    'timestamp': datetime.now().isoformat()
-                }
+            # Recopilar datos de análisis en el reporter
+            data_id = self.reporter.collect_analysis_data(
+                classification_results=analysis_data,
+                validation_results=analysis_data,
+                risk_analysis=analysis_data,
+                comparison_results=analysis_data if len(document_ids) > 1 else {},
+                extraction_results=analysis_data
             )
+            
+            # Generar reporte usando ReportGenerationAgent
+            if report_type == "comprehensive":
+                report = self.reporter.generate_comprehensive_report(data_id=data_id)
+            elif report_type == "executive":
+                report = self.reporter.generate_executive_summary(data_id=data_id)
+            elif report_type == "risk":
+                report = self.reporter.generate_risk_assessment_report(data_id=data_id)
+            elif report_type == "technical":
+                report = self.reporter.generate_technical_analysis(data_id=data_id)
+            elif report_type == "compliance":
+                report = self.reporter.generate_compliance_report(data_id=data_id)
+            elif report_type == "comparison":
+                report = self.reporter.generate_proposal_comparison_report(data_id=data_id)
+            else:
+                # Default to comprehensive
+                report = self.reporter.generate_comprehensive_report(data_id=data_id)
             
             return report
             

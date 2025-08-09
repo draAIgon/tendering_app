@@ -2,7 +2,7 @@ import fitz
 import re
 import logging
 from pathlib import Path
-from typing import List, Dict, Optional, Tuple
+from typing import List, Dict, Optional, Tuple, Any
 from collections import defaultdict, Counter
 import numpy as np
 
@@ -19,6 +19,9 @@ from Embedding import (
     to_pdf_if_needed
 )
 from langchain_chroma import Chroma
+
+# Importar database manager para ubicaciones estandarizadas
+from ..db_manager import get_standard_db_path
 from langchain.schema import Document
 
 logging.basicConfig(level=logging.INFO)
@@ -80,13 +83,25 @@ class DocumentClassificationAgent:
     }
     
     def __init__(self, document_path=None, vector_db_path=None, collection_name="DocumentClassification"):
-        self.document_path = Path(document_path) if document_path else None
-        self.vector_db_path = Path(vector_db_path) if vector_db_path else Path("./classification_db")
+        self.document_path = document_path
+        # Use standardized database path
+        if vector_db_path:
+            self.vector_db_path = Path(vector_db_path)
+        else:
+            # Generate document ID for standardized path
+            if document_path:
+                doc_name = Path(document_path).stem
+                self.vector_db_path = get_standard_db_path('classification', doc_name)
+            else:
+                self.vector_db_path = get_standard_db_path('classification', 'global')
+                
         self.collection_name = collection_name
         self.embeddings_provider = None
-        self.provider_info = None
         self.vector_db = None
         self.document_sections = {}
+        self.classified_content = {}
+        
+        logger.info(f"DocumentClassificationAgent iniciado con DB: {self.vector_db_path}")
         
     def initialize_embeddings(self, provider="auto", model=None):
         """Inicializa el proveedor de embeddings"""

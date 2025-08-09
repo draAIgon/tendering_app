@@ -35,6 +35,9 @@ if root_dir not in sys.path:
 
 from utils.bidding import BiddingAnalysisSystem, RFPAnalyzer
 
+# Importar database manager
+from utils.db_manager import get_analysis_path, db_manager
+
 # Configurar logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -214,8 +217,14 @@ async def upload_and_analyze_document(
         # Limpiar archivo temporal
         os.unlink(temp_path)
         
-        # Cachear sistema para uso posterior
-        system_cache[document_name] = system
+        # Usar el document_id devuelto por el análisis para caching consistente
+        actual_document_id = analysis_result.get('document_id', document_name)
+        
+        # Cachear sistema usando el ID correcto
+        system_cache[actual_document_id] = system
+        
+        logger.info(f"Sistema cacheado con ID: {actual_document_id}")
+        logger.info(f"Cache ahora contiene: {list(system_cache.keys())}")
         
         if analysis_result.get('errors'):
             logger.warning(f"Análisis completado con errores: {analysis_result['errors']}")
@@ -223,7 +232,7 @@ async def upload_and_analyze_document(
         # Respuesta de la API
         api_response = {
             "status": "success",
-            "document_id": document_name,
+            "document_id": actual_document_id,  # Usar ID consistente
             "filename": file.filename,
             "analysis_level": request.analysis_level,
             "provider_used": request.provider,
@@ -270,33 +279,394 @@ async def get_analysis_status():
             "timestamp": datetime.now().isoformat(),
             "message": "Error verificando estado del análisis"
         }
+    
+def load_analysis_from_disk(document_id: str) -> Optional[Dict[str, Any]]:
+    """
+    Cargar resultados de análisis desde disco si existen
+    
+    Args:
+        document_id: ID del documento
+        
+    Returns:
+        Resultados del análisis o None si no se encuentran
+    """
+    try:
+        # Usar path estandarizado para análisis
+        analysis_db_path = get_analysis_path(document_id)
+        
+        # Verificar si existe la base de datos de análisis
+        if analysis_db_path.exists():
+            # Buscar archivos de resultados JSON
+            for json_file in analysis_db_path.glob("*.json"):
+                if "analysis_result" in json_file.name or "summary" in json_file.name:
+                    with open(json_file, 'r', encoding='utf-8') as f:
+                        result = json.load(f)
+                        logger.info(f"Análisis cargado desde disco: {json_file}")
+                        return result
+            
+            # Si no hay archivos JSON, buscar bases de datos vectoriales estandarizadas
+            logger.info(f"Buscando bases de datos vectoriales estandarizadas para {document_id}...")
+            
+            # Buscar en las ubicaciones estandarizadas
+            db_info = db_manager.get_database_info()
+            available_dbs = []
+            
+            for db_type, info in db_info['databases'].items():
+                if info['exists'] and info['count'] > 0:
+                    available_dbs.append(f"{db_type} ({info['count']} databases)")
+            
+            # Crear respuesta más informativa
+            return {
+                "status": "reconstructible",
+                "message": f"Análisis parcial disponible. Base de datos encontrada pero sin resultados JSON guardados.",
+                "document_id": document_id,
+                "analysis_timestamp": datetime.now().isoformat(),
+                "available_data": {
+                    "database_directory": str(analysis_db_path),
+                    "standardized_dbs": available_dbs,
+                    "total_vector_dbs": db_info.get('total_databases', 0)
+                },
+                "reconstruction_info": {
+                    "can_rebuild": len(available_dbs) > 0,
+                    "rebuild_endpoint": f"/api/v1/analysis/{document_id}/rebuild",
+                    "note": "Use el endpoint de rebuild para intentar reconstruir el análisis desde las bases de datos vectoriales estandarizadas"
+                },
+                "stages": {
+                    "extraction": {"status": "unknown", "message": "Requiere reconstrucción"},
+                    "classification": {"status": "possible" if available_dbs else "unknown", "message": f"Bases de datos estandarizadas disponibles: {len(available_dbs)}"},
+                    "validation": {"status": "unknown", "message": "Requiere reconstrucción"},
+                    "risk_analysis": {"status": "unknown", "message": "Requiere reconstrucción"}
+                }
+            }
+                
+        logger.warning(f"No se encontró análisis en disco para {document_id}")
+        return None
+        
+    except Exception as e:
+        logger.error(f"Error cargando análisis desde disco: {e}")
+        return None
+
+@app.post("/api/v1/analysis/{document_id}/rebuild")
+async def rebuild_analysis_from_disk(document_id: str, background_tasks: BackgroundTasks):
+    """
+    Intentar reconstruir análisis desde bases de datos vectoriales estandarizadas
+    """
+    try:
+        # Verificar si ya existe en caché
+        if document_id in system_cache:
+            system = system_cache[document_id]
+            if document_id in system.analysis_results:
+                return JSONResponse(content={
+                    "status": "success",
+                    "message": "El análisis ya está disponible en memoria",
+                    "document_id": document_id
+                })
+        
+        # Verificar si existe base de datos de análisis usando path estandarizado
+        analysis_db_path = get_analysis_path(document_id)
+        if not analysis_db_path.exists():
+            raise HTTPException(
+                status_code=404,
+                detail=f"No se encontró base de datos de análisis para {document_id}"
+            )
+        
+        # Obtener información de bases de datos estandarizadas
+        db_info = db_manager.get_database_info()
+        available_dbs = [db_type for db_type, info in db_info['databases'].items() 
+                        if info['exists'] and info['count'] > 0]
+        
+        if not available_dbs:
+            return JSONResponse(
+                status_code=202,
+                content={
+                    "status": "partial_failure",
+                    "message": "No se encontraron bases de datos vectoriales estandarizadas para reconstruir el análisis",
+                    "document_id": document_id,
+                    "database_info": db_info,
+                    "available_actions": [
+                        "Re-upload el documento original para análisis completo",
+                        "Verificar que las bases de datos vectoriales existan en ubicaciones estandarizadas"
+                    ]
+                }
+            )
+        
+        # Intentar reconstrucción básica con información estandarizada
+        reconstructed_analysis = {
+            "document_id": document_id,
+            "status": "reconstructed",
+            "analysis_timestamp": datetime.now().isoformat(),
+            "reconstruction_timestamp": datetime.now().isoformat(),
+            "message": "Análisis reconstruido desde bases de datos vectoriales estandarizadas",
+            "source": "standardized_reconstruction",
+            "database_info": db_info,
+            "available_databases": available_dbs,
+            "stages": {
+                "extraction": {
+                    "status": "reconstructed",
+                    "message": "Estado desconocido - reconstruido desde metadatos"
+                },
+                "classification": {
+                    "status": "available" if "classification" in available_dbs else "unavailable",
+                    "message": f"Base de datos estandarizada: {'disponible' if 'classification' in available_dbs else 'no disponible'}"
+                },
+                "validation": {
+                    "status": "available" if "validation" in available_dbs else "unavailable",
+                    "message": f"Base de datos estandarizada: {'disponible' if 'validation' in available_dbs else 'no disponible'}"
+                },
+                "risk_analysis": {
+                    "status": "available" if "risk_analysis" in available_dbs else "unavailable",
+                    "message": f"Base de datos estandarizada: {'disponible' if 'risk_analysis' in available_dbs else 'no disponible'}"
+                }
+            },
+            "summary": {
+                "reconstruction_note": "Este análisis fue reconstruido desde bases de datos vectoriales estandarizadas. Los datos pueden estar incompletos.",
+                "standardized_databases": len(available_dbs),
+                "total_database_size_mb": db_info.get('total_size_mb', 0),
+                "recommendation": "Para análisis completo, re-procese el documento original"
+            }
+        }
+        
+        # Guardar el análisis reconstruido
+        try:
+            result_file = analysis_db_path / "analysis_result_reconstructed.json"
+            with open(result_file, 'w', encoding='utf-8') as f:
+                json.dump(reconstructed_analysis, f, ensure_ascii=False, indent=2)
+            logger.info(f"Análisis reconstruido guardado en {result_file}")
+        except Exception as save_error:
+            logger.warning(f"No se pudo guardar análisis reconstruido: {save_error}")
+        
+        return JSONResponse(content={
+            "status": "success",
+            "message": "Análisis reconstruido exitosamente desde bases de datos vectoriales estandarizadas",
+            "document_id": document_id,
+            "reconstruction_info": {
+                "standardized_databases": len(available_dbs),
+                "databases_available": available_dbs,
+                "total_size_mb": db_info.get('total_size_mb', 0)
+            },
+            "analysis": reconstructed_analysis
+        })
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error reconstruyendo análisis: {e}")
+        raise HTTPException(status_code=500, detail=f"Error en reconstrucción: {str(e)}")
+
+@app.get("/api/v1/database/info")
+async def get_database_info():
+    """Obtener información completa de las bases de datos"""
+    try:
+        db_info = db_manager.get_database_info()
+        db_list = db_manager.list_databases()
+        
+        return JSONResponse(content={
+            "status": "success",
+            "database_manager": {
+                "base_directory": db_info['base_directory'],
+                "analysis_directory": db_info['analysis_directory'],
+                "total_databases": db_info['total_databases'],
+                "total_size_mb": db_info['total_size_mb']
+            },
+            "databases_by_type": db_list,
+            "detailed_info": db_info['databases']
+        })
+        
+    except Exception as e:
+        logger.error(f"Error obteniendo información de base de datos: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/v1/database/migrate")
+async def migrate_old_databases():
+    """Migrar bases de datos de ubicaciones antiguas a estandarizadas"""
+    try:
+        migration_stats = db_manager.migrate_old_databases()
+        
+        return JSONResponse(content={
+            "status": "success",
+            "message": "Migración de bases de datos completada",
+            "migration_stats": migration_stats
+        })
+        
+    except Exception as e:
+        logger.error(f"Error migrando bases de datos: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/v1/database/cleanup")
+async def cleanup_old_databases(days_old: int = Query(30, description="Remove databases older than this many days")):
+    """Limpiar bases de datos antiguas"""
+    try:
+        cleanup_stats = db_manager.cleanup_old_databases(days_old)
+        
+        return JSONResponse(content={
+            "status": "success", 
+            "message": f"Limpieza completada - removidas bases de datos con más de {days_old} días",
+            "cleanup_stats": cleanup_stats
+        })
+        
+    except Exception as e:
+        logger.error(f"Error limpiando bases de datos: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/v1/analysis/list")
+async def list_available_analyses():
+    """Listar todos los análisis disponibles (en caché y en disco)"""
+    
+    try:
+        available_analyses = []
+        
+        # 1. Análisis en caché (memoria)
+        for doc_id in system_cache:
+            system = system_cache[doc_id]
+            if doc_id in system.analysis_results:
+                available_analyses.append({
+                    "document_id": doc_id,
+                    "status": "active",
+                    "source": "memory",
+                    "timestamp": system.analysis_results[doc_id].get("analysis_timestamp", "unknown")
+                })
+        
+        # 2. Análisis en disco usando path estandarizado
+        analysis_base_path = db_manager.ANALYSIS_DB_DIR
+        if analysis_base_path.exists():
+            for db_dir in analysis_base_path.iterdir():
+                if db_dir.is_dir():
+                    doc_id = db_dir.name
+                    
+                    # Skip if already in memory
+                    if doc_id in system_cache:
+                        continue
+                    
+                    # Check for analysis files
+                    result_file = db_dir / "analysis_result.json"
+                    summary_file = db_dir / "analysis_summary.json"
+                    reconstructed_file = db_dir / "analysis_result_reconstructed.json"
+                    
+                    if result_file.exists() or summary_file.exists() or reconstructed_file.exists():
+                        timestamp = "unknown"
+                        status = "stored"
+                        
+                        # Check reconstructed file first
+                        if reconstructed_file.exists():
+                            status = "reconstructed"
+                            try:
+                                with open(reconstructed_file, 'r', encoding='utf-8') as f:
+                                    recon_data = json.load(f)
+                                    timestamp = recon_data.get("reconstruction_timestamp", "unknown")
+                            except:
+                                pass
+                        elif summary_file.exists():
+                            try:
+                                with open(summary_file, 'r', encoding='utf-8') as f:
+                                    summary_data = json.load(f)
+                                    timestamp = summary_data.get("timestamp", "unknown")
+                            except:
+                                pass
+                        
+                        available_analyses.append({
+                            "document_id": doc_id,
+                            "status": status,
+                            "source": "disk",
+                            "timestamp": timestamp,
+                            "has_results": result_file.exists(),
+                            "has_summary": summary_file.exists(),
+                            "has_reconstructed": reconstructed_file.exists()
+                        })
+                    else:
+                        # Database exists but no saved results
+                        available_analyses.append({
+                            "document_id": doc_id,
+                            "status": "reconstructible",
+                            "source": "disk",
+                            "timestamp": "unknown",
+                            "has_results": False,
+                            "has_summary": False,
+                            "has_reconstructed": False,
+                            "actions": ["rebuild"],
+                            "message": "Analysis database exists - can attempt reconstruction"
+                        })
+        
+        # Add database information
+        db_info = db_manager.get_database_info()
+        
+        return JSONResponse(content={
+            "status": "success",
+            "total_analyses": len(available_analyses),
+            "analyses": available_analyses,
+            "database_info": {
+                "total_vector_dbs": db_info['total_databases'],
+                "total_size_mb": db_info['total_size_mb'],
+                "standardized_location": db_info['base_directory']
+            }
+        })
+        
+    except Exception as e:
+        logger.error(f"Error listando análisis: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/api/v1/analysis/{document_id}")
 async def get_analysis_result(document_id: str):
     """Obtener resultados de análisis de un documento"""
     
-    if document_id not in system_cache:
+    try:
+        # Primero verificar si está en caché
+        if document_id in system_cache:
+            system = system_cache[document_id]
+            
+            if document_id in system.analysis_results:
+                result = system.analysis_results[document_id]
+                return JSONResponse(content={
+                    "status": "success",
+                    "document_id": document_id,
+                    "analysis": result,
+                    "source": "memory"
+                })
+        
+        # Si no está en caché, intentar cargar desde disco
+        disk_result = load_analysis_from_disk(document_id)
+        if disk_result:
+            status_map = {
+                "reconstructible": "partial",
+                "partial": "partial",
+                "reconstructed": "success"
+            }
+            
+            response_status = status_map.get(disk_result.get("status"), "success")
+            
+            response_data = {
+                "status": response_status,
+                "document_id": document_id,
+                "analysis": disk_result,
+                "source": "disk"
+            }
+            
+            # Add helpful actions for reconstructible analyses
+            if disk_result.get("status") == "reconstructible":
+                response_data["available_actions"] = [
+                    {
+                        "action": "rebuild",
+                        "method": "POST",
+                        "endpoint": f"/api/v1/analysis/{document_id}/rebuild",
+                        "description": "Attempt to reconstruct analysis from vector databases"
+                    },
+                    {
+                        "action": "re_upload",
+                        "method": "POST", 
+                        "endpoint": "/api/v1/analysis/upload",
+                        "description": "Upload original document for complete fresh analysis"
+                    }
+                ]
+            
+            return JSONResponse(content=response_data)
+        
+        # Si no se encuentra en ningún lado
         raise HTTPException(
             status_code=404,
-            detail=f"Documento '{document_id}' no encontrado"
+            detail="Resultados de análisis no disponibles"
         )
-    
-    try:
-        system = system_cache[document_id]
         
-        if document_id in system.analysis_results:
-            result = system.analysis_results[document_id]
-            return JSONResponse(content={
-                "status": "success",
-                "document_id": document_id,
-                "analysis": result
-            })
-        else:
-            raise HTTPException(
-                status_code=404,
-                detail="Resultados de análisis no disponibles"
-            )
-    
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Error obteniendo análisis: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -879,6 +1249,33 @@ async def get_system_status():
             "semantic_search",
             "synthetic_generation"
         ],
+        "timestamp": datetime.now().isoformat()
+    })
+
+@app.get("/api/v1/utils/debug-cache")
+async def debug_cache():
+    """Obtener información detallada del cache para debugging"""
+    
+    cache_details = []
+    for doc_id, system in system_cache.items():
+        system_info = {
+            "document_id": doc_id,
+            "analysis_results_count": len(system.analysis_results) if hasattr(system, 'analysis_results') else 0,
+            "analysis_results_keys": list(system.analysis_results.keys()) if hasattr(system, 'analysis_results') else [],
+            "processed_documents": list(system.processed_documents.keys()) if hasattr(system, 'processed_documents') else [],
+            "system_initialized": getattr(system, 'system_initialized', False),
+            "data_dir": str(system.data_dir) if hasattr(system, 'data_dir') else None
+        }
+        cache_details.append(system_info)
+    
+    return JSONResponse(content={
+        "status": "success",
+        "cache_summary": {
+            "total_systems": len(system_cache),
+            "system_cache_keys": list(system_cache.keys()),
+            "rfp_cache_keys": list(rfp_analyzer_cache.keys())
+        },
+        "detailed_cache": cache_details,
         "timestamp": datetime.now().isoformat()
     })
 
