@@ -109,6 +109,7 @@ def get_embeddings_provider(provider: str = "auto", model: Optional[str] = None)
     else:
         raise ValueError(f"Proveedor no soportado: {chosen_provider}. Use 'openai', 'ollama' o 'auto'.")
 
+#Convierte DOC/DOCX a PDF
 def to_pdf_if_needed(path: Path) -> Path:
     """
     Acepta .pdf/.doc/.docx. Convierte DOC/DOCX a PDF con LibreOffice (soffice).
@@ -142,6 +143,7 @@ def to_pdf_if_needed(path: Path) -> Path:
 
     raise ValueError(f"Formato no soportado: {path.suffix}. Use .pdf, .doc o .docx")
 
+# Normaliza texto extraído de PDFs
 def _normalize_text(text: str) -> str:
     """
     Normaliza unicode, corrige guiones por salto de línea y espacios múltiples.
@@ -217,7 +219,7 @@ SEPARADORES = [
     r"\nFORMULARIO\s+ÚNICO\s+DE\s+LA\s+OFERTA\b",
 ]
 
-
+#Crea un splitter para dividir el texto en chunks
 def make_splitter() -> RecursiveCharacterTextSplitter:
     return RecursiveCharacterTextSplitter(
         chunk_size=1800,
@@ -233,7 +235,7 @@ section_pattern = re.compile(
     re.I,
 )
 
-
+# Convierte texto de un archivo .txt a una lista de Documentos
 def txt_to_documents(txt_path: Path, source_name: str) -> List[Document]:
     text = txt_path.read_text(encoding="utf-8")
     splitter = make_splitter()
@@ -255,6 +257,7 @@ def txt_to_documents(txt_path: Path, source_name: str) -> List[Document]:
         )
     return docs
 
+# ID determinista 
 def make_id(doc: Document) -> str:
     """
     ID determinista con baja probabilidad de colisión.
@@ -263,13 +266,14 @@ def make_id(doc: Document) -> str:
     base = f"{doc.metadata.get('source','')}|{doc.metadata.get('section','')}|{doc.page_content}"
     return hashlib.sha1(base.encode("utf-8")).hexdigest()
 
-
+# Deriva el nombre de la colección
 def _derive_collection_name(base_name: Optional[str], provider: str, model: str) -> str:
     if base_name:
         return base_name
     safe_model = model.replace(":", "_")
     return f"Licitaciones-{provider}-{safe_model}"
 
+# Construye embeddings y los guarda en Chroma
 def build_embeddings(
     carpeta_lawdata: str,
     ruta_db: str,
@@ -373,6 +377,7 @@ def build_embeddings(
     logger.info(f"Colección: {final_collection_name} | Proveedor: {used_provider} | Modelo: {used_model}")
     return db
 
+# Procesa un documento PDF y lo convierte en una lista de Documentos
 def test_document_processing(archivo_pdf: str) -> List[Document]:
     pdf_path = Path(archivo_pdf)
     pdf_final = to_pdf_if_needed(pdf_path)
@@ -381,6 +386,7 @@ def test_document_processing(archivo_pdf: str) -> List[Document]:
     logger.info(f"Chunks: {len(docs)} | Secciones: {sorted(set(d.metadata['section'] for d in docs))}")
     return docs
 
+# Verifica dependencias críticas
 def verificar_dependencias() -> bool:
     """
     Verifica que las dependencias críticas estén instaladas y configuradas.
