@@ -22,11 +22,18 @@ from pydantic import BaseModel, Field
 
 # Importar sistemas y agentes
 import sys
-sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+import os
+# Add backend directory to Python path
+backend_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if backend_dir not in sys.path:
+    sys.path.insert(0, backend_dir)
+
+# Add root project directory to Python path for utils
+root_dir = os.path.dirname(backend_dir)
+if root_dir not in sys.path:
+    sys.path.insert(0, root_dir)
 
 from utils.bidding import BiddingAnalysisSystem, RFPAnalyzer
-from utils.agents.document_classification import DocumentClassificationAgent
-from utils.synthetic_document_generator import SyntheticDocumentGenerator, PliegoPDFExtractor
 
 # Configurar logging
 logging.basicConfig(level=logging.INFO)
@@ -766,92 +773,26 @@ async def export_document_results(document_id: str):
 
 # ===================== UTILIDADES =====================
 
-@app.post("/api/v1/utils/generate-synthetic")
+@app.post("/api/v2/utils/generate-synthetic")
 async def generate_synthetic_documents(
     source_pdf: UploadFile = File(..., description="PDF fuente para generar documentos sintéticos"),
     count: int = Query(default=5, ge=1, le=20, description="Número de documentos a generar"),
     model: str = Query(default="gpt-4", description="Modelo OpenAI a usar")
 ):
-    """Generar documentos sintéticos basados en un PDF fuente"""
+    """Generar documentos sintéticos basados en un PDF fuente - TEMPORALMENTE DESHABILITADO"""
     
-    if not source_pdf.filename.endswith('.pdf'):
-        raise HTTPException(
-            status_code=400,
-            detail="Solo se aceptan archivos PDF para generación sintética"
-        )
-    
-    try:
-        timestamp = int(datetime.now().timestamp())
-        generation_id = f"synthetic_{timestamp}"
-        
-        # Guardar PDF temporal
-        with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as tmp_file:
-            content = await source_pdf.read()
-            tmp_file.write(content)
-            temp_pdf_path = tmp_file.name
-        
-        # Crear directorio de salida
-        output_dir = TEMP_DIR / generation_id
-        output_dir.mkdir(exist_ok=True)
-        
-        logger.info(f"Generando {count} documentos sintéticos")
-        
-        # Ejecutar generación en thread pool
-        loop = asyncio.get_event_loop()
-        result = await loop.run_in_executor(
-            executor,
-            lambda: generate_synthetic_docs_sync(temp_pdf_path, str(output_dir), count, model)
-        )
-        
-        # Limpiar archivo temporal
-        os.unlink(temp_pdf_path)
-        
-        # Crear ZIP con documentos generados
-        zip_filename = f"synthetic_docs_{generation_id}.zip"
-        zip_path = TEMP_DIR / zip_filename
-        
-        with zipfile.ZipFile(zip_path, 'w') as zipf:
-            for file_path in output_dir.glob('*'):
-                zipf.write(file_path, file_path.name)
-        
-        return FileResponse(
-            path=zip_path,
-            media_type='application/zip',
-            filename=zip_filename,
-            headers={"Content-Disposition": f"attachment; filename={zip_filename}"}
-        )
-        
-    except Exception as e:
-        logger.error(f"Error generando documentos sintéticos: {e}")
-        if 'temp_pdf_path' in locals() and Path(temp_pdf_path).exists():
-            os.unlink(temp_pdf_path)
-        
-        raise HTTPException(status_code=500, detail=str(e))
+    raise HTTPException(
+        status_code=501,
+        detail="Generación de documentos sintéticos temporalmente deshabilitada. "
+               "Funcionalidad en desarrollo."
+    )
 
 def generate_synthetic_docs_sync(pdf_path: str, output_dir: str, count: int, model: str):
-    """Función síncrona para generar documentos sintéticos"""
-    try:
-        # Extraer estructura del PDF
-        extractor = PliegoPDFExtractor(pdf_path)
-        structure = extractor.extract_text_and_structure()
-        
-        # Generar documentos
-        generator = SyntheticDocumentGenerator(model=model)
-        documents = generator.generate_synthetic_documents(
-            structure, 
-            count=count,
-            output_dir=output_dir
-        )
-        
-        return {
-            "status": "success",
-            "documents_generated": len(documents),
-            "output_directory": output_dir
-        }
-        
-    except Exception as e:
-        logger.error(f"Error en generación síncrona: {e}")
-        return {"status": "error", "error": str(e)}
+    """Función síncrona para generar documentos sintéticos - DESHABILITADA"""
+    return {
+        "status": "error", 
+        "error": "Generación de documentos sintéticos temporalmente deshabilitada"
+    }
 
 @app.get("/api/v1/utils/system-status")
 async def get_system_status():

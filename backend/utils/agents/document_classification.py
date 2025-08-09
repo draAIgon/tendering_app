@@ -18,7 +18,7 @@ from Embedding import (
     pdf_to_txt, 
     to_pdf_if_needed
 )
-from langchain.vectorstores import Chroma
+from langchain_community.vectorstores import Chroma
 from langchain.schema import Document
 
 logging.basicConfig(level=logging.INFO)
@@ -84,14 +84,17 @@ class DocumentClassificationAgent:
         self.vector_db_path = Path(vector_db_path) if vector_db_path else Path("./classification_db")
         self.collection_name = collection_name
         self.embeddings_provider = None
+        self.provider_info = None
         self.vector_db = None
         self.document_sections = {}
         
     def initialize_embeddings(self, provider="auto", model=None):
         """Inicializa el proveedor de embeddings"""
         try:
-            self.embeddings_provider = get_embeddings_provider(provider=provider, model=model)
-            logger.info(f"Proveedor de embeddings inicializado: {provider}")
+            embeddings, used_provider, used_model = get_embeddings_provider(provider=provider, model=model)
+            self.embeddings_provider = embeddings
+            self.provider_info = {"provider": used_provider, "model": used_model}
+            logger.info(f"Proveedor de embeddings inicializado: {used_provider} ({used_model})")
             return True
         except Exception as e:
             logger.error(f"Error inicializando embeddings: {e}")
