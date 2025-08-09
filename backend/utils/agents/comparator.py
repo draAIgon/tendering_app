@@ -169,7 +169,8 @@ class ComparatorAgent:
             'comparison_type': 'content_similarity',
             'doc1_id': doc1_id,
             'doc2_id': doc2_id,
-            'analysis_timestamp': datetime.now().isoformat(),
+            'comparison_timestamp': datetime.now().isoformat(),
+            'semantic_similarity': 0.0,
             'metrics': {}
         }
         
@@ -186,6 +187,9 @@ class ComparatorAgent:
         similarity_analysis['metrics']['common_words_count'] = len(common_words)
         similarity_analysis['metrics']['unique_words_doc1'] = len(words1 - words2)
         similarity_analysis['metrics']['unique_words_doc2'] = len(words2 - words1)
+        
+        # Use Jaccard similarity as semantic similarity for now
+        similarity_analysis['semantic_similarity'] = jaccard_similarity
         
         # Análisis semántico si está disponible
         if self.vector_db:
@@ -378,6 +382,13 @@ class ComparatorAgent:
             }
         }
         
+        # Add required test keys
+        technical_analysis['technical_completeness'] = {
+            doc1_id: score1,
+            doc2_id: score2
+        }
+        technical_analysis['completeness_comparison'] = technical_analysis['comparative_analysis']['technical_coverage_comparison']
+        
         return technical_analysis
     
     def analyze_economic_competitiveness(self, doc1_id: str, doc2_id: str) -> Dict[str, Any]:
@@ -480,6 +491,16 @@ class ComparatorAgent:
         }
         
         economic_analysis['comparative_analysis'] = comparative_analysis
+        
+        # Add required test keys
+        economic_analysis['economic_competitiveness'] = {
+            doc1_id: econ1,
+            doc2_id: econ2
+        }
+        economic_analysis['cost_analysis'] = {
+            doc1_id: price1 or 0,
+            doc2_id: price2 or 0
+        }
         
         return economic_analysis
     

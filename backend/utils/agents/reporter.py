@@ -120,11 +120,19 @@ class ReportGenerationAgent:
         # Análisis de clasificación
         if data['classification']:
             sections = data['classification'].get('sections', {})
-            key_findings.append(f"Documento clasificado en {len(sections)} secciones principales")
+            # Handle both dict/list (actual sections) and int (section count)
+            if isinstance(sections, (dict, list)):
+                key_findings.append(f"Documento clasificado en {len(sections)} secciones principales")
+            elif isinstance(sections, int):
+                key_findings.append(f"Documento clasificado en {sections} secciones principales")
             
             if data['classification'].get('confidence_scores'):
-                avg_confidence = sum(data['classification']['confidence_scores'].values()) / len(data['classification']['confidence_scores'])
-                key_findings.append(f"Confianza promedio de clasificación: {avg_confidence:.1f}%")
+                confidence_scores = data['classification']['confidence_scores']
+                if isinstance(confidence_scores, dict) and confidence_scores:
+                    avg_confidence = sum(confidence_scores.values()) / len(confidence_scores)
+                    key_findings.append(f"Confianza promedio de clasificación: {avg_confidence:.1f}%")
+                elif isinstance(confidence_scores, (int, float)):
+                    key_findings.append(f"Confianza promedio de clasificación: {confidence_scores:.1f}%")
         
         # Análisis de validación
         if data['validation']:
@@ -286,7 +294,7 @@ class ReportGenerationAgent:
             'executive_summary': {
                 'overall_risk_score': risk_data.get('overall_assessment', {}).get('total_risk_score', 0),
                 'risk_level': risk_data.get('overall_assessment', {}).get('risk_level', 'UNKNOWN'),
-                'critical_risks_count': len(risk_data.get('critical_risks', [])),
+                'critical_risks_count': len(risk_data.get('critical_risks', [])) if isinstance(risk_data.get('critical_risks', []), (list, dict)) else risk_data.get('critical_risks_count', 0),
                 'assessment_summary': risk_data.get('overall_assessment', {}).get('assessment_summary', '')
             },
             'risk_breakdown': [],
@@ -593,8 +601,12 @@ class ReportGenerationAgent:
         
         # Confianza de clasificación
         if data['classification'] and data['classification'].get('confidence_scores'):
-            avg_conf = sum(data['classification']['confidence_scores'].values()) / len(data['classification']['confidence_scores'])
-            confidence_scores.append(avg_conf)
+            confidence_scores_data = data['classification']['confidence_scores']
+            if isinstance(confidence_scores_data, dict) and confidence_scores_data:
+                avg_conf = sum(confidence_scores_data.values()) / len(confidence_scores_data)
+                confidence_scores.append(avg_conf)
+            elif isinstance(confidence_scores_data, (int, float)):
+                confidence_scores.append(confidence_scores_data)
         
         # Confianza de validación
         if data['validation']:

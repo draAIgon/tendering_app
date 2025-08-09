@@ -74,46 +74,59 @@ class ProposalComparisonAgent:
     
     def load_proposal(self, proposal_id: str, content: str, metadata: Optional[Dict] = None):
         """
-        Carga una propuesta para comparación
+        Carga una propuesta para análisis y comparación
         
         Args:
             proposal_id: Identificador único de la propuesta
-            content: Contenido de la propuesta
-            metadata: Metadatos adicionales (precio, empresa, etc.)
+            content: Contenido textual de la propuesta
+            metadata: Metadatos adicionales de la propuesta
         """
+        logger.info(f"Cargando propuesta: {proposal_id}")
         
-        if not metadata:
-            metadata = {}
+        if not content or not content.strip():
+            raise ValueError(f"Contenido vacío para propuesta {proposal_id}")
         
-        # Crear documentos para embeddings
-        from langchain.text_splitter import RecursiveCharacterTextSplitter
+        # Preparar chunks del documento
+        chunks = []
         
-        splitter = RecursiveCharacterTextSplitter(
-            chunk_size=1000,
-            chunk_overlap=200,
-            separators=["\n\n", "\n", ". ", " "]
-        )
+        # Dividir en párrafos para mejor análisis
+        paragraphs = [p.strip() for p in content.split('\n\n') if p.strip()]
         
-        chunks = splitter.split_text(content)
-        documents = []
+        if not paragraphs:
+            paragraphs = [content]  # Si no hay párrafos, usar todo el contenido
         
-        for i, chunk in enumerate(chunks):
-            doc_metadata = {
-                'proposal_id': proposal_id,
-                'chunk_id': i,
-                'content_type': 'proposal_text',
-                **metadata
-            }
-            documents.append(Document(page_content=chunk, metadata=doc_metadata))
+        for i, paragraph in enumerate(paragraphs):
+            if len(paragraph) > 50:  # Solo incluir párrafos significativos
+                chunks.append(Document(
+                    page_content=paragraph,
+                    metadata={
+                        'proposal_id': proposal_id,
+                        'chunk_id': i,
+                        'chunk_type': 'paragraph',
+                        **(metadata or {})
+                    }
+                ))
         
+        # Guardar propuesta
         self.proposals[proposal_id] = {
             'content': content,
-            'metadata': metadata,
-            'documents': documents,
+            'chunks': chunks,
+            'metadata': metadata or {},
             'loaded_at': datetime.now().isoformat()
         }
         
-        logger.info(f"Propuesta {proposal_id} cargada con {len(documents)} chunks")
+        logger.info(f"Propuesta {proposal_id} cargada con {len(chunks)} fragmentos")
+    
+    def add_proposal(self, proposal_id: str, content: str, metadata: Optional[Dict] = None):
+        """
+        Alias para load_proposal para compatibilidad con tests
+        
+        Args:
+            proposal_id: Identificador único de la propuesta
+            content: Contenido textual de la propuesta
+            metadata: Metadatos adicionales de la propuesta
+        """
+        return self.load_proposal(proposal_id, content, metadata)
     
     def setup_vector_database(self):
         """Configura la base de datos vectorial con todas las propuestas"""
