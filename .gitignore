@@ -1,3 +1,4 @@
 documents
+backend/db
 __pycache__
 .env

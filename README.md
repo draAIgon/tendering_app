@@ -34,7 +34,7 @@ architecture-beta
 * Iniciar el API Gateway
 
 ```
-fastapi dev backend/api.py --host 0.0.0.0
+fastapi dev backend/api/main.py --host 0.0.0.0
 ```
 
 * Iniciar el frontend
