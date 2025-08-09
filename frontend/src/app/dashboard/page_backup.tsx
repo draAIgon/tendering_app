@@ -2,7 +2,13 @@
 
 import React, { useState, useRef } from 'react';
 import { apiClient, useAnalysisPolling } from '@/lib/api';
-import { ProcessedData } from '@/types/dashboard';
+import { Pro        // Insights de clasificación
+        if (classification?.document_info && typeof classification.document_info === 'object') {
+          const docInfo = classification.document_info as { total_sections?: number; total_fragments?: number };
+          if (docInfo.total_sections && docInfo.total_fragments) {
+            insights.push(`📝 Documento clasificado: ${docInfo.total_sections} secciones y ${docInfo.total_fragments} fragmentos identificados`);
+          }
+        }dData } from '@/types/dashboard';
 import {
   Header,
   FileUploader,
@@ -137,45 +143,33 @@ export default function Dashboard() {
           insights.push(`✅ Análisis completado: ${summary.completed_stages}/${summary.total_stages} etapas`);
         }
         
-        // Insights de clasificación - con verificaciones de tipo seguras
-        if (classification?.document_info && typeof classification.document_info === 'object') {
-          const docInfo = classification.document_info as { total_sections?: number; total_fragments?: number };
-          if (typeof docInfo.total_sections === 'number' && typeof docInfo.total_fragments === 'number') {
-            insights.push(`📝 Documento clasificado: ${docInfo.total_sections} secciones y ${docInfo.total_fragments} fragmentos identificados`);
-          }
+        // Insights de clasificación
+        if (classification?.document_info) {
+          const { total_sections, total_fragments } = classification.document_info;
+          insights.push(`� Documento clasificado: ${total_sections} secciones y ${total_fragments} fragmentos identificados`);
         }
         
-        // Insights de validación - con verificaciones de tipo seguras
-        if (validation?.overall_score !== undefined && typeof validation.overall_score === 'number') {
+        // Insights de validación
+        if (validation?.overall_score !== undefined) {
           const score = validation.overall_score;
           const level = validation.validation_level;
-          const levelStr = typeof level === 'string' ? level.replace('_', ' ') : 'desconocido';
-          insights.push(`📋 Validación: ${score.toFixed(1)}/100 - ${levelStr}`);
+          insights.push(`📋 Validación: ${score.toFixed(1)}/100 - ${level?.replace('_', ' ')}`);
         }
         
-        // Insights de cumplimiento normativo - con verificaciones de tipo seguras
-        if (validation?.compliance_validation && 
-            typeof validation.compliance_validation === 'object' &&
-            validation.compliance_validation !== null) {
-          const complianceValidation = validation.compliance_validation as Record<string, unknown>;
-          if (typeof complianceValidation.overall_compliance_percentage === 'number') {
-            const compliance = complianceValidation.overall_compliance_percentage;
-            insights.push(`⚖️ Cumplimiento normativo: ${compliance.toFixed(1)}%`);
-          }
+        if (validation?.compliance_validation?.overall_compliance_percentage !== undefined) {
+          const compliance = validation.compliance_validation.overall_compliance_percentage;
+          insights.push(`⚖️ Cumplimiento normativo: ${compliance.toFixed(1)}%`);
         }
         
-        // Insights de riesgos - con verificaciones de tipo seguras
-        if (riskAnalysis?.overall_assessment && typeof riskAnalysis.overall_assessment === 'object') {
-          const assessment = riskAnalysis.overall_assessment as Record<string, unknown>;
-          if (typeof assessment.risk_level === 'string' && typeof assessment.total_risk_score === 'number') {
-            const riskLevel = assessment.risk_level.replace('_', ' ');
-            const riskScore = assessment.total_risk_score;
-            insights.push(`⚠️ Nivel de riesgo: ${riskLevel} (${riskScore}/100)`);
-          }
+        // Insights de riesgos
+        if (riskAnalysis?.overall_assessment) {
+          const riskLevel = riskAnalysis.overall_assessment.risk_level;
+          const riskScore = riskAnalysis.overall_assessment.total_risk_score;
+          insights.push(`⚠️ Nivel de riesgo: ${riskLevel?.replace('_', ' ')} (${riskScore}/100)`);
         }
         
-        // Insights del contenido extraído - con verificaciones de tipo seguras
-        if (extraction?.content && typeof extraction.content === 'string') {
+        // Insights del contenido extraído
+        if (extraction?.content) {
           const contentLength = extraction.content.length;
           insights.push(`📄 Contenido extraído: ${Math.round(contentLength / 1000)}k caracteres procesados`);
         }
@@ -192,41 +186,28 @@ export default function Dashboard() {
         return insights;
       };
 
-      // Generar recomendaciones dinámicas - con verificaciones de tipo seguras
+      // Generar recomendaciones dinámicas
       const generateRecommendations = () => {
         const recommendations: string[] = [];
         
         // Recomendaciones del resumen
-        if (summary?.recommendations && Array.isArray(summary.recommendations)) {
-          recommendations.push(...summary.recommendations.slice(0, 3).map((rec: unknown) => 
-            typeof rec === 'string' ? `💡 ${rec}` : '💡 Revisar recomendación'
-          ));
+        if (summary?.recommendations && summary.recommendations.length > 0) {
+          recommendations.push(...summary.recommendations.slice(0, 3).map((rec: string) => `💡 ${rec}`));
         }
         
         // Recomendaciones de validación
-        if (validation?.recommendations && Array.isArray(validation.recommendations)) {
-          recommendations.push(...validation.recommendations.slice(0, 2).map((rec: unknown) => 
-            typeof rec === 'string' ? `🔍 ${rec}` : '🔍 Revisar recomendación'
-          ));
+        if (validation?.recommendations && validation.recommendations.length > 0) {
+          recommendations.push(...validation.recommendations.slice(0, 2).map((rec: string) => `🔍 ${rec}`));
         }
         
         // Recomendaciones de riesgos
-        if (riskAnalysis?.overall_assessment && typeof riskAnalysis.overall_assessment === 'object') {
-          const assessment = riskAnalysis.overall_assessment as Record<string, unknown>;
-          if (assessment.risk_level === 'HIGH' || assessment.risk_level === 'VERY_HIGH') {
-            recommendations.push('⚠️ Revisar análisis de riesgos detallado - Nivel de riesgo elevado');
-          }
+        if (riskAnalysis?.overall_assessment?.risk_level === 'HIGH' || riskAnalysis?.overall_assessment?.risk_level === 'VERY_HIGH') {
+          recommendations.push('⚠️ Revisar análisis de riesgos detallado - Nivel de riesgo elevado');
         }
         
         // Recomendaciones basadas en cumplimiento
-        if (validation?.compliance_validation && 
-            typeof validation.compliance_validation === 'object' &&
-            validation.compliance_validation !== null) {
-          const complianceValidation = validation.compliance_validation as Record<string, unknown>;
-          if (typeof complianceValidation.overall_compliance_percentage === 'number' &&
-              complianceValidation.overall_compliance_percentage < 50) {
-            recommendations.push('📋 Mejorar cumplimiento normativo - Puntuación baja detectada');
-          }
+        if (validation?.compliance_validation?.overall_compliance_percentage && validation.compliance_validation.overall_compliance_percentage < 50) {
+          recommendations.push('📋 Mejorar cumplimiento normativo - Puntuación baja detectada');
         }
         
         // Recomendaciones por defecto
