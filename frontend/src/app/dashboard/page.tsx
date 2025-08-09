@@ -105,7 +105,7 @@ export default function Dashboard() {
 
   // Efecto para manejar los resultados del polling
   React.useEffect(() => {
-    if (analysisResult && analysisResult.status === 'completed') {
+    if (analysisResult && analysisResult.status === 'success') {
       // Convertir datos de la API al formato esperado por el UI
       const transformedData: ProcessedData = {
         documentId: analysisResult.document_id,

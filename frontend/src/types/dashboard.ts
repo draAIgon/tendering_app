@@ -1,6 +1,6 @@
 export interface AnalysisResult {
   document_id: string;
-  status: 'processing' | 'completed' | 'error' | 'pending';
+  status: 'processing' | 'success' | 'error' | 'pending';
   progress?: number;
   error?: string;
   results?: {

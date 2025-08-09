@@ -46,7 +46,7 @@ export interface UploadResponse {
 
 export interface AnalysisResult {
   document_id: string;
-  status: 'processing' | 'completed' | 'error';
+  status: 'processing' | 'success' | 'error';
   progress?: number;
   results?: {
     technical_analysis?: Record<string, unknown>;
@@ -341,7 +341,7 @@ export const useAnalysisPolling = (documentId: string | null, interval: number =
         setResult(data);
         
         // Si está completado o hay error, dejar de hacer polling
-        if (data.status === 'completed' || data.status === 'error') {
+        if (data.status === 'success' || data.status === 'error') {
           if (intervalId) clearInterval(intervalId);
         }
       } catch (err) {
