@@ -149,27 +149,20 @@ class BiddingAnalysisSystem:
             try:
                 logger.info("Etapa 2: Clasificando documento...")
                 
-                # Create a temporary file for the document classifier
-                import tempfile
-                import os
+                # Instead of creating temp file, pass the original document to classifier
+                # Create standardized database path for this document
+                classifier_db_path = get_standard_db_path('classification', document_id)
                 
-                # Save content to temporary file
-                with tempfile.NamedTemporaryFile(mode='w', suffix='.txt', delete=False, encoding='utf-8') as tmp_file:
-                    tmp_file.write(content)
-                    temp_path = tmp_file.name
+                # Initialize classifier with original document and standardized DB path
+                self.classifier.document_path = document_path
+                self.classifier.vector_db_path = classifier_db_path
+                self.classifier.collection_name = f"classification_{document_id}"
                 
-                # Set document path and process
-                original_path = self.classifier.document_path
-                self.classifier.document_path = temp_path
-                
+                # Process document with original file (this handles PDF/DOC/DOCX properly)
                 classification_result = self.classifier.process_document(
                     provider="auto", 
                     force_rebuild=True
                 )
-                
-                # Clean up
-                self.classifier.document_path = original_path
-                os.unlink(temp_path)
                 
                 analysis_result['stages']['classification'] = {
                     'status': 'completed',

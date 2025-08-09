@@ -1,6 +1,7 @@
 documents
 backend/db
 analysis_databases
+db
 temp
 __pycache__
 .env
