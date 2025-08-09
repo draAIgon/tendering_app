@@ -200,7 +200,7 @@ def pdf_to_txt(pdf_path: Path, ocr_char_threshold: int = 30) -> Path:
     txt_path.write_text(contenido, encoding="utf-8")
     return txt_path
 
-SEPARADORES = [
+SEPARATORS = [
     r"\nSECCIÓN\s+[IVXLC]+\b",
     r"\nCAPÍTULO\s+[IVXLC]+\b",
     r"\n\d+\.\s*[A-ZÁÉÍÓÚÑ]",
@@ -219,14 +219,68 @@ SEPARADORES = [
     r"\nFORMULARIO\s+ÚNICO\s+DE\s+LA\s+OFERTA\b",
 ]
 
+def _custom_regex_split(text: str, separators: List[str]) -> List[str]:
+    """
+    Custom regex splitting that handles None values properly.
+    Splits text using regex patterns in order of preference.
+    """
+    if not text:
+        return []
+    
+    # Start with the full text
+    chunks = [text]
+    
+    # Apply each separator in order
+    for separator in separators:
+        new_chunks = []
+        for chunk in chunks:
+            if not chunk or not chunk.strip():
+                continue
+            
+            try:
+                # Split using the regex pattern
+                parts = re.split(separator, chunk)
+                # Filter out None and empty parts
+                parts = [str(part).strip() for part in parts if part is not None and str(part).strip()]
+                new_chunks.extend(parts)
+            except Exception:
+                # If regex fails, keep the original chunk
+                new_chunks.append(chunk)
+        
+        chunks = new_chunks
+        
+        # Stop if we have enough small chunks
+        if len(chunks) > 10 and all(len(chunk) < 2000 for chunk in chunks):
+            break
+    
+    # Final cleanup - remove empty chunks and ensure reasonable size
+    final_chunks = []
+    for chunk in chunks:
+        if chunk and len(chunk.strip()) > 10:  # Minimum chunk size
+            # If chunk is too large, split it manually
+            if len(chunk) > 2500:
+                # Split large chunks into smaller pieces
+                for i in range(0, len(chunk), 1800):
+                    sub_chunk = chunk[i:i+1800]
+                    if sub_chunk.strip():
+                        final_chunks.append(sub_chunk)
+            else:
+                final_chunks.append(chunk)
+    
+    return final_chunks
+
 #Crea un splitter para dividir el texto en chunks
 def make_splitter() -> RecursiveCharacterTextSplitter:
+    # Always use simple separators for RecursiveCharacterTextSplitter
+    # We'll handle regex splitting in txt_to_documents if needed
+    simple_separators = ["\n\n", "\n", ". ", " "]
+    
     return RecursiveCharacterTextSplitter(
         chunk_size=1800,
         chunk_overlap=200,
-        separators=SEPARADORES + ["\n\n", "\n", ". ", " "],
+        separators=simple_separators,
         length_function=len,
-        is_separator_regex=True,
+        is_separator_regex=False,
     )
 
 
@@ -238,16 +292,66 @@ section_pattern = re.compile(
 # Convierte texto de un archivo .txt a una lista de Documentos
 def txt_to_documents(txt_path: Path, source_name: str) -> List[Document]:
     text = txt_path.read_text(encoding="utf-8")
-    splitter = make_splitter()
-    chunks = splitter.split_text(text)
+    
+    # Validate text content
+    if not text or not text.strip():
+        logger.warning(f"Empty or invalid text content in {txt_path}")
+        return []
+    
+    # Ensure text doesn't have None values by cleaning it
+    text = str(text).replace('\x00', '').strip()
+    
+    chunks = []
+    
+    try:
+        # First try custom regex splitting for better section detection
+        logger.info("Attempting custom regex splitting with SEPARATORS...")
+        regex_chunks = _custom_regex_split(text, SEPARATORS)
+        
+        if regex_chunks and len(regex_chunks) > 1:
+            logger.info(f"Custom regex splitting successful: {len(regex_chunks)} chunks")
+            chunks = regex_chunks
+        else:
+            raise ValueError("Custom regex splitting produced no useful chunks")
+            
+    except Exception as e:
+        logger.warning(f"Custom regex splitting failed: {e}")
+        
+        try:
+            # Fallback to RecursiveCharacterTextSplitter
+            logger.info("Using RecursiveCharacterTextSplitter...")
+            splitter = make_splitter()
+            chunks = splitter.split_text(text)
+            logger.info(f"RecursiveCharacterTextSplitter successful: {len(chunks)} chunks")
+        except Exception as e2:
+            logger.error(f"RecursiveCharacterTextSplitter failed: {e2}")
+            # Last resort - manual chunking
+            logger.info("Using manual chunking as fallback")
+            chunks = [text[i:i+1800] for i in range(0, len(text), 1600)]
+    
+    # Filter out empty or None chunks
+    chunks = [str(ch).strip() for ch in chunks if ch is not None and str(ch).strip()]
+    
+    if not chunks:
+        logger.warning(f"No valid chunks created from {txt_path}")
+        return []
 
     docs: List[Document] = []
     for ch in chunks:
-        m_sec = section_pattern.search(ch)
-        section = m_sec.group(1).upper() if m_sec else "GENERAL"
+        if not ch or not ch.strip():
+            continue
+            
+        try:
+            m_sec = section_pattern.search(ch)
+            section = m_sec.group(1).upper() if m_sec else "GENERAL"
+        except Exception:
+            section = "GENERAL"
 
-        m_page = re.search(r"=== PÁGINA\s+(\d+)", ch)
-        page = int(m_page.group(1)) if m_page else None
+        try:
+            m_page = re.search(r"=== PÁGINA\s+(\d+)", ch)
+            page = int(m_page.group(1)) if m_page else None
+        except Exception:
+            page = None
 
         docs.append(
             Document(
@@ -255,6 +359,8 @@ def txt_to_documents(txt_path: Path, source_name: str) -> List[Document]:
                 metadata={"source": source_name, "section": section, "page": page},
             )
         )
+    
+    logger.info(f"Created {len(docs)} document chunks from {source_name}")
     return docs
 
 # ID determinista 

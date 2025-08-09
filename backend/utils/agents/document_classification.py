@@ -18,7 +18,7 @@ from Embedding import (
     pdf_to_txt, 
     to_pdf_if_needed
 )
-from langchain_community.vectorstores import Chroma
+from langchain_chroma import Chroma
 from langchain.schema import Document
 
 logging.basicConfig(level=logging.INFO)
@@ -151,7 +151,14 @@ class DocumentClassificationAgent:
             
             # Agregar documentos
             self.vector_db.add_documents(documents)
-            self.vector_db.persist()
+            
+            # Note: persist() is no longer needed in ChromaDB 0.4+
+            # The database auto-persists
+            try:
+                self.vector_db.persist()
+            except AttributeError:
+                # persist() method doesn't exist in newer versions
+                pass
             
             logger.info(f"BD vectorial creada con {len(documents)} fragmentos")
             return True

@@ -5,13 +5,13 @@ import json
 from datetime import datetime
 
 # Importar todos los agentes implementados
-from agents.document_extraction import DocumentExtractionAgent
-from agents.document_classification import DocumentClassificationAgent
-from agents.validator import ComplianceValidationAgent
-from agents.proposal_comparison import ProposalComparisonAgent
-from agents.risk_analyzer import RiskAnalyzerAgent
-from agents.reporter import ReportGenerationAgent
-from agents.comparator import ComparatorAgent
+from .agents.document_extraction import DocumentExtractionAgent
+from .agents.document_classification import DocumentClassificationAgent
+from .agents.validator import ComplianceValidationAgent
+from .agents.proposal_comparison import ProposalComparisonAgent
+from .agents.risk_analyzer import RiskAnalyzerAgent
+from .agents.reporter import ReportGenerationAgent
+from .agents.comparator import ComparatorAgent
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
