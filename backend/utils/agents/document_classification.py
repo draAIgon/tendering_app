@@ -148,23 +148,39 @@ class DocumentClassificationAgent:
     def _create_vector_db_from_document(self):
         """Crea la BD vectorial desde el documento"""
         try:
-            # Convertir documento a PDF si es necesario
-            pdf_path = to_pdf_if_needed(self.document_path)
+            # Validate document path
+            if not self.document_path or not Path(self.document_path).exists():
+                raise ValueError(f"Document path does not exist: {self.document_path}")
             
-            # Extraer texto
-            txt_path = pdf_to_txt(pdf_path)
+            doc_path = Path(self.document_path)
             
-            # Crear documentos con metadatos
-            documents = txt_to_documents(txt_path, source_name=self.document_path.stem)
+            # Check if it's already a text file
+            if doc_path.suffix.lower() == '.txt':
+                # If it's already a text file, use it directly
+                txt_path = doc_path
+                logger.info(f"Using existing text file: {txt_path}")
+            else:
+                # Convert document to PDF if needed
+                pdf_path = to_pdf_if_needed(self.document_path)
+                
+                # Extract text
+                txt_path = pdf_to_txt(pdf_path)
             
-            # Crear BD vectorial
+            # Create documents with metadatas
+            documents = txt_to_documents(txt_path, source_name=doc_path.stem)
+            
+            # Ensure we have valid documents
+            if not documents:
+                raise ValueError(f"No documents could be created from {txt_path}")
+            
+            # Create vector database
             self.vector_db = Chroma(
                 collection_name=self.collection_name,
                 persist_directory=str(self.vector_db_path),
                 embedding_function=self.embeddings_provider
             )
             
-            # Agregar documentos
+            # Add documents
             self.vector_db.add_documents(documents)
             
             # Note: persist() is no longer needed in ChromaDB 0.4+
