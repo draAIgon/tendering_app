@@ -11,7 +11,7 @@ import sys
 import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
 
-from Enbedding import get_embeddings_provider
+from Embedding import get_embeddings_provider
 from langchain.vectorstores import Chroma
 from langchain.schema import Document
 
