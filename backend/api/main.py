@@ -129,6 +129,37 @@ async def root():
         }
     }
 
+@app.get("/health")
+async def health_check():
+    """Health check básico"""
+    return {"status": "ok", "timestamp": datetime.now().isoformat()}
+
+@app.get("/api/v1/health")
+async def api_health_check():
+    """Health check de la API"""
+    try:
+        # Verificar que los directorios existen
+        for directory in [UPLOAD_DIR, ANALYSIS_DB_DIR, REPORTS_DIR, TEMP_DIR]:
+            if not directory.exists():
+                directory.mkdir(exist_ok=True, parents=True)
+        
+        return {
+            "status": "healthy",
+            "version": "1.0.0",
+            "timestamp": datetime.now().isoformat(),
+            "analysis_available": True,
+            "cache_size": len(system_cache),
+            "directories_ok": True
+        }
+    except Exception as e:
+        logger.error(f"Health check failed: {e}")
+        return {
+            "status": "unhealthy", 
+            "error": str(e),
+            "analysis_available": False,
+            "timestamp": datetime.now().isoformat()
+        }
+
 # ===================== ANÁLISIS DE DOCUMENTOS =====================
 
 @app.post("/api/v1/analysis/upload")
@@ -210,6 +241,35 @@ async def upload_and_analyze_document(
             os.unlink(temp_path)
         
         raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/v1/analysis/status")
+async def get_analysis_status():
+    """Obtener estado general del análisis"""
+    try:
+        # Verificar dependencias críticas
+        from Embedding import verificar_dependencias
+        dependencies_ok = verificar_dependencias()
+        
+        analysis_available = dependencies_ok and len(system_cache) >= 0
+        
+        return {
+            "status": "operational" if analysis_available else "limited",
+            "analysis_available": analysis_available,
+            "dependencies_ok": dependencies_ok,
+            "active_analyses": len(system_cache),
+            "cached_systems": list(system_cache.keys()),
+            "timestamp": datetime.now().isoformat(),
+            "message": "Sistema de análisis operativo" if analysis_available else "Análisis limitado - verifica dependencias"
+        }
+    except Exception as e:
+        logger.error(f"Error verificando estado del análisis: {e}")
+        return {
+            "status": "error",
+            "analysis_available": False,
+            "error": str(e),
+            "timestamp": datetime.now().isoformat(),
+            "message": "Error verificando estado del análisis"
+        }
 
 @app.get("/api/v1/analysis/{document_id}")
 async def get_analysis_result(document_id: str):
