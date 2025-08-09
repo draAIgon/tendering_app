@@ -773,7 +773,7 @@ async def export_document_results(document_id: str):
 
 # ===================== UTILIDADES =====================
 
-@app.post("/api/v2/utils/generate-synthetic")
+@app.post("/api/v1/utils/generate-synthetic")
 async def generate_synthetic_documents(
     source_pdf: UploadFile = File(..., description="PDF fuente para generar documentos sintéticos"),
     count: int = Query(default=5, ge=1, le=20, description="Número de documentos a generar"),
