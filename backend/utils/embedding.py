@@ -1,6 +1,7 @@
 from pathlib import Path
 import re
 import subprocess
+from typing import List, Dict, Optional, Union, Tuple
 from langchain_core.documents import Document
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_openai import OpenAIEmbeddings
@@ -10,7 +11,7 @@ import logging
 from collections import defaultdict
 import hashlib
 import requests
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -106,77 +107,6 @@ def get_embeddings_provider(provider: str = "auto", model: Optional[str] = None)
     else:
         raise ValueError(f"Proveedor no soportado: {chosen_provider}. Use 'openai', 'ollama' o 'auto'.")
 
-# Separadores simplificados - comentados para usar método más simple
-# SEPARATORS = [
-#     r"\nSECCIÓN\s+[IVXLC]+\b",
-#     r"\nCAPÍTULO\s+[IVXLC]+\b",
-#     r"\n\d+\.\s*[A-ZÁÉÍÓÚÑ]",
-#     r"\n\d+\.\d+(\.\d+)?\s",
-#     r"\n[A-ZÁÉÍÓÚÑ ]{10,}\n",
-#     r"\nCONVOCATORIA\b",
-#     r"\nOBJETO\s+DE\s+LA\s+CONTRATACI[ÓO]N\b",
-#     r"\nCONDICIONES\s+GENERALES\b",
-#     r"\nCONDICIONES\s+PARTICULARES\b",
-#     r"\nREQUISITOS\s+TÉCNICOS\b",
-#     r"\nESPECIFICACIONES\s+TÉCNICAS\b",
-#     r"\nCONDICIONES\s+ECON[ÓO]MICAS\b",
-#     r"\nGARANT[IÍ]AS\b",
-#     r"\nPLAZOS\b",
-#     r"\nCRONOGRAMA\b",
-#     r"\nFORMULARIO\s+ÚNICO\s+DE\s+LA\s+OFERTA\b",
-# ]
-
-# Función regex compleja comentada - ya no se usa en el sistema simplificado
-# def _custom_regex_split(text: str, separators: List[str]) -> List[str]:
-#     """
-#     Custom regex splitting that handles None values properly.
-#     Splits text using regex patterns in order of preference.
-#     """
-#     if not text:
-#         return []
-#     
-#     # Start with the full text
-#     chunks = [text]
-#     
-#     # Apply each separator in order
-#     for separator in separators:
-#         new_chunks = []
-#         for chunk in chunks:
-#             if not chunk or not chunk.strip():
-#                 continue
-#             
-#             try:
-#                 # Split using the regex pattern
-#                 parts = re.split(separator, chunk)
-#                 # Filter out None and empty parts
-#                 parts = [str(part).strip() for part in parts if part is not None and str(part).strip()]
-#                 new_chunks.extend(parts)
-#             except Exception:
-#                 # If regex fails, keep the original chunk
-#                 new_chunks.append(chunk)
-#         
-#         chunks = new_chunks
-#         
-#         # Stop if we have enough small chunks
-#         if len(chunks) > 10 and all(len(chunk) < 2000 for chunk in chunks):
-#             break
-#     
-#     # Final cleanup - remove empty chunks and ensure reasonable size
-#     final_chunks = []
-#     for chunk in chunks:
-#         if chunk and len(chunk.strip()) > 10:  # Minimum chunk size
-#             # If chunk is too large, split it manually
-#             if len(chunk) > 2500:
-#                 # Split large chunks into smaller pieces
-#                 for i in range(0, len(chunk), 1800):
-#                     sub_chunk = chunk[i:i+1800]
-#                     if sub_chunk.strip():
-#                         final_chunks.append(sub_chunk)
-#             else:
-#                 final_chunks.append(chunk)
-#     
-#     return final_chunks
-
 #Crea un splitter para dividir el texto en chunks simples
 def make_splitter(chunk_size: int = 2000, chunk_overlap: int = 1000) -> RecursiveCharacterTextSplitter:
     """
@@ -198,18 +128,290 @@ def make_splitter(chunk_size: int = 2000, chunk_overlap: int = 1000) -> Recursiv
         is_separator_regex=False,
     )
 
+def detect_section_boundaries_semantic(text: str) -> List[Tuple[int, str, float]]:
+    """
+    Detect section boundaries using semantic cues and text analysis.
+    Returns list of (position, section_name, confidence) tuples.
+    """
+    import re
+    
+    def get_ordinal_position(line_text: str) -> Optional[int]:
+        """Extract ordinal position from clause headers (primera=1, segunda=2, etc.)"""
+        line_lower = line_text.lower()
+        
+        # Spanish ordinal mapping
+        ordinal_map = {
+            'primera': 1, 'primero': 1, 'primer': 1,
+            'segunda': 2, 'segundo': 2, 
+            'tercera': 3, 'tercero': 3,
+            'cuarta': 4, 'cuarto': 4,
+            'quinta': 5, 'quinto': 5,
+            'sexta': 6, 'sexto': 6,
+            'séptima': 7, 'septima': 7, 'séptimo': 7, 'septimo': 7,
+            'octava': 8, 'octavo': 8,
+            'novena': 9, 'noveno': 9,
+            'décima': 10, 'decima': 10, 'décimo': 10, 'decimo': 10
+        }
+        
+        # Check for Spanish ordinals
+        for ordinal, position in ordinal_map.items():
+            if ordinal in line_lower:
+                return position
+        
+        # Check for Arabic numerals (1., 2., etc.)
+        arabic_match = re.match(r'^(\d+)\.?\s', line_text.strip())
+        if arabic_match:
+            return int(arabic_match.group(1))
+            
+        # Check for Roman numerals (I., II., etc.)
+        roman_match = re.match(r'^([IVXLCDM]+)\.?\s', line_text.strip())
+        if roman_match:
+            roman_to_int = {
+                'I': 1, 'II': 2, 'III': 3, 'IV': 4, 'V': 5,
+                'VI': 6, 'VII': 7, 'VIII': 8, 'IX': 9, 'X': 10
+            }
+            return roman_to_int.get(roman_match.group(1), None)
+        
+        return None
+    
+    def map_position_to_section(position: int, line_content: str) -> Optional[str]:
+        """Map ordinal position to most likely section type based on common contract structure"""
+        line_lower = line_content.lower()
+        
+        # Position-based mapping with content validation
+        position_mapping = {
+            1: [('objeto', ['objeto', 'contrato', 'denominada', 'encarga', 'ejecución']), 
+                ('convocatoria', ['convocatoria', 'proceso', 'licitación'])],
+            2: [('condiciones_economicas', ['monto', 'valor', 'precio', 'asciende', 'total']),
+                ('objeto', ['objeto', 'alcance', 'descripción'])],
+            3: [('plazos', ['plazo', 'tiempo', 'ejecutará', 'meses', 'días']),
+                ('requisitos_tecnicos', ['requisitos', 'especificaciones'])],
+            4: [('garantias', ['garantía', 'garantías', 'póliza', 'fianza', 'cumplimiento']),
+                ('condiciones_economicas', ['condiciones', 'económicas'])],
+            5: [('condiciones_generales', ['anticipo', 'entregará', 'amortizable']),
+                ('garantias', ['garantía', 'seguros'])],
+            6: [('condiciones_generales', ['multas', 'penalizaciones', 'sanciones']),
+                ('plazos', ['cronograma', 'fechas'])],
+            7: [('formularios', ['recepción', 'entrega', 'documentos']),
+                ('condiciones_generales', ['multas', 'terminación'])],
+            8: [('condiciones_particulares', ['controversias', 'resolución', 'jurisdicción']),
+                ('formularios', ['documentación'])],
+            9: [('condiciones_particulares', ['legislación', 'normativa', 'aplicable']),
+                ('condiciones_generales', ['disposiciones'])]
+        }
+        
+        if position in position_mapping:
+            for section_name, keywords in position_mapping[position]:
+                if any(keyword in line_lower for keyword in keywords):
+                    return section_name.upper()
+                    
+        # Default fallback based on position
+        if position == 1:
+            return 'OBJETO'
+        elif position == 2:
+            return 'CONDICIONES_ECONOMICAS'
+        elif position == 3:
+            return 'PLAZOS'
+        elif position == 4:
+            return 'GARANTIAS'
+        else:
+            return 'CONDICIONES_GENERALES'
+    
+    boundaries = []
+    lines = text.split('\n')
+    
+    # Define semantic patterns for different section types (updated for contracts and RFPs)
+    semantic_patterns = {
+        'CONVOCATORIA': {
+            'keywords': ['convocatoria', 'llamado', 'invitación', 'proceso', 'licitación', 'concurso', 'información', 'general'],
+            'context_words': ['pública', 'privada', 'internacional', 'nacional', 'abierta', 'participar'],
+            'structure_cues': ['proceso de', 'número', 'fecha de publicación', 'tiene por objeto', 'se rige por', 'cláusulas contractuales'],
+            'priority': 1
+        },
+        'OBJETO': {
+            'keywords': ['objeto', 'finalidad', 'propósito', 'alcance', 'descripción'],
+            'context_words': ['contrato', 'contratación', 'servicio', 'obra', 'suministro', 'contractual', 'ejecución'],
+            'structure_cues': ['del contrato', 'de la contratación', 'duración', 'valor estimado', 'se requiere', 'encarga', 'objeto del contrato', 'denominada'],
+            'priority': 2
+        },
+        'REQUISITOS_TECNICOS': {
+            'keywords': ['requisitos', 'especificaciones', 'requerimientos', 'capacidades', 'mínimos'],
+            'context_words': ['técnicos', 'tecnológicos', 'especializado', 'profesional', 'proponentes', 'interesados'],
+            'structure_cues': ['experiencia', 'certificaciones', 'personal', 'equipo', 'infraestructura', 'acreditar', 'especificaciones técnicas'],
+            'priority': 3
+        },
+        'CONDICIONES_ECONOMICAS': {
+            'keywords': ['condiciones', 'aspectos', 'términos', 'económicos', 'presupuesto', 'monto', 'valor'],
+            'context_words': ['económicas', 'financieras', 'monetarias', 'precio', 'valor', 'pago', 'contrato'],
+            'structure_cues': ['forma de pago', 'anticipo', 'presupuesto', 'desembolsos', 'descuentos', 'asciende', 'total', 'monto del contrato', 'valor total'],
+            'priority': 4
+        },
+        'GARANTIAS': {
+            'keywords': ['garantías', 'pólizas', 'seguros', 'fianzas', 'respaldos', 'requeridas'],
+            'context_words': ['seriedad', 'cumplimiento', 'responsabilidad', 'civil', 'manejo', 'fiel'],
+            'structure_cues': ['equivalente', 'vigencia', 'constituir', 'mantener', 'por el', 'smmlv', 'deberá presentar', 'garantía de fiel', 'garantía por vicios'],
+            'priority': 5
+        },
+        'PLAZOS': {
+            'keywords': ['cronograma', 'plazos', 'fechas', 'calendario', 'programación', 'proceso', 'ejecución'],
+            'context_words': ['proceso', 'selección', 'evaluación', 'adjudicación', 'ejecutará', 'meses'],
+            'structure_cues': ['apertura', 'recepción', 'hasta', 'enero', 'febrero', 'marzo', 'contados desde', 'plazo de ejecución', 'se ejecutará'],
+            'priority': 6
+        },
+        'FORMULARIOS': {
+            'keywords': ['documentos', 'formularios', 'anexos', 'formatos', 'certificados', 'documentación'],
+            'context_words': ['propuesta', 'presentar', 'requeridos', 'integral', 'entregar'],
+            'structure_cues': ['deberán presentar', 'carta de', 'estados financieros', 'sobre separado', 'recepción', 'controversias'],
+            'priority': 7
+        },
+        'CONDICIONES_GENERALES': {
+            'keywords': ['condiciones', 'disposiciones', 'normas', 'términos', 'multas', 'penalizaciones'],
+            'context_words': ['generales', 'aplicables', 'marco', 'normativo', 'terminación', 'resolución'],
+            'structure_cues': ['según', 'conforme', 'de acuerdo', 'vigentes', 'causales', 'jurisdicción', 'anticipo', 'multas'],
+            'priority': 8
+        },
+        'CONDICIONES_PARTICULARES': {
+            'keywords': ['condiciones', 'disposiciones', 'normas', 'anticipo', 'recepción'],
+            'context_words': ['particulares', 'específicas', 'especiales', 'propias', 'provisional', 'definitiva'],
+            'structure_cues': ['en particular', 'específicamente', 'adicionalmente', 'concluir', 'vicios ocultos'],
+            'priority': 9
+        }
+    }
+    
+    current_pos = 0
+    
+    for i, line in enumerate(lines):
+        line_clean = line.strip()
+        if not line_clean or len(line_clean) < 5:
+            current_pos += len(line) + 1
+            continue
+            
+        line_lower = line_clean.lower()
+        
+        # Check if line could be a section header based on semantic cues
+        is_potential_header = False
+        header_confidence = 0.0
+        detected_section = None
+        
+        # Analyze line characteristics with improved numeric detection
+        line_characteristics = {
+            'is_short': len(line_clean) < 150,  # Headers are usually shorter
+            'is_uppercase': line_clean.isupper(),  # Many headers are uppercase
+            'has_numbers': bool(re.search(r'\b[IVXLC]+\b|\b\d+\.?\s*[A-ZÁÉÍÓÚÑ]|^\d+\.|^[a-z]\)', line_clean)),  # Roman/Arabic numerals
+            'ends_with_colon': line_clean.endswith(':'),
+            'is_standalone': i > 0 and i < len(lines) - 1 and (not lines[i-1].strip() or lines[i-1].strip() == '') and lines[i+1].strip(),
+            'has_title_case': any(word[0].isupper() for word in line_clean.split() if len(word) > 3),
+            'starts_with_number': bool(re.match(r'^\d+\.?\s', line_clean)),
+            'has_header_words': any(hw in line_lower for hw in ['información', 'descripción', 'requisitos', 'aspectos', 'garantías', 'programación', 'documentación']),
+            # Enhanced numeric patterns for contract clauses
+            'has_ordinal_pattern': bool(re.search(r'(primera|segunda|tercera|cuarta|quinta|sexta|séptima|octava|novena|décima)', line_lower)),
+            'has_clause_number': bool(re.search(r'^(cláusula\s+)?(primera|segunda|tercera|cuarta|quinta|sexta|séptima|octava|novena|décima|\d+[°ª]?\.?)[\s–-]', line_lower)),
+            'has_section_dash': bool(re.search(r'[–-]\s*[A-ZÁÉÍÓÚÑ]', line_clean)),
+            'starts_with_roman': bool(re.match(r'^[IVXLCDM]+\.?\s', line_clean))
+        }
+        
+        # Calculate base header probability with improved scoring
+        header_score = 0
+        if line_characteristics['is_short']: header_score += 0.2
+        if line_characteristics['is_uppercase']: header_score += 0.3
+        if line_characteristics['has_numbers']: header_score += 0.3
+        if line_characteristics['ends_with_colon']: header_score += 0.2
+        if line_characteristics['is_standalone']: header_score += 0.3
+        if line_characteristics['has_title_case']: header_score += 0.2
+        if line_characteristics['starts_with_number']: header_score += 0.4
+        if line_characteristics['has_header_words']: header_score += 0.3
+        # Enhanced scoring for contract patterns
+        if line_characteristics['has_ordinal_pattern']: header_score += 0.5
+        if line_characteristics['has_clause_number']: header_score += 0.6  # Very strong indicator
+        if line_characteristics['has_section_dash']: header_score += 0.4
+        if line_characteristics['starts_with_roman']: header_score += 0.4
+        
+        # Minimum header score to be considered
+        if header_score < 0.3:
+            current_pos += len(line) + 1
+            continue
+        
+        # First check for ordinal-based contract clauses (priority approach)
+        ordinal_position = get_ordinal_position(line_clean)
+        if ordinal_position and line_characteristics['has_clause_number']:
+            detected_section = map_position_to_section(ordinal_position, line_clean)
+            if detected_section:
+                header_confidence = 0.8  # High confidence for clear ordinal patterns
+                is_potential_header = True
+                logger.info(f"Detected ordinal clause {ordinal_position} -> {detected_section}: '{line_clean[:50]}...' (confidence: {header_confidence:.3f})")
+        
+        # If no ordinal match, fall back to semantic analysis
+        if not is_potential_header:
+            # Semantic analysis for each section type
+            for section_name, pattern_info in semantic_patterns.items():
+                section_score = 0
+                total_possible = 0
+                
+                # Check keywords (most important)
+                keyword_matches = sum(1 for kw in pattern_info['keywords'] if kw in line_lower)
+                if keyword_matches > 0:
+                    section_score += keyword_matches * 0.4
+                total_possible += len(pattern_info['keywords']) * 0.4
+                
+                # Check context words
+                context_matches = sum(1 for cw in pattern_info['context_words'] if cw in line_lower)
+                if context_matches > 0:
+                    section_score += context_matches * 0.3
+                total_possible += len(pattern_info['context_words']) * 0.3
+                
+                # Check structure cues (look in next few lines too)
+                structure_score = 0
+                context_lines = lines[i:min(i+5, len(lines))]
+                context_text = ' '.join(context_lines).lower()
+                
+                structure_matches = sum(1 for sc in pattern_info['structure_cues'] if sc in context_text)
+                if structure_matches > 0:
+                    structure_score = structure_matches * 0.4  # Increased weight since contract patterns are merged here
+                section_score += structure_score
+                total_possible += len(pattern_info['structure_cues']) * 0.4
+                
+                # Calculate confidence for this section
+                if total_possible > 0:
+                    section_confidence = (section_score / total_possible) * header_score
+                    
+                    # Boost confidence if multiple indicators align
+                    if keyword_matches > 0 and context_matches > 0:
+                        section_confidence *= 1.2
+                    if keyword_matches > 0 and structure_matches > 0:
+                        section_confidence *= 1.3  # Higher boost since structure cues now include contract patterns
+                    
+                    # Consider priority (earlier sections might appear first)
+                    position_factor = 1.0 - (i / len(lines)) * 0.2
+                    section_confidence *= position_factor
+                    
+                    if section_confidence > header_confidence and section_confidence > 0.15:  # Lower threshold
+                        header_confidence = section_confidence
+                        detected_section = section_name
+                        is_potential_header = True
+        
+        # Add boundary if confident enough
+        if is_potential_header and detected_section and header_confidence > 0.2:  # Lower threshold
+            boundaries.append((current_pos, detected_section, header_confidence))
+            logger.info(f"Detected section '{detected_section}' at line {i+1}: '{line_clean[:60]}...' (confidence: {header_confidence:.3f})")
+        
+        current_pos += len(line) + 1
+    
+    # Sort by position and remove duplicates/overlaps
+    boundaries.sort()
+    filtered_boundaries = []
+    for pos, section, conf in boundaries:
+        # Avoid very close boundaries (< 100 characters apart)
+        if not filtered_boundaries or pos - filtered_boundaries[-1][0] > 100:
+            filtered_boundaries.append((pos, section, conf))
+    
+    logger.info(f"Semantic analysis found {len(filtered_boundaries)} section boundaries")
+    return filtered_boundaries
 
-# Pattern simplificado para detectar secciones (opcional)
-section_pattern = re.compile(
-    r"(SECCIÓN\s+[IVXLC]+|FORMULARIO\s+ÚNICO\s+DE\s+LA\s+OFERTA|CONVOCATORIA|CONDICIONES\s+GENERALES|CONDICIONES\s+PARTICULARES|REQUISITOS\s+TÉCNICOS|ESPECIFICACIONES\s+TÉCNICAS|CONDICIONES\s+ECON[ÓO]MICAS|GARANT[IÍ]AS|PLAZOS|CRONOGRAMA)",
-    re.I,
-)
-
-# Convierte texto de un archivo .txt a una lista de Documentos
+# Convierte texto de un archivo .txt a una lista de Documentos con detección semántica mejorada
 def txt_to_documents(txt_path: Path, source_name: str, chunk_size: int = 2000, chunk_overlap: int = 1000) -> List[Document]:
     """
-    Convierte un archivo txt a documentos usando chunking simplificado.
-    Ya no usa separadores regex complejos, solo chunks configurables con overlap.
+    Convierte un archivo txt a documentos usando detección semántica inteligente de secciones.
+    Analiza el contenido semántico para identificar límites de secciones.
     
     Args:
         txt_path: Ruta al archivo txt
@@ -230,19 +432,92 @@ def txt_to_documents(txt_path: Path, source_name: str, chunk_size: int = 2000, c
     chunks = []
     
     try:
-        # Usar solo RecursiveCharacterTextSplitter simplificado
-        logger.info(f"Using simplified RecursiveCharacterTextSplitter ({chunk_size}/{chunk_overlap})...")
+        # Use semantic boundary detection
+        logger.info("Using semantic section boundary detection...")
+        boundaries = detect_section_boundaries_semantic(text)
+        
+        if boundaries:
+            logger.info(f"Found {len(boundaries)} semantic section boundaries")
+            
+            # Create chunks based on semantic boundaries
+            for i, (start_pos, section_name, confidence) in enumerate(boundaries):
+                # Determine end position
+                if i + 1 < len(boundaries):
+                    end_pos = boundaries[i + 1][0]
+                else:
+                    end_pos = len(text)
+                
+                # Extract section content
+                section_content = text[start_pos:end_pos].strip()
+                
+                if len(section_content) > 20:  # Minimum content length
+                    # If section is too large, split it but try to keep logical parts together
+                    if len(section_content) > chunk_size:
+                        logger.info(f"Section '{section_name}' is large ({len(section_content)} chars), intelligent splitting...")
+                        
+                        # Try to split on paragraph boundaries first
+                        paragraphs = section_content.split('\n\n')
+                        if len(paragraphs) > 1:
+                            current_chunk = ""
+                            for para in paragraphs:
+                                if len(current_chunk + para) <= chunk_size:
+                                    current_chunk += para + "\n\n"
+                                else:
+                                    if current_chunk.strip():
+                                        chunks.append(current_chunk.strip())
+                                    current_chunk = para + "\n\n"
+                            if current_chunk.strip():
+                                chunks.append(current_chunk.strip())
+                        else:
+                            # Fallback to regular splitting
+                            splitter = make_splitter(chunk_size=chunk_size, chunk_overlap=chunk_overlap)
+                            sub_chunks = splitter.split_text(section_content)
+                            chunks.extend(sub_chunks)
+                    else:
+                        chunks.append(section_content)
+        else:
+            # Fallback to intelligent paragraph-based splitting
+            logger.info("No semantic boundaries detected, using intelligent paragraph splitting...")
+            
+            # Split by double newlines (paragraphs) first
+            paragraphs = text.split('\n\n')
+            current_chunk = ""
+            
+            for para in paragraphs:
+                para = para.strip()
+                if not para:
+                    continue
+                    
+                # Check if adding this paragraph exceeds chunk size
+                if len(current_chunk + para) <= chunk_size:
+                    current_chunk += para + "\n\n"
+                else:
+                    # Save current chunk if not empty
+                    if current_chunk.strip():
+                        chunks.append(current_chunk.strip())
+                    
+                    # Start new chunk with current paragraph
+                    if len(para) <= chunk_size:
+                        current_chunk = para + "\n\n"
+                    else:
+                        # Paragraph itself is too large, split it
+                        splitter = make_splitter(chunk_size=chunk_size, chunk_overlap=chunk_overlap)
+                        para_chunks = splitter.split_text(para)
+                        chunks.extend(para_chunks)
+                        current_chunk = ""
+            
+            # Add final chunk if any
+            if current_chunk.strip():
+                chunks.append(current_chunk.strip())
+            
+    except Exception as e:
+        logger.error(f"Error in semantic splitting: {e}")
+        # Last resort - regular splitter
+        logger.info("Using regular splitter as fallback")
         splitter = make_splitter(chunk_size=chunk_size, chunk_overlap=chunk_overlap)
         chunks = splitter.split_text(text)
-        logger.info(f"Splitter successful: {len(chunks)} chunks created")
-    except Exception as e:
-        logger.error(f"Splitter failed: {e}")
-        # Last resort - manual chunking with same parameters
-        logger.info("Using manual chunking as fallback")
-        step_size = max(1, chunk_size - chunk_overlap)
-        chunks = [text[i:i+chunk_size] for i in range(0, len(text), step_size)]
     
-    # Filter out empty or None chunks
+    # Filter out empty chunks
     chunks = [str(ch).strip() for ch in chunks if ch is not None and str(ch).strip()]
     
     if not chunks:
@@ -250,16 +525,53 @@ def txt_to_documents(txt_path: Path, source_name: str, chunk_size: int = 2000, c
         return []
 
     docs: List[Document] = []
-    for ch in chunks:
+    section_boundaries = detect_section_boundaries_semantic(text) if chunks else []
+    
+    for i, ch in enumerate(chunks):
         if not ch or not ch.strip():
             continue
             
-        try:
-            m_sec = section_pattern.search(ch)
-            section = m_sec.group(1).upper() if m_sec else "GENERAL"
-        except Exception:
-            section = "GENERAL"
-
+        # Find which section this chunk belongs to using semantic analysis
+        detected_section = "GENERAL"
+        chunk_start_pos = text.find(ch[:50]) if len(ch) >= 50 else text.find(ch)
+        
+        if chunk_start_pos != -1 and section_boundaries:
+            # Find the section boundary that this chunk falls under
+            applicable_boundary = None
+            for pos, section_name, confidence in section_boundaries:
+                if pos <= chunk_start_pos:
+                    applicable_boundary = (section_name, confidence)
+                else:
+                    break
+            
+            if applicable_boundary:
+                detected_section = applicable_boundary[0]
+        
+        # Also use content-based semantic classification as backup
+        if detected_section == "GENERAL":
+            content_lower = ch.lower()
+            
+            # Use semantic keyword analysis
+            section_scores = {}
+            semantic_patterns = {
+                'CONVOCATORIA': ['convocatoria', 'licitación', 'proceso', 'llamado', 'invitación'],
+                'OBJETO': ['objeto', 'contrato', 'contratación', 'servicio', 'finalidad'],
+                'REQUISITOS_TECNICOS': ['requisitos', 'técnicos', 'experiencia', 'certificaciones', 'personal'],
+                'CONDICIONES_ECONOMICAS': ['económicas', 'pago', 'valor', 'precio', 'presupuesto', 'financieras'],
+                'GARANTIAS': ['garantías', 'pólizas', 'seguros', 'seriedad', 'cumplimiento'],
+                'PLAZOS': ['cronograma', 'fechas', 'plazos', 'publicación', 'cierre'],
+                'FORMULARIOS': ['documentos', 'formularios', 'presentar', 'carta', 'certificado']
+            }
+            
+            for section, keywords in semantic_patterns.items():
+                score = sum(1 for keyword in keywords if keyword in content_lower)
+                if score > 0:
+                    section_scores[section] = score
+            
+            if section_scores:
+                detected_section = max(section_scores.items(), key=lambda x: x[1])[0]
+        
+        # Extract page number if available
         try:
             m_page = re.search(r"=== PÁGINA\s+(\d+)", ch)
             page = int(m_page.group(1)) if m_page else None
@@ -269,11 +581,25 @@ def txt_to_documents(txt_path: Path, source_name: str, chunk_size: int = 2000, c
         docs.append(
             Document(
                 page_content=ch.strip(),
-                metadata={"source": source_name, "section": section, "page": page},
+                metadata={
+                    "source": source_name, 
+                    "section": detected_section, 
+                    "page": page,
+                    "chunk_index": i,
+                    "chunk_method": "semantic_aware"
+                },
             )
         )
     
     logger.info(f"Created {len(docs)} document chunks from {source_name}")
+    
+    # Show section distribution
+    section_counts = {}
+    for doc in docs:
+        section = doc.metadata.get('section', 'UNKNOWN')
+        section_counts[section] = section_counts.get(section, 0) + 1
+    
+    logger.info(f"Semantic section distribution: {section_counts}")
     return docs
 
 # ID determinista 

@@ -68,17 +68,21 @@ def test_basic_classification():
         # Mostrar secciones encontradas
         logger.info("\n📋 Secciones clasificadas:")
         for section_name, section_info in report['sections'].items():
-            confidence = report['confidence_scores'].get(section_name, 0)
+            # Get confidence from DSPy analysis if available
+            confidence = 0
+            if 'dspy_analysis' in section_info:
+                confidence = section_info['dspy_analysis'].get('avg_combined_confidence', 0) * 100
             logger.info(f"  • {section_name}: {section_info['document_count']} fragmentos (Confianza: {confidence:.1f}%)")
         
         # Mostrar requisitos clave encontrados
-        if report['key_requirements']:
+        if report.get('dspy_requirements'):
             logger.info("\n🔍 Requisitos clave encontrados:")
-            for section, requirements in report['key_requirements'].items():
+            for section, requirements in report['dspy_requirements'].items():
                 if requirements:
                     logger.info(f"  {section}:")
                     for req in requirements[:3]:  # Mostrar solo los primeros 3
-                        logger.info(f"    - {req[:80]}...")
+                        req_text = req.get('requirement', str(req)[:80]) if isinstance(req, dict) else str(req)[:80]
+                        logger.info(f"    - {req_text}...")
         
         return True
         
