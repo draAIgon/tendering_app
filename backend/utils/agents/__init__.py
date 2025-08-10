@@ -15,11 +15,6 @@ from .document_extraction import DocumentExtractionAgent
 
 # Importaciones opcionales (evitar errores si no existen)
 try:
-    from .comparator import ComparatorAgent
-except ImportError:
-    pass
-
-try:
     from .validator import ValidatorAgent
 except ImportError:
     pass
@@ -34,11 +29,6 @@ try:
 except ImportError:
     pass
 
-try:
-    from .proposal_comparison import ProposalComparisonAgent
-except ImportError:
-    pass
-
 __all__ = [
     'DocumentClassificationAgent',
     'DocumentExtractionAgent',
@@ -46,13 +36,11 @@ __all__ = [
 ]
 
 # Agregar clases disponibles dinámicamente
-if 'ComparatorAgent' in locals():
-    __all__.append('ComparatorAgent')
+if 'ComparisonAgent' in locals():
+    __all__.append('ComparisonAgent')
 if 'ValidatorAgent' in locals():
     __all__.append('ValidatorAgent')
 if 'RiskAnalyzerAgent' in locals():
     __all__.append('RiskAnalyzerAgent')
 if 'ReporterAgent' in locals():
     __all__.append('ReporterAgent')
-if 'ProposalComparisonAgent' in locals():
-    __all__.append('ProposalComparisonAgent')
