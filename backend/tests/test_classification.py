@@ -199,7 +199,7 @@ def main():
     
     # Verificar dependencias primero
     try:
-        from Embedding import verificar_dependencias
+        from utils.embedding import verificar_dependencias
         if not verificar_dependencias():
             logger.error("❌ Dependencias no satisfechas")
             return

@@ -109,97 +109,6 @@ def get_embeddings_provider(provider: str = "auto", model: Optional[str] = None)
     else:
         raise ValueError(f"Proveedor no soportado: {chosen_provider}. Use 'openai', 'ollama' o 'auto'.")
 
-#Convierte DOC/DOCX a PDF
-def to_pdf_if_needed(path: Path) -> Path:
-    """
-    Acepta .pdf/.doc/.docx. Convierte DOC/DOCX a PDF con LibreOffice (soffice).
-    """
-    path = Path(path)
-    if not path.exists():
-        raise FileNotFoundError(f"El archivo {path} no existe")
-
-    if path.suffix.lower() == ".pdf":
-        logger.info(f"Archivo PDF importado: {path.name}")
-        return path
-
-    if path.suffix.lower() in [".doc", ".docx"]:
-        try:
-            out_dir = path.parent
-            soffice_bin = os.getenv("SOFFICE_BIN", "soffice")
-            cmd = [soffice_bin, "--headless", "--convert-to", "pdf", "--outdir", str(out_dir), str(path)]
-            logger.info(f"Convirtiendo {path.name} a PDF...")
-            subprocess.run(cmd, check=True, capture_output=True, text=True)
-
-            pdf_path = path.with_suffix(".pdf")
-            if not pdf_path.exists():
-                raise FileNotFoundError(f"No se pudo convertir {path.name} a PDF")
-
-            logger.info(f"Conversión exitosa: {path.name} -> {pdf_path.name}")
-            return pdf_path
-
-        except subprocess.CalledProcessError as e:
-            logger.error(f"Error al convertir {path.name}: {e}")
-            raise
-
-    raise ValueError(f"Formato no soportado: {path.suffix}. Use .pdf, .doc o .docx")
-
-# Normaliza texto extraído de PDFs
-def _normalize_text(text: str) -> str:
-    """
-    Normaliza unicode, corrige guiones por salto de línea y espacios múltiples.
-    Mantiene los marcadores '=== PÁGINA i ==='.
-    """
-    text = unicodedata.normalize("NFC", text)
-    text = re.sub(r"(\w)-\n(\w)", r"\1\2", text)
-    text = re.sub(r"[ \t]+\n", "\n", text)
-    text = re.sub(r"\n{3,}", "\n\n", text)
-    text = re.sub(r"[ \t]{2,}", " ", text)
-    return text
-
-def _ocr_page(pagina) -> str:
-    import pytesseract
-    from PIL import Image
-    pix = pagina.get_pixmap(dpi=300, alpha=False)
-    img = Image.open(BytesIO(pix.tobytes("png")))
-    return pytesseract.image_to_string(img, lang="spa+eng")
-
-def pdf_to_txt(pdf_path: Path, ocr_char_threshold: int = 30) -> Path:
-    logger.info(f"Extrayendo texto de: {pdf_path.name}")
-    texto = []
-    try:
-        import pytesseract  # opcional
-        ocr_enabled = True
-        try:
-            pytesseract.get_tesseract_version()
-        except Exception:
-            ocr_enabled = False
-    except ImportError:
-        ocr_enabled = False
-
-    with fitz.open(pdf_path) as pdf:
-        total_pages = len(pdf)
-        logger.info(f"Total de páginas: {total_pages}")
-        for i, pagina in enumerate(pdf, 1):
-            page_text = pagina.get_text() or ""
-            page_text = page_text.strip()
-            if not page_text or len(page_text) < ocr_char_threshold:
-                if ocr_enabled:
-                    try:
-                        page_text = _ocr_page(pagina).strip()
-                        if page_text:
-                            texto.append(f"\n=== PÁGINA {i} (OCR) ===\n{page_text}")
-                            continue
-                    except Exception as e:
-                        logger.warning(f"OCR falló en página {i}: {e}")
-            if page_text:
-                texto.append(f"\n=== PÁGINA {i} ===\n{page_text}")
-            else:
-                texto.append(f"\n=== PÁGINA {i} ===\n")
-    contenido = _normalize_text("\n".join(texto))
-    txt_path = pdf_path.with_suffix(".txt")
-    txt_path.write_text(contenido, encoding="utf-8")
-    return txt_path
-
 SEPARATORS = [
     r"\nSECCIÓN\s+[IVXLC]+\b",
     r"\nCAPÍTULO\s+[IVXLC]+\b",
@@ -421,10 +330,11 @@ def build_embeddings(
     for p in sorted(carpeta.iterdir()):
         if p.suffix.lower() in [".pdf", ".doc", ".docx"]:
             try:
-                pdf = to_pdf_if_needed(p)
+                from .agents.document_extraction import DocumentExtractionAgent
+                pdf = DocumentExtractionAgent.to_pdf_if_needed(p)
                 txt = pdf.with_suffix(".txt")
                 if not txt.exists():
-                    txt = pdf_to_txt(pdf)
+                    txt = DocumentExtractionAgent.pdf_to_txt(pdf)
                 txt_paths.append(txt)
                 archivos_procesados.append(p.name)
             except Exception as e:
@@ -482,15 +392,6 @@ def build_embeddings(
     logger.info(f"Chunks totales: {len(all_docs)}")
     logger.info(f"Colección: {final_collection_name} | Proveedor: {used_provider} | Modelo: {used_model}")
     return db
-
-# Procesa un documento PDF y lo convierte en una lista de Documentos
-def test_document_processing(archivo_pdf: str) -> List[Document]:
-    pdf_path = Path(archivo_pdf)
-    pdf_final = to_pdf_if_needed(pdf_path)
-    txt_path = pdf_to_txt(pdf_final)
-    docs = txt_to_documents(txt_path, pdf_path.stem)
-    logger.info(f"Chunks: {len(docs)} | Secciones: {sorted(set(d.metadata['section'] for d in docs))}")
-    return docs
 
 # Verifica dependencias críticas
 def verificar_dependencias() -> bool:
@@ -555,4 +456,3 @@ def verificar_dependencias() -> bool:
         logger.error("Faltan dependencias críticas")
 
     return dependencias_ok
-

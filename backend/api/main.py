@@ -256,7 +256,7 @@ async def get_analysis_status():
     """Obtener estado general del análisis"""
     try:
         # Verificar dependencias críticas
-        from Embedding import verificar_dependencias
+        from utils.embedding import verificar_dependencias
         dependencies_ok = verificar_dependencias()
         
         analysis_available = dependencies_ok and len(system_cache) >= 0
@@ -1324,12 +1324,4 @@ async def internal_error_handler(request, exc):
 
 if __name__ == "__main__":
     import uvicorn
-    
-    print("🚀 Iniciando API Completa de Análisis de Licitaciones")
-    print("📋 Features: Análisis, Comparación, Reportes, RFP, Búsqueda")
-    print("📄 Soporta: PDF, DOC, DOCX")
-    print("🧠 IA: OpenAI, OLLAMA")
-    print("🌐 Acceso: http://localhost:8000")
-    print("📖 Docs: http://localhost:8000/docs")
-    
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
