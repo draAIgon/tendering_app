@@ -8,7 +8,8 @@ import {
   FileUploader,
   Sidebar,
   ResultsSection,
-  DetailedAnalysisModal
+  DetailedAnalysisModal,
+  ComparisonModal
 } from '@/components/dashboard';
 
 export default function Dashboard() {
@@ -390,15 +391,33 @@ export default function Dashboard() {
         )}
       </div>
 
-      {/* Modal de Análisis Detallado */}
-      <DetailedAnalysisModal
-        showModal={showDetailedModal}
-        onClose={() => setShowDetailedModal(false)}
-        activeTab={activeTab}
-        setActiveTab={setActiveTab}
-        uploadedFiles={uploadedFiles}
-        onExportReport={handleExportReport}
-      />
+      {/* Modal de Análisis Detallado - Condicional */}
+      {!isComparison && (
+        <DetailedAnalysisModal
+          showModal={showDetailedModal}
+          onClose={() => setShowDetailedModal(false)}
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+          uploadedFiles={uploadedFiles}
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          analysisData={processedData?.apiData && !isComparison ? processedData.apiData as any : undefined}
+          onExportReport={handleExportReport}
+        />
+      )}
+
+      {/* Modal de Comparación - Condicional */}
+      {isComparison && (
+        <ComparisonModal
+          showModal={showDetailedModal}
+          onClose={() => setShowDetailedModal(false)}
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+          uploadedFiles={uploadedFiles}
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          comparisonData={processedData?.apiData && isComparison ? processedData.apiData as any : undefined}
+          onExportReport={handleExportReport}
+        />
+      )}
     </div>
   );
 }
