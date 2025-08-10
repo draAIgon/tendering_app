@@ -256,7 +256,7 @@ async def get_analysis_status():
     """Obtener estado general del análisis"""
     try:
         # Verificar dependencias críticas
-        from Embedding import verificar_dependencias
+        from utils.embedding import verificar_dependencias
         dependencies_ok = verificar_dependencias()
         
         analysis_available = dependencies_ok and len(system_cache) >= 0

@@ -11,13 +11,12 @@ import sys
 import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
 
-from Embedding import (
+from utils.embedding import (
     get_embeddings_provider, 
     build_embeddings, 
-    txt_to_documents, 
-    pdf_to_txt, 
-    to_pdf_if_needed
+    txt_to_documents
 )
+from .document_extraction import DocumentExtractionAgent
 from langchain_chroma import Chroma
 
 # Importar database manager para ubicaciones estandarizadas
@@ -161,10 +160,10 @@ class DocumentClassificationAgent:
                 logger.info(f"Using existing text file: {txt_path}")
             else:
                 # Convert document to PDF if needed
-                pdf_path = to_pdf_if_needed(self.document_path)
+                pdf_path = DocumentExtractionAgent.to_pdf_if_needed(self.document_path)
                 
                 # Extract text
-                txt_path = pdf_to_txt(pdf_path)
+                txt_path = DocumentExtractionAgent.pdf_to_txt(pdf_path)
             
             # Create documents with metadatas
             documents = txt_to_documents(txt_path, source_name=doc_path.stem)
