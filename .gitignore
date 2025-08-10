@@ -5,3 +5,5 @@ db
 temp
 __pycache__
 .env
+reports
+test_reports

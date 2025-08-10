@@ -98,8 +98,8 @@ def test_document_completeness():
         
         # Verificar elementos encontrados
         if 'sections_found' in completeness_result:
-            sections = completeness_result['sections_found']
-            logger.info(f"📋 Secciones encontradas: {len(sections)}")
+            sections_count = completeness_result['sections_found']
+            logger.info(f"📋 Secciones encontradas: {sections_count}")
         
         logger.info("✅ Test de completitud exitoso")
         return True

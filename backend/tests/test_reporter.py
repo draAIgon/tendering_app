@@ -32,7 +32,33 @@ def test_basic_report_generation():
         
         # Datos de ejemplo para generar reporte
         sample_data = {
-            'classification': {'sections': 5, 'fragments': 50, 'confidence': 85.0},
+            'classification': {
+                'sections': {
+                    'PLIEGO_GENERAL': {
+                        'section_name': 'PLIEGO_GENERAL',
+                        'document_count': 5,
+                        'total_characters': 2500,
+                        'content_preview': 'Información general del proyecto...',
+                        'sources': ['document1.pdf'],
+                        'taxonomy_info': {'priority': 1}
+                    },
+                    'REQUISITOS_TECNICOS': {
+                        'section_name': 'REQUISITOS_TECNICOS',
+                        'document_count': 8,
+                        'total_characters': 4200,
+                        'content_preview': 'Especificaciones técnicas del proyecto...',
+                        'sources': ['document1.pdf'],
+                        'taxonomy_info': {'priority': 2}
+                    }
+                },
+                'document_info': {
+                    'total_sections': 2,
+                    'total_fragments': 13,
+                    'source': 'test_document.pdf'
+                },
+                'confidence_scores': {'PLIEGO_GENERAL': 0.85, 'REQUISITOS_TECNICOS': 0.92},
+                'key_requirements': {}
+            },
             'validation': {'compliance_score': 92.0, 'missing_docs': []},
             'risk_analysis': {'total_risk_score': 25.0, 'risk_level': 'LOW'},
             'comparison': {'best_proposal': 'Propuesta A', 'score': 88.0},
@@ -92,16 +118,41 @@ def test_multiple_report_types():
         # Datos más completos
         comprehensive_data = {
             'classification': {
-                'sections': 8, 
-                'fragments': 120, 
-                'confidence': 87.5,
-                'categories': ['TECHNICAL', 'ECONOMIC', 'LEGAL']
+                'sections': {
+                    'PLIEGO_GENERAL': {
+                        'section_name': 'PLIEGO_GENERAL',
+                        'document_count': 3,
+                        'total_characters': 1800
+                    },
+                    'REQUISITOS_TECNICOS': {
+                        'section_name': 'REQUISITOS_TECNICOS', 
+                        'document_count': 5,
+                        'total_characters': 3200
+                    }
+                },
+                'document_info': {'total_sections': 8, 'total_fragments': 120},
+                'confidence_scores': {'overall': 87.5},
+                'key_requirements': {}
             },
             'risk_analysis': {
-                'total_risk_score': 35.0, 
-                'risk_level': 'MEDIUM',
-                'critical_risks': 2,
-                'recommendations': ['Implementar controles adicionales', 'Revisar especificaciones']
+                'overall_assessment': {
+                    'total_risk_score': 35.0, 
+                    'risk_level': 'MEDIUM',
+                    'risk_distribution': {'TECHNICAL': 15.0, 'ECONOMIC': 20.0},
+                    'assessment_summary': 'Riesgo moderado identificado en el proyecto'
+                },
+                'critical_risks': [
+                    {'category': 'TECHNICAL', 'description': 'Complejidad técnica alta', 'impact': 'HIGH'},
+                    {'category': 'ECONOMIC', 'description': 'Presupuesto ajustado', 'impact': 'MEDIUM'}
+                ],
+                'mitigation_recommendations': [
+                    {'category': 'TECHNICAL', 'recommendation': 'Implementar controles adicionales'},
+                    {'category': 'ECONOMIC', 'recommendation': 'Revisar especificaciones'}
+                ],
+                'category_risks': {
+                    'TECHNICAL': {'risk_score': 15.0, 'weight': 0.25},
+                    'ECONOMIC': {'risk_score': 20.0, 'weight': 0.20}
+                }
             }
         }
         
@@ -161,9 +212,14 @@ def test_report_customization():
         # Datos personalizados
         custom_data = {
             'classification': {
-                'project_name': 'Proyecto Especial de Infraestructura',
-                'sections': 12, 
-                'confidence': 95.0
+                'sections': {
+                    'PLIEGO_GENERAL': {'section_name': 'PLIEGO_GENERAL', 'document_count': 4},
+                    'REQUISITOS_TECNICOS': {'section_name': 'REQUISITOS_TECNICOS', 'document_count': 6},
+                    'CONDICIONES_ECONOMICAS': {'section_name': 'CONDICIONES_ECONOMICAS', 'document_count': 2}
+                },
+                'document_info': {'total_sections': 12, 'source': 'Proyecto Especial de Infraestructura'},
+                'confidence_scores': {'overall': 95.0},
+                'key_requirements': {}
             },
             'risk_analysis': {
                 'total_risk_score': 15.0, 
@@ -181,8 +237,7 @@ def test_report_customization():
         # Generar reporte comprensivo personalizado
         report_result = agent.generate_comprehensive_report(
             data_id, 
-            include_charts=True,
-            detailed_analysis=True
+            include_charts=True
         )
         
         if 'error' not in report_result:
@@ -221,7 +276,15 @@ def test_export_formats():
         
         # Datos simples para exportar
         export_data = {
-            'classification': {'sections': 5, 'confidence': 90.0}
+            'classification': {
+                'sections': {
+                    'PLIEGO_GENERAL': {'section_name': 'PLIEGO_GENERAL', 'document_count': 2},
+                    'REQUISITOS_TECNICOS': {'section_name': 'REQUISITOS_TECNICOS', 'document_count': 3}
+                },
+                'document_info': {'total_sections': 5},
+                'confidence_scores': {'overall': 90.0},
+                'key_requirements': {}
+            }
         }
         
         data_id = agent.collect_analysis_data(
@@ -243,14 +306,14 @@ def test_export_formats():
             logger.info(f"🔄 Exportando a formato: {format_type}")
             
             try:
-                export_path = reports_dir / f"test_report.{format_type}"
+                export_filename = f"test_report.{format_type}"
                 export_result = agent.export_report(
                     report_data=report,
-                    output_path=export_path,
-                    format_type=format_type
+                    output_format=format_type,
+                    filename=export_filename
                 )
                 
-                if export_result.get('success', False) and export_path.exists():
+                if export_result.exists():
                     logger.info(f"  ✅ {format_type.upper()}: Exportado exitosamente")
                     successful_exports += 1
                 else:
