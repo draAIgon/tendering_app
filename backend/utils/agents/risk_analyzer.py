@@ -543,21 +543,36 @@ class RiskAnalyzerAgent:
         """Genera recomendaciones de mitigación de riesgos"""
         recommendations = []
         
-        # Recomendaciones por categoría
+        # Recomendaciones por categoría - reducir umbral para más sensibilidad
         for category, data in category_risks.items():
             if 'error' in data:
                 continue
                 
             risk_score = data.get('risk_score', 0)
-            if risk_score > 50:  # Solo para riesgos significativos
+            indicators_detected = data.get('indicators_detected', 0)
+            
+            # Generar recomendaciones si hay riesgo moderado (>30) o indicadores detectados
+            if risk_score > 30 or indicators_detected > 0:
                 category_name = category.replace('_', ' ').title()
+                
+                # Determinar prioridad basada en score y número de indicadores
+                if risk_score > 70 or indicators_detected > 3:
+                    priority = 'HIGH'
+                    estimated_impact = 'HIGH'
+                elif risk_score > 50 or indicators_detected > 1:
+                    priority = 'MEDIUM'
+                    estimated_impact = 'MEDIUM'
+                else:
+                    priority = 'LOW'
+                    estimated_impact = 'LOW'
                 
                 recommendation = {
                     'category': category,
-                    'priority': 'HIGH' if risk_score > 70 else 'MEDIUM',
+                    'priority': priority,
                     'risk_score': risk_score,
+                    'indicators_count': indicators_detected,
                     'recommendation': self._get_category_mitigation(category, risk_score),
-                    'estimated_impact': 'HIGH' if risk_score > 70 else 'MEDIUM'
+                    'estimated_impact': estimated_impact
                 }
                 recommendations.append(recommendation)
         
@@ -577,6 +592,22 @@ class RiskAnalyzerAgent:
                 'risk_score': overall_score,
                 'recommendation': 'Implementar plan de gestión de riesgos robusto antes de la ejecución',
                 'estimated_impact': 'HIGH'
+            })
+        elif overall_score > 30:
+            recommendations.insert(0, {
+                'category': 'GENERAL',
+                'priority': 'MEDIUM',
+                'risk_score': overall_score,
+                'recommendation': 'Implementar monitoreo adicional y controles básicos de riesgo',
+                'estimated_impact': 'MEDIUM'
+            })
+        elif overall_score > 10:
+            recommendations.insert(0, {
+                'category': 'GENERAL',
+                'priority': 'LOW',
+                'risk_score': overall_score,
+                'recommendation': 'Mantener monitoreo rutinario de factores de riesgo identificados',
+                'estimated_impact': 'LOW'
             })
         
         return recommendations[:10]  # Máximo 10 recomendaciones
