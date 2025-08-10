@@ -5,7 +5,6 @@ Tests risk identification, analysis, and scoring capabilities
 """
 
 import sys
-import os
 from pathlib import Path
 
 # Agregar paths necesarios

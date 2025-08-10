@@ -55,7 +55,7 @@ def main():
         print("⚠️  Final API test file not found")
     
     print(f"\n{'='*60}")
-    print(f"📊 API TESTS SUMMARY")
+    print("📊 API TESTS SUMMARY")
     print(f"{'='*60}")
     print(f"Passed: {passed}/{total}")
     

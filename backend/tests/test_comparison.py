@@ -5,7 +5,6 @@ Tests both general document comparison and specialized tender evaluation capabil
 """
 
 import sys
-import os
 from pathlib import Path
 
 # Agregar paths necesarios
@@ -289,7 +288,7 @@ def test_tender_evaluation():
                        f"(Score: {rank_data['total_score']:.1f}, "
                        f"Empresa: {rank_data['company']}, "
                        f"Precio: ${rank_data['price']:,})" if rank_data['price'] != 'N/A' 
-                       else f"Precio: N/A)")
+                       else "Precio: N/A)")
         
         # Test 5: Análisis de similaridad semántica
         logger.info("Test 5: Análisis de similaridad semántica")

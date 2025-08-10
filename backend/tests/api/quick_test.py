@@ -91,7 +91,7 @@ def test_live_api():
                 passed += 1
             else:
                 print(f"  ❌ {name}: {response.status_code}")
-        except Exception as e:
+        except Exception:
             print(f"  ❌ {name}: Error")
     
     print(f"📊 Live API: {passed}/{len(endpoints)} endpoints working")

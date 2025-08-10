@@ -14,9 +14,7 @@ import pytest
 import requests
 import time
 import tempfile
-import json
 from pathlib import Path
-from typing import Dict, Any, Optional
 import logging
 
 # Configure logging
@@ -559,7 +557,6 @@ Dirección: Carrera 15 #45-67, Bogotá D.C.
         logger.info("🔄 Testing concurrent request handling...")
         
         import concurrent.futures
-        import threading
         
         def make_request():
             try:
@@ -717,7 +714,7 @@ def run_quick_workflow_test():
             # Display summary
             if "report" in report and "executive_summary" in report["report"]:
                 summary = report["report"]["executive_summary"]
-                print(f"📊 Analysis Summary:")
+                print("📊 Analysis Summary:")
                 print(f"   - Document Type: {summary.get('document_type', 'Unknown')}")
                 print(f"   - Analysis Confidence: {summary.get('analysis_confidence', 'Unknown')}")
             

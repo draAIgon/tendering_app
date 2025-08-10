@@ -6,7 +6,6 @@ Working API Test Runner - Final Version
 import subprocess
 import sys
 import requests
-import time
 from pathlib import Path
 
 def main():

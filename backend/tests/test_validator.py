@@ -5,7 +5,6 @@ Tests compliance validation and document checking capabilities
 """
 
 import sys
-import os
 from pathlib import Path
 
 # Agregar paths necesarios

@@ -3,12 +3,10 @@ Core API Unit Tests - Simplified
 Tests only the essential API endpoints and functionality
 """
 
-import pytest
 from unittest.mock import Mock, patch
 from fastapi.testclient import TestClient
 from pathlib import Path
 import sys
-import io
 
 # Setup paths
 current_dir = Path(__file__).parent

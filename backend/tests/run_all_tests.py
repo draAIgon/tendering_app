@@ -46,7 +46,7 @@ def main():
             print(f"❌ {description} - FAILED")
     
     print(f"\n{'='*70}")
-    print(f"🏆 FINAL TEST RESULTS")
+    print("🏆 FINAL TEST RESULTS")
     print(f"{'='*70}")
     print(f"Test Suites Passed: {passed_suites}/{total_suites}")
     

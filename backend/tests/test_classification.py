@@ -5,7 +5,6 @@ Demuestra las capacidades de clasificación y organización de contenido
 """
 
 import sys
-import os
 from pathlib import Path
 
 # Agregar paths necesarios
@@ -62,7 +61,7 @@ def test_basic_classification():
             return False
         
         # Mostrar resultados
-        logger.info(f"✅ Documento procesado exitosamente")
+        logger.info("✅ Documento procesado exitosamente")
         logger.info(f"📄 Total de secciones: {report['document_info']['total_sections']}")
         logger.info(f"📝 Total de fragmentos: {report['document_info']['total_fragments']}")
         

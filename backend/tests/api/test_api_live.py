@@ -6,7 +6,6 @@ Tests the actual deployed API at https://hackiathon-api.nimblersoft.org/
 import pytest
 import requests
 import time
-from pathlib import Path
 
 # Configuration
 BASE_URL = "https://hackiathon-api.nimblersoft.org"

@@ -5,7 +5,6 @@ Tests report generation capabilities for different types and formats
 """
 
 import sys
-import os
 from pathlib import Path
 
 # Agregar paths necesarios

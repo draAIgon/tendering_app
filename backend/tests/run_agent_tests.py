@@ -55,7 +55,7 @@ def main():
             print(f"⚠️  {description} - Test file not found: {test_file}")
     
     print(f"\n{'='*60}")
-    print(f"📊 AGENT TESTS SUMMARY")
+    print("📊 AGENT TESTS SUMMARY")
     print(f"{'='*60}")
     print(f"Passed: {passed}/{total}")
     

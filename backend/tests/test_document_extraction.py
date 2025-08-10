@@ -5,7 +5,6 @@ Tests document extraction capabilities for PDF processing
 """
 
 import sys
-import os
 from pathlib import Path
 
 # Agregar paths necesarios
@@ -58,7 +57,7 @@ def test_basic_extraction():
             return False
         
         # Validar contenido básico
-        logger.info(f"✅ Texto extraído exitosamente")
+        logger.info("✅ Texto extraído exitosamente")
         logger.info(f"📄 Longitud del texto: {len(extracted_text)} caracteres")
         logger.info(f"📝 Palabras aproximadas: {len(extracted_text.split())}")
         
@@ -117,7 +116,7 @@ def test_process_document():
             return False
         
         text = result["content"]
-        logger.info(f"✅ Documento procesado exitosamente")
+        logger.info("✅ Documento procesado exitosamente")
         logger.info(f"📄 Texto extraído: {len(text)} caracteres")
         
         # Validar estructura del resultado
@@ -279,7 +278,7 @@ def test_with_law_documents():
                 # Handle synthetic text files
                 with open(doc_path, 'r', encoding='utf-8') as f:
                     text = f.read()
-                logger.info(f"   📄 Texto leído de archivo sintético")
+                logger.info("   📄 Texto leído de archivo sintético")
             else:
                 logger.warning(f"   ⚠️  Tipo de archivo no soportado: {doc_path.suffix}")
                 text = None
@@ -393,7 +392,7 @@ def main():
             status = "✅ PASS" if success else "⚠️  SKIP"
             logger.info(f"  {status} {test_name}")
     
-    logger.info(f"\n🏆 Resultado final:")
+    logger.info("\n🏆 Resultado final:")
     logger.info(f"  • Tests requeridos: {required_passed}/{required_total}")
     logger.info(f"  • Tests totales: {total_passed}/{total_tests}")
     logger.info(f"  • Tasa de éxito total: {(total_passed/total_tests)*100:.1f}%")

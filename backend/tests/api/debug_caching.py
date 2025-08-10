@@ -4,8 +4,6 @@ Debug Script - Test caching issue
 """
 
 import requests
-import json
-import tempfile
 from pathlib import Path
 
 BASE_URL = "http://localhost:8000"
@@ -40,7 +38,7 @@ def debug_caching_issue():
     
     result = response.json()
     document_id = result["document_id"]
-    print(f"   ✅ Upload successful")
+    print("   ✅ Upload successful")
     print(f"   Document ID: {document_id}")
     print(f"   Analysis stages: {result.get('analysis_result', {}).get('stages', {}).keys()}")
     
