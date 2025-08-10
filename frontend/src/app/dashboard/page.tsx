@@ -19,11 +19,12 @@ export default function Dashboard() {
   const [showDetailedModal, setShowDetailedModal] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
   const [currentDocumentId, setCurrentDocumentId] = useState<string | null>(null);
+  const [isComparison, setIsComparison] = useState(false);
   const [processingError, setProcessingError] = useState<string | null>(null);
-    const fileInputRef = useRef<HTMLInputElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Hook para polling de resultados
-  const { result: analysisResult, isLoading: isPolling, error: pollingError } = useAnalysisPolling(currentDocumentId);
+  const { result: analysisResult, isLoading: isPolling, error: pollingError } = useAnalysisPolling(currentDocumentId, isComparison);
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
@@ -88,6 +89,7 @@ export default function Dashboard() {
       if (uploadedFiles.length > 1) {
         const result = await apiClient.uploadMultipleDocuments(uploadedFiles);
         setCurrentDocumentId(result.comparison_id);
+        setIsComparison(true);
       } else {
         // Un solo archivo
         const result = await apiClient.uploadAndAnalyzeDocument(uploadedFiles[0], {
@@ -95,6 +97,7 @@ export default function Dashboard() {
           document_type: 'tender_document'
         });
         setCurrentDocumentId(result.document_id);
+        setIsComparison(false);
       }
     } catch (error) {
       console.error('Error al procesar archivos:', error);
@@ -106,25 +109,49 @@ export default function Dashboard() {
   // Efecto para manejar los resultados del polling
   React.useEffect(() => {
     if (analysisResult && analysisResult.status === 'success') {
-      // Extraer datos específicos del análisis desde la estructura real de la API
-      const results = analysisResult.results;
-      const summary = results?.summary as Record<string, unknown>;
-      const riskAnalysis = results?.risk_analysis as Record<string, unknown>;
-
-      // Intentar extraer datos más específicos si están estructurados como el JSON de ejemplo
-      let detailedAnalysis: Record<string, unknown> | null = null;
+      // Manejar estructura diferente para comparación vs análisis individual
+      let results: Record<string, unknown> | null = null;
+      let summary: Record<string, unknown> | null = null;
+      let riskAnalysis: Record<string, unknown> | null = null;
       let validation: Record<string, unknown> | null = null;
       let classification: Record<string, unknown> | null = null;
       let extraction: Record<string, unknown> | null = null;
 
-      // Si los resultados contienen análisis detallado en el formato esperado
-      if (summary && typeof summary === 'object' && 'stages' in summary) {
-        detailedAnalysis = summary;
-        const stages = (detailedAnalysis as Record<string, unknown>).stages as Record<string, unknown>;
-        if (stages) {
-          validation = (stages.validation as Record<string, unknown>)?.data as Record<string, unknown>;
-          classification = (stages.classification as Record<string, unknown>)?.data as Record<string, unknown>;
-          extraction = (stages.extraction as Record<string, unknown>)?.data as Record<string, unknown>;
+      if (isComparison && analysisResult.comparison) {
+        // Estructura de comparación
+        const comparison = analysisResult.comparison;
+        const analysisResults = comparison.analysis_results;
+        
+        // Tomar el primer documento como referencia para mostrar datos
+        const firstDocKey = Object.keys(analysisResults)[0];
+        if (firstDocKey) {
+          const firstDoc = analysisResults[firstDocKey];
+          results = firstDoc as Record<string, unknown>;
+          summary = firstDoc.summary as Record<string, unknown>;
+          
+          // Extraer datos de las etapas
+          const stages = firstDoc.stages;
+          if (stages) {
+            validation = stages.validation?.data as Record<string, unknown>;
+            classification = stages.classification?.data as Record<string, unknown>;
+            extraction = stages.extraction?.data as Record<string, unknown>;
+            riskAnalysis = stages.risk_analysis?.data as Record<string, unknown>;
+          }
+        }
+      } else {
+        // Estructura de análisis individual (formato anterior)
+        results = analysisResult.results || null;
+        summary = results?.summary as Record<string, unknown>;
+        riskAnalysis = results?.risk_analysis as Record<string, unknown>;
+
+        // Si los resultados contienen análisis detallado en el formato esperado
+        if (summary && typeof summary === 'object' && 'stages' in summary) {
+          const stages = (summary as Record<string, unknown>).stages as Record<string, unknown>;
+          if (stages) {
+            validation = (stages.validation as Record<string, unknown>)?.data as Record<string, unknown>;
+            classification = (stages.classification as Record<string, unknown>)?.data as Record<string, unknown>;
+            extraction = (stages.extraction as Record<string, unknown>)?.data as Record<string, unknown>;
+          }
         }
       }
 
@@ -135,6 +162,15 @@ export default function Dashboard() {
         // Insights del resumen
         if (summary?.completed_stages && summary?.total_stages) {
           insights.push(`✅ Análisis completado: ${summary.completed_stages}/${summary.total_stages} etapas`);
+        }
+        
+        // Insights específicos para comparación
+        if (isComparison && analysisResult.comparison) {
+          const comparison = analysisResult.comparison;
+          const docsProcessed = comparison.system_status.documents_processed;
+          const analysesCompleted = comparison.system_status.analyses_completed;
+          insights.push(`📊 Comparación: ${docsProcessed} documentos procesados`);
+          insights.push(`✅ Análisis completados: ${analysesCompleted}`);
         }
         
         // Insights de clasificación - con verificaciones de tipo seguras
@@ -243,12 +279,12 @@ export default function Dashboard() {
 
       // Convertir datos de la API al formato esperado por el UI
       const transformedData: ProcessedData = {
-        documentId: analysisResult.document_id,
+        documentId: analysisResult.document_id || analysisResult.comparison?.comparison_id || '',
         totalDocuments: uploadedFiles.length,
         analysisComplete: true,
         keyInsights: generateKeyInsights(),
         recommendedActions: generateRecommendations(),
-        apiData: analysisResult
+        apiData: analysisResult as import('@/types/dashboard').AnalysisResult
       };
       
       setProcessedData(transformedData);
@@ -257,7 +293,7 @@ export default function Dashboard() {
       setProcessingError(analysisResult.error || 'Error en el análisis');
       setIsProcessing(false);
     }
-  }, [analysisResult, uploadedFiles.length]);
+  }, [analysisResult, uploadedFiles.length, isComparison]);
 
   // Efecto para manejar errores de polling
   React.useEffect(() => {
@@ -271,6 +307,7 @@ export default function Dashboard() {
     setUploadedFiles([]);
     setProcessedData(null);
     setCurrentDocumentId(null);
+    setIsComparison(false);
     setProcessingError(null);
     setIsProcessing(false);
     if (fileInputRef.current) fileInputRef.current.value = '';
@@ -324,7 +361,7 @@ export default function Dashboard() {
               setIsDragOver={setIsDragOver}
               fileInputRef={fileInputRef}
               isPolling={isPolling}
-              analysisResult={analysisResult}
+              analysisResult={analysisResult as import('@/types/dashboard').AnalysisResult | null}
               onProcessFiles={processFiles}
               onClearAll={clearAll}
               onFileUpload={handleFileUpload}

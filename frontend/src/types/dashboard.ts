@@ -1,11 +1,50 @@
 export interface AnalysisResult {
-  document_id: string;
+  document_id?: string;
+  comparison_id?: string;
   status: 'processing' | 'success' | 'error' | 'pending';
   progress?: number;
   error?: string;
   results?: {
     recommendations?: string[];
     analysis?: AnalysisData;
+  };
+  comparison?: {
+    comparison_id: string;
+    system_status: {
+      initialized: boolean;
+      documents_processed: number;
+      analyses_completed: number;
+      agents_available: string[];
+      data_directory: string;
+      timestamp: string;
+    };
+    analysis_results: Record<string, {
+      document_id: string;
+      document_path: string;
+      document_type: string;
+      analysis_level: string;
+      timestamp: string;
+      stages: {
+        extraction?: {
+          status: string;
+          data: ExtractionData;
+        };
+        classification?: {
+          status: string;
+          data: ClassificationData;
+        };
+        validation?: {
+          status: string;
+          data: ValidationData;
+        };
+        risk_analysis?: {
+          status: string;
+          data: RiskAnalysisData;
+        };
+      };
+      summary: AnalysisSummary;
+      errors: string[];
+    }>;
   };
 }
 

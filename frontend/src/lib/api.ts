@@ -45,7 +45,8 @@ export interface UploadResponse {
 }
 
 export interface AnalysisResult {
-  document_id: string;
+  document_id?: string;
+  comparison_id?: string;
   status: 'processing' | 'success' | 'error';
   progress?: number;
   results?: {
@@ -55,6 +56,83 @@ export interface AnalysisResult {
     risk_analysis?: Record<string, unknown>;
     recommendations?: string[];
     summary?: Record<string, unknown>;
+  };
+  comparison?: {
+    comparison_id: string;
+    system_status: {
+      initialized: boolean;
+      documents_processed: number;
+      analyses_completed: number;
+      agents_available: string[];
+      data_directory: string;
+      timestamp: string;
+    };
+    analysis_results: Record<string, {
+      document_id: string;
+      document_path: string;
+      document_type: string;
+      analysis_level: string;
+      timestamp: string;
+      stages: {
+        extraction?: {
+          status: string;
+          data: {
+            content: string;
+            text: string;
+          };
+        };
+        classification?: {
+          status: string;
+          data: {
+            document_info: {
+              source: string;
+              total_sections: number;
+              total_fragments: number;
+              classification_timestamp: string;
+            };
+            sections: Record<string, unknown>;
+            confidence_scores: Record<string, number>;
+            key_requirements: Record<string, string[]>;
+          };
+        };
+        validation?: {
+          status: string;
+          data: {
+            document_type: string;
+            validation_timestamp: string;
+            overall_score: number;
+            validation_level: string;
+            structural_validation: Record<string, unknown>;
+            compliance_validation: Record<string, unknown>;
+            dates_validation: Record<string, unknown>;
+            recommendations: string[];
+            summary: Record<string, unknown>;
+          };
+        };
+        risk_analysis?: {
+          status: string;
+          data: {
+            document_type: string;
+            analysis_timestamp: string;
+            content_length: number;
+            category_risks: Record<string, unknown>;
+            overall_assessment: Record<string, unknown>;
+            critical_risks: string[];
+            mitigation_recommendations: string[];
+            risk_matrix: Record<string, unknown>;
+          };
+        };
+      };
+      summary: {
+        total_stages: number;
+        completed_stages: number;
+        failed_stages: number;
+        overall_status: string;
+        key_findings: string[];
+        recommendations: string[];
+      };
+      errors: string[];
+    }>;
   };
   error?: string;
 }
@@ -311,6 +389,34 @@ class TenderAIApi {
       throw error;
     }
   }
+
+  async getComparisonResult(comparisonId: string): Promise<AnalysisResult> {
+    debugLog('Obteniendo resultado de comparación', { comparisonId });
+    
+    try {
+      const url = `${this.baseUrl}/api/v1/comparison/${comparisonId}`;
+      debugLog('URL de consulta de comparación:', url);
+      
+      const response = await fetch(url);
+      
+      debugLog('Respuesta de comparación recibida', { 
+        status: response.status, 
+        statusText: response.statusText 
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ detail: 'Error desconocido' }));
+        throw new Error(errorData.detail || `Error HTTP: ${response.status}`);
+      }
+
+      const result = await response.json();
+      debugLog('Resultado de comparación obtenido', result);
+      return result;
+    } catch (error) {
+      debugError('Error en getComparisonResult', error);
+      throw error;
+    }
+  }
 }
 
 export const apiClient = new TenderAIApi();
@@ -323,7 +429,11 @@ export const testDebugLogs = () => {
 };
 
 // Hook personalizado para polling de resultados
-export const useAnalysisPolling = (documentId: string | null, interval: number = 3000) => {
+export const useAnalysisPolling = (
+  documentId: string | null, 
+  isComparison: boolean = false,
+  interval: number = 3000
+) => {
   const [result, setResult] = React.useState<AnalysisResult | null>(null);
   const [isLoading, setIsLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
@@ -337,7 +447,12 @@ export const useAnalysisPolling = (documentId: string | null, interval: number =
       try {
         setIsLoading(true);
         setError(null);
-        const data = await apiClient.getAnalysisResult(documentId);
+        
+        // Usar el método correcto según el tipo de operación
+        const data = isComparison 
+          ? await apiClient.getComparisonResult(documentId)
+          : await apiClient.getAnalysisResult(documentId);
+          
         setResult(data);
         
         // Si está completado o hay error, dejar de hacer polling
@@ -346,8 +461,9 @@ export const useAnalysisPolling = (documentId: string | null, interval: number =
         }
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : 'Error desconocido';
-        debugError('Error en polling de análisis', {
+        debugError('Error en polling de análisis/comparación', {
           documentId: documentId,
+          isComparison: isComparison,
           error: err,
           errorMessage: errorMessage
         });
@@ -367,7 +483,7 @@ export const useAnalysisPolling = (documentId: string | null, interval: number =
     return () => {
       if (intervalId) clearInterval(intervalId);
     };
-  }, [documentId, interval]);
+  }, [documentId, isComparison, interval]);
 
   return { result, isLoading, error };
 };
