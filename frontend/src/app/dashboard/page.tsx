@@ -339,7 +339,7 @@ export default function Dashboard() {
     }
 
     try {
-      const reportBlob = await apiClient.exportDocument(processedData.documentId, 'json');
+      const reportBlob = await apiClient.exportDocument(processedData.documentId, 'pdf');
       
       // Crear URL para descarga
       const url = window.URL.createObjectURL(reportBlob);
