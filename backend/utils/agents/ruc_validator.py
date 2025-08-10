@@ -88,7 +88,7 @@ class RUCValidationAgent:
         }
     }
     
-    def __init__(self, vector_db_path: Optional[Path] = None, use_embeddings: bool = True):
+    def __init__(self, vector_db_path: Optional[Path] = None, use_embeddings: bool = True, use_real_api: bool = False):
         # Usar base de datos estandarizada
         if vector_db_path:
             self.vector_db_path = vector_db_path
@@ -96,11 +96,24 @@ class RUCValidationAgent:
             self.vector_db_path = get_standard_db_path('ruc_validation', 'global')
             
         self.use_embeddings = use_embeddings
+        self.use_real_api = use_real_api
         self.embeddings_provider = None
         self.vector_db = None
         self.validation_cache = {}
         
+        # Cache de validaciones para evitar llamadas repetitivas a la API
+        self.cache_ttl = 3600  # 1 hora
+        self.last_cache_cleanup = datetime.now()
+        
         logger.info(f"RUCValidationAgent iniciado con DB: {self.vector_db_path}")
+        logger.info(f"Modo API real: {'ACTIVADO' if use_real_api else 'DESACTIVADO (simulación)'}")
+    
+    def set_api_mode(self, use_real_api: bool):
+        """Cambia el modo de validación entre API real y simulación"""
+        self.use_real_api = use_real_api
+        logger.info(f"Modo API cambiado a: {'REAL' if use_real_api else 'SIMULACION'}")
+        # Limpiar cache al cambiar modo
+        self.validation_cache.clear()
     
     def initialize_embeddings(self, provider="auto", model=None):
         """Inicializa el sistema de embeddings para análisis semántico"""
@@ -308,12 +321,16 @@ class RUCValidationAgent:
         Returns:
             Resultado de verificación en línea
         """
+        # Limpiar cache antiguo periódicamente
+        self._cleanup_cache()
+        
         # Verificar cache primero
         cache_key = f"{country}_{ruc_number}"
         if cache_key in self.validation_cache:
             cached_result = self.validation_cache[cache_key]
-            if (datetime.now() - cached_result['timestamp']).seconds < 3600:  # Cache por 1 hora
+            if (datetime.now() - cached_result['timestamp']).seconds < self.cache_ttl:
                 logger.info(f"Usando resultado cached para RUC {ruc_number}")
+                cached_result['data']['from_cache'] = True
                 return cached_result['data']
         
         if country not in self.RUC_PATTERNS:
@@ -332,7 +349,18 @@ class RUCValidationAgent:
         try:
             # Preparar request según el país
             if country == 'ECUADOR':
-                return self._verify_ecuador_ruc_online(ruc_number, validation_url, config['headers'])
+                if self.use_real_api:
+                    result = self._verify_ecuador_ruc_online(ruc_number, validation_url, config['headers'])
+                else:
+                    result = self._simulate_ecuador_validation(ruc_number)
+                
+                # Guardar en cache
+                self.validation_cache[cache_key] = {
+                    'data': result,
+                    'timestamp': datetime.now()
+                }
+                
+                return result
             else:
                 return {'online_validation': False, 'error': 'Implementación pendiente para este país'}
                 
@@ -344,12 +372,54 @@ class RUCValidationAgent:
                 'offline_validation': True
             }
     
-    def _verify_ecuador_ruc_online(self, ruc: str, url: str, headers: dict) -> Dict[str, Any]:
-        """Verificación específica para RUC de Ecuador"""
-        try:
-            # Simular llamada al SRI (en producción usar la API real)
-            # Por ahora, implementamos una validación offline mejorada
+    def _cleanup_cache(self):
+        """Limpia entradas antigas del cache"""
+        now = datetime.now()
+        if (now - self.last_cache_cleanup).seconds > 1800:  # Limpiar cada 30 minutos
+            expired_keys = []
+            for key, value in self.validation_cache.items():
+                if (now - value['timestamp']).seconds > self.cache_ttl:
+                    expired_keys.append(key)
             
+            for key in expired_keys:
+                del self.validation_cache[key]
+            
+            self.last_cache_cleanup = now
+            logger.info(f"Cache limpiado: {len(expired_keys)} entradas eliminadas")
+    
+    def _simulate_ecuador_validation(self, ruc: str) -> Dict[str, Any]:
+        """Simulación mejorada para validación de RUC cuando la API real no está habilitada"""
+        format_validation = self.validate_ruc_format(ruc, 'ECUADOR')
+        
+        if not format_validation.get('valid_format', False):
+            return {
+                'online_validation': False,
+                'error': 'Formato de RUC inválido',
+                'details': format_validation
+            }
+        
+        # Simular latencia de red
+        time.sleep(0.1)
+        
+        return {
+            'online_validation': True,
+            'simulation_mode': True,
+            'found': True,
+            'ruc_number': ruc,
+            'status': 'ACTIVO',
+            'razon_social': f'EMPRESA SIMULADA RUC {ruc}',
+            'tipo_contribuyente': format_validation.get('entity_type', 'PERSONA JURIDICA'),
+            'estado_contribuyente': 'ACTIVO',
+            'actividad_economica': 'ACTIVIDADES DE CONSTRUCCION',
+            'fecha_consulta': datetime.now().isoformat(),
+            'source': 'SRI_SIMULATION',
+            'nota': 'Validación simulada - Habilitar use_real_api=True para usar API real'
+        }
+    
+    def _verify_ecuador_ruc_online(self, ruc: str, url: str, headers: dict) -> Dict[str, Any]:
+        """Verificación específica para RUC de Ecuador con API real del SRI"""
+        try:
+            # Primero validar formato offline
             format_validation = self.validate_ruc_format(ruc, 'ECUADOR')
             if not format_validation.get('valid_format', False):
                 return {
@@ -358,28 +428,116 @@ class RUCValidationAgent:
                     'details': format_validation
                 }
             
-            # Simular consulta (en producción, hacer request real al SRI)
-            time.sleep(0.1)  # Simular latencia de red
-            
-            # Por ahora retornamos validación offline exitosa
-            return {
-                'online_validation': True,  # En producción, usar resultado real
-                'simulation_mode': True,
-                'ruc_number': ruc,
-                'status': 'ACTIVO',  # Valores simulados
-                'razon_social': f'Empresa con RUC {ruc}',
-                'tipo_contribuyente': format_validation.get('entity_type', 'desconocido'),
-                'fecha_consulta': datetime.now().isoformat(),
-                'source': 'SRI_SIMULATION',
-                'note': 'Validación simulada - En producción usar API del SRI'
-            }
+            # Intentar validación real con SRI
+            return self._call_sri_api(ruc, format_validation)
             
         except Exception as e:
+            logger.error(f"Error en verificación SRI: {e}")
+            # Fallback a validación offline si falla la API
+            return self._fallback_validation(ruc, format_validation, str(e))
+    
+    def _call_sri_api(self, ruc: str, format_validation: Dict) -> Dict[str, Any]:
+        """Llamada real a la API del SRI"""
+        try:
+            # URL actual del SRI para consulta de contribuyentes
+            sri_url = "https://srienlinea.sri.gob.ec/sri-catastro-sujeto-servicio-internet/rest/ConsolidadoContribuyente/existePorNumeroRuc"
+            
+            # Headers necesarios para la API del SRI
+            headers = {
+                'Content-Type': 'application/json',
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+                'Accept': 'application/json, text/plain, */*',
+                'Origin': 'https://srienlinea.sri.gob.ec'
+            }
+            
+            # Payload para la consulta
+            payload = {
+                "numeroRuc": ruc
+            }
+            
+            # Hacer la consulta con timeout
+            logger.info(f"Consultando RUC {ruc} en API del SRI...")
+            response = requests.post(
+                sri_url, 
+                json=payload, 
+                headers=headers, 
+                timeout=10,
+                verify=True
+            )
+            
+            if response.status_code == 200:
+                return self._process_sri_response(response.json(), ruc)
+            elif response.status_code == 404:
+                return {
+                    'online_validation': True,
+                    'found': False,
+                    'ruc_number': ruc,
+                    'status': 'NO_ENCONTRADO',
+                    'message': 'RUC no registrado en el SRI',
+                    'fecha_consulta': datetime.now().isoformat(),
+                    'source': 'SRI_OFICIAL'
+                }
+            else:
+                raise Exception(f"Error HTTP {response.status_code}: {response.text}")
+                
+        except requests.exceptions.Timeout:
+            logger.warning("Timeout en consulta SRI, usando validación offline")
+            return self._fallback_validation(ruc, format_validation, "Timeout en API del SRI")
+        except requests.exceptions.ConnectionError:
+            logger.warning("Error de conexión SRI, usando validación offline")
+            return self._fallback_validation(ruc, format_validation, "Error de conexión con SRI")
+        except Exception as e:
+            logger.error(f"Error inesperado en API SRI: {e}")
+            return self._fallback_validation(ruc, format_validation, str(e))
+    
+    def _process_sri_response(self, sri_data: Dict, ruc: str) -> Dict[str, Any]:
+        """Procesar respuesta exitosa del SRI"""
+        try:
+            # El SRI puede devolver diferentes estructuras, adaptamos según la respuesta
+            if isinstance(sri_data, dict):
+                return {
+                    'online_validation': True,
+                    'found': True,
+                    'ruc_number': ruc,
+                    'status': 'ACTIVO',
+                    'razon_social': sri_data.get('razonSocial', '').strip(),
+                    'nombre_comercial': sri_data.get('nombreComercial', '').strip(),
+                    'tipo_contribuyente': sri_data.get('tipoContribuyente', ''),
+                    'estado_contribuyente': sri_data.get('estadoContribuyente', ''),
+                    'clase_contribuyente': sri_data.get('claseContribuyente', ''),
+                    'fecha_actualizacion': sri_data.get('fechaActualizacion', ''),
+                    'actividad_economica': sri_data.get('actividadEconomica', ''),
+                    'provincia': sri_data.get('provincia', ''),
+                    'canton': sri_data.get('canton', ''),
+                    'fecha_consulta': datetime.now().isoformat(),
+                    'source': 'SRI_OFICIAL',
+                    'raw_data': sri_data  # Guardar datos originales para debugging
+                }
+            else:
+                raise Exception(f"Formato de respuesta SRI inesperado: {type(sri_data)}")
+                
+        except Exception as e:
+            logger.error(f"Error procesando respuesta SRI: {e}")
             return {
                 'online_validation': False,
-                'error': f'Error en verificación: {str(e)}',
-                'fallback_validation': format_validation
+                'error': f'Error procesando respuesta del SRI: {str(e)}',
+                'raw_response': sri_data
             }
+    
+    def _fallback_validation(self, ruc: str, format_validation: Dict, error_msg: str) -> Dict[str, Any]:
+        """Validación fallback cuando la API del SRI no está disponible"""
+        return {
+            'online_validation': False,
+            'fallback_mode': True,
+            'ruc_number': ruc,
+            'format_validation': format_validation,
+            'error': error_msg,
+            'status': 'FORMATO_VALIDO' if format_validation.get('valid_format') else 'FORMATO_INVALIDO',
+            'nota': 'Validación offline - API del SRI no disponible',
+            'fecha_consulta': datetime.now().isoformat(),
+            'source': 'VALIDACION_OFFLINE',
+            'recomendacion': 'Verificar manualmente en https://srienlinea.sri.gob.ec/'
+        }
     
     def validate_entity_compatibility(self, entity_data: Dict[str, Any], 
                                     work_type: str = 'CONSTRUCCION') -> Dict[str, Any]:
