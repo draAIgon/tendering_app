@@ -214,7 +214,6 @@ class DocumentExtractionAgent:
         document_text = self.extract_text()
         # metadata = self.extract_metadata()
         return {
-            "content": document_text,  # Change from "text" to "content" 
-            "text": document_text,     # Keep for backward compatibility
+            "content": document_text
             # "metadata": metadata
         }

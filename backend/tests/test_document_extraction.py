@@ -112,11 +112,11 @@ def test_process_document():
         # Procesar documento completo
         result = agent.process_document()
         
-        if "text" not in result:
-            logger.error("No se encontró 'text' en el resultado")
+        if "content" not in result:
+            logger.error("No se encontró 'content' en el resultado")
             return False
         
-        text = result["text"]
+        text = result["content"]
         logger.info(f"✅ Documento procesado exitosamente")
         logger.info(f"📄 Texto extraído: {len(text)} caracteres")
         
