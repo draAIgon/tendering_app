@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Test script for ComparatorAgent
+Test script for UnifiedComparisonAgent
 Tests document comparison and similarity analysis capabilities
 """
 
@@ -14,7 +14,7 @@ backend_dir = current_dir.parent  # Go up one level to backend directory
 sys.path.append(str(backend_dir))
 sys.path.append(str(backend_dir / "utils" / "agents"))
 
-from utils.agents.comparator import ComparatorAgent
+from utils.agents.unified_comparison import UnifiedComparisonAgent
 import logging
 
 # Configurar logging
@@ -47,7 +47,7 @@ def test_basic_comparison():
     try:
         # Crear agente comparador
         db_path = backend_dir / "db" / "test_comparator"
-        agent = ComparatorAgent(vector_db_path=db_path)
+        agent = UnifiedComparisonAgent(vector_db_path=db_path)
         
         # Inicializar sistema de embeddings
         if agent.initialize_embeddings():
@@ -95,7 +95,7 @@ def test_multiple_comparison():
     try:
         # Crear agente comparador
         db_path = backend_dir / "db" / "test_comparator"
-        agent = ComparatorAgent(vector_db_path=db_path)
+        agent = UnifiedComparisonAgent(vector_db_path=db_path)
         
         # Inicializar embeddings
         agent.initialize_embeddings()
@@ -138,7 +138,7 @@ def test_similarity_analysis():
     try:
         # Crear agente comparador
         db_path = backend_dir / "db" / "test_comparator"
-        agent = ComparatorAgent(vector_db_path=db_path)
+        agent = UnifiedComparisonAgent(vector_db_path=db_path)
         
         # Inicializar embeddings
         if agent.initialize_embeddings():
@@ -184,7 +184,7 @@ def test_custom_criteria():
     try:
         # Crear agente comparador
         db_path = backend_dir / "db" / "test_comparator"
-        agent = ComparatorAgent(vector_db_path=db_path)
+        agent = UnifiedComparisonAgent(vector_db_path=db_path)
         
         # Inicializar embeddings
         agent.initialize_embeddings()
@@ -226,7 +226,7 @@ def test_custom_criteria():
 
 def main():
     """Función principal del test"""
-    logger.info("🚀 Iniciando tests del ComparatorAgent")
+    logger.info("🚀 Iniciando tests del UnifiedComparisonAgent")
     
     tests = [
         ("Comparación Básica", test_basic_comparison),

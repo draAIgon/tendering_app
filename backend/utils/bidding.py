@@ -1,17 +1,16 @@
-import logging
 from typing import Dict, List, Optional, Any
 from pathlib import Path
 import json
+import logging
 from datetime import datetime
 
 # Importar todos los agentes implementados
 from .agents.document_extraction import DocumentExtractionAgent
 from .agents.document_classification import DocumentClassificationAgent
 from .agents.validator import ComplianceValidationAgent
-from .agents.proposal_comparison import ProposalComparisonAgent
+from .agents.comparison import ComparisonAgent
 from .agents.risk_analyzer import RiskAnalyzerAgent
 from .agents.reporter import ReportGenerationAgent
-from .agents.comparator import ComparatorAgent
 
 # Importar database manager
 from .db_manager import get_standard_db_path, get_analysis_path
@@ -44,10 +43,9 @@ class BiddingAnalysisSystem:
         self.document_extractor = DocumentExtractionAgent()
         self.classifier = DocumentClassificationAgent()
         self.validator = ComplianceValidationAgent()
-        self.comparator = ProposalComparisonAgent()
+        self.comparator = ComparisonAgent()
         self.risk_analyzer = RiskAnalyzerAgent()
         self.reporter = ReportGenerationAgent()
-        self.advanced_comparator = ComparatorAgent()
         
         # Estado del sistema
         self.processed_documents = {}
@@ -65,12 +63,13 @@ class BiddingAnalysisSystem:
             model: Modelo específico a usar
         """
         try:
-            logger.info("Inicializando sistema de embeddings...")
+            logger.info("Inicializando embeddings para agentes...")
             
-            # Inicializar embeddings en agentes que lo requieren
+            # Inicializar embeddings para agentes que los requieren
             agents_with_embeddings = [
                 self.classifier,
-                self.advanced_comparator
+                self.comparator,
+                self.risk_analyzer
             ]
             
             for agent in agents_with_embeddings:
@@ -318,15 +317,15 @@ class BiddingAnalysisSystem:
                 logger.error(error_msg)
                 comparison_result['errors'].append(error_msg)
         
-        # 2. Usar ComparatorAgent para comparación avanzada
+        # 2. Usar ComparisonAgent para comparación avanzada
         if len(proposal_analyses) >= 2:
             try:
-                # Preparar documentos para ComparatorAgent
+                # Preparar documentos para ComparisonAgent
                 for proposal_id, analysis in proposal_analyses.items():
                     if 'extraction' in analysis['stages'] and analysis['stages']['extraction']['status'] == 'completed':
                         content = analysis['stages']['extraction']['data'].get('content', '')
                         if content:
-                            self.advanced_comparator.add_document(
+                            self.comparator.add_document(
                                 doc_id=proposal_id,
                                 content=content,
                                 doc_type="proposal",
@@ -337,11 +336,11 @@ class BiddingAnalysisSystem:
                             )
                 
                 # Configurar base de datos vectorial
-                self.advanced_comparator.setup_vector_database()
+                self.comparator.setup_vector_database()
                 
                 # Realizar comparación múltiple
                 proposal_ids = list(proposal_analyses.keys())
-                multi_comparison = self.advanced_comparator.compare_multiple_documents(
+                multi_comparison = self.comparator.compare_multiple_documents(
                     doc_ids=proposal_ids,
                     comparison_type="comprehensive"
                 )
@@ -363,14 +362,24 @@ class BiddingAnalysisSystem:
                 logger.error(error_msg)
                 comparison_result['errors'].append(error_msg)
         
-        # 3. Usar ProposalComparisonAgent para comparación estándar
+        # 3. Usar ComparisonAgent para comparación estándar
         try:
             if len(proposal_paths) == 2:
-                standard_comparison = self.comparator.compare_proposals(
-                    proposal_paths[0], 
-                    proposal_paths[1],
-                    comparison_criteria
-                )
+                # Load both proposals
+                self.comparator.clear_documents()  # Clear previous data
+                
+                for i, prop_path in enumerate(proposal_paths):
+                    with open(prop_path, 'r', encoding='utf-8') as f:
+                        content = f.read()
+                        self.comparator.add_proposal(
+                            f"proposal_{i+1}", 
+                            content,
+                            metadata={'path': str(prop_path)}
+                        )
+                
+                # Setup and compare
+                self.comparator.setup_vector_database()
+                standard_comparison = self.comparator.compare_proposals()
                 comparison_result['standard_comparison'] = standard_comparison
                 
         except Exception as e:
@@ -629,10 +638,9 @@ class BiddingAnalysisSystem:
                 'DocumentExtractionAgent',
                 'DocumentClassificationAgent', 
                 'ComplianceValidationAgent',
-                'ProposalComparisonAgent',
+                'ComparisonAgent',
                 'RiskAnalyzerAgent',
-                'ReportGenerationAgent',
-                'ComparatorAgent'
+                'ReportGenerationAgent'
             ],
             'data_directory': str(self.data_dir),
             'timestamp': datetime.now().isoformat()
@@ -799,7 +807,7 @@ class RFPAnalyzer:
         
         try:
             # Preparar documentos para comparación
-            comparator = ComparatorAgent()
+            comparator = ComparisonAgent()
             
             # Añadir RFP actual
             current_content = ""

@@ -14,7 +14,7 @@ backend_dir = current_dir.parent
 sys.path.append(str(backend_dir))
 sys.path.append(str(backend_dir / "utils" / "agents"))
 
-from utils.agents.proposal_comparison import ProposalComparisonAgent
+from utils.agents.unified_comparison import UnifiedComparisonAgent
 import logging
 
 # Configurar logging
