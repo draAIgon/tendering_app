@@ -1,7 +1,6 @@
 from pathlib import Path
 import re
 import subprocess
-import fitz
 from langchain_core.documents import Document
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_openai import OpenAIEmbeddings
@@ -11,9 +10,7 @@ import logging
 from collections import defaultdict
 import hashlib
 import requests
-from io import BytesIO
-from typing import List, Tuple, Optional
-import unicodedata
+from typing import List, Optional
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

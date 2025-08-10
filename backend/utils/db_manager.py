@@ -6,7 +6,6 @@ Standardizes locations and management of all vector databases
 import logging
 from pathlib import Path
 from typing import Dict, Optional, List
-import json
 from datetime import datetime
 
 logger = logging.getLogger(__name__)

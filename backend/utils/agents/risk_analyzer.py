@@ -1,18 +1,16 @@
 import re
 import logging
 from pathlib import Path
-from typing import List, Dict, Optional, Any, Tuple
-from datetime import datetime, timedelta
-from collections import defaultdict, Counter
+from typing import List, Dict, Optional, Any
+from datetime import datetime
 import json
-import numpy as np
 
 # Importar funciones del sistema de embeddings
 import sys
 import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
 
-from utils.embedding import get_embeddings_provider, txt_to_documents
+from utils.embedding import get_embeddings_provider
 from langchain_chroma import Chroma
 from langchain.schema import Document
 
