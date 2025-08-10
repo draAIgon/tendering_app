@@ -1324,12 +1324,4 @@ async def internal_error_handler(request, exc):
 
 if __name__ == "__main__":
     import uvicorn
-    
-    print("🚀 Iniciando API Completa de Análisis de Licitaciones")
-    print("📋 Features: Análisis, Comparación, Reportes, RFP, Búsqueda")
-    print("📄 Soporta: PDF, DOC, DOCX")
-    print("🧠 IA: OpenAI, OLLAMA")
-    print("🌐 Acceso: http://localhost:8000")
-    print("📖 Docs: http://localhost:8000/docs")
-    
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
