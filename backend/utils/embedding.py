@@ -106,97 +106,117 @@ def get_embeddings_provider(provider: str = "auto", model: Optional[str] = None)
     else:
         raise ValueError(f"Proveedor no soportado: {chosen_provider}. Use 'openai', 'ollama' o 'auto'.")
 
-SEPARATORS = [
-    r"\nSECCIÓN\s+[IVXLC]+\b",
-    r"\nCAPÍTULO\s+[IVXLC]+\b",
-    r"\n\d+\.\s*[A-ZÁÉÍÓÚÑ]",
-    r"\n\d+\.\d+(\.\d+)?\s",
-    r"\n[A-ZÁÉÍÓÚÑ ]{10,}\n",
-    r"\nCONVOCATORIA\b",
-    r"\nOBJETO\s+DE\s+LA\s+CONTRATACI[ÓO]N\b",
-    r"\nCONDICIONES\s+GENERALES\b",
-    r"\nCONDICIONES\s+PARTICULARES\b",
-    r"\nREQUISITOS\s+TÉCNICOS\b",
-    r"\nESPECIFICACIONES\s+TÉCNICAS\b",
-    r"\nCONDICIONES\s+ECON[ÓO]MICAS\b",
-    r"\nGARANT[IÍ]AS\b",
-    r"\nPLAZOS\b",
-    r"\nCRONOGRAMA\b",
-    r"\nFORMULARIO\s+ÚNICO\s+DE\s+LA\s+OFERTA\b",
-]
+# Separadores simplificados - comentados para usar método más simple
+# SEPARATORS = [
+#     r"\nSECCIÓN\s+[IVXLC]+\b",
+#     r"\nCAPÍTULO\s+[IVXLC]+\b",
+#     r"\n\d+\.\s*[A-ZÁÉÍÓÚÑ]",
+#     r"\n\d+\.\d+(\.\d+)?\s",
+#     r"\n[A-ZÁÉÍÓÚÑ ]{10,}\n",
+#     r"\nCONVOCATORIA\b",
+#     r"\nOBJETO\s+DE\s+LA\s+CONTRATACI[ÓO]N\b",
+#     r"\nCONDICIONES\s+GENERALES\b",
+#     r"\nCONDICIONES\s+PARTICULARES\b",
+#     r"\nREQUISITOS\s+TÉCNICOS\b",
+#     r"\nESPECIFICACIONES\s+TÉCNICAS\b",
+#     r"\nCONDICIONES\s+ECON[ÓO]MICAS\b",
+#     r"\nGARANT[IÍ]AS\b",
+#     r"\nPLAZOS\b",
+#     r"\nCRONOGRAMA\b",
+#     r"\nFORMULARIO\s+ÚNICO\s+DE\s+LA\s+OFERTA\b",
+# ]
 
-def _custom_regex_split(text: str, separators: List[str]) -> List[str]:
-    """
-    Custom regex splitting that handles None values properly.
-    Splits text using regex patterns in order of preference.
-    """
-    if not text:
-        return []
-    
-    # Start with the full text
-    chunks = [text]
-    
-    # Apply each separator in order
-    for separator in separators:
-        new_chunks = []
-        for chunk in chunks:
-            if not chunk or not chunk.strip():
-                continue
-            
-            try:
-                # Split using the regex pattern
-                parts = re.split(separator, chunk)
-                # Filter out None and empty parts
-                parts = [str(part).strip() for part in parts if part is not None and str(part).strip()]
-                new_chunks.extend(parts)
-            except Exception:
-                # If regex fails, keep the original chunk
-                new_chunks.append(chunk)
-        
-        chunks = new_chunks
-        
-        # Stop if we have enough small chunks
-        if len(chunks) > 10 and all(len(chunk) < 2000 for chunk in chunks):
-            break
-    
-    # Final cleanup - remove empty chunks and ensure reasonable size
-    final_chunks = []
-    for chunk in chunks:
-        if chunk and len(chunk.strip()) > 10:  # Minimum chunk size
-            # If chunk is too large, split it manually
-            if len(chunk) > 2500:
-                # Split large chunks into smaller pieces
-                for i in range(0, len(chunk), 1800):
-                    sub_chunk = chunk[i:i+1800]
-                    if sub_chunk.strip():
-                        final_chunks.append(sub_chunk)
-            else:
-                final_chunks.append(chunk)
-    
-    return final_chunks
+# Función regex compleja comentada - ya no se usa en el sistema simplificado
+# def _custom_regex_split(text: str, separators: List[str]) -> List[str]:
+#     """
+#     Custom regex splitting that handles None values properly.
+#     Splits text using regex patterns in order of preference.
+#     """
+#     if not text:
+#         return []
+#     
+#     # Start with the full text
+#     chunks = [text]
+#     
+#     # Apply each separator in order
+#     for separator in separators:
+#         new_chunks = []
+#         for chunk in chunks:
+#             if not chunk or not chunk.strip():
+#                 continue
+#             
+#             try:
+#                 # Split using the regex pattern
+#                 parts = re.split(separator, chunk)
+#                 # Filter out None and empty parts
+#                 parts = [str(part).strip() for part in parts if part is not None and str(part).strip()]
+#                 new_chunks.extend(parts)
+#             except Exception:
+#                 # If regex fails, keep the original chunk
+#                 new_chunks.append(chunk)
+#         
+#         chunks = new_chunks
+#         
+#         # Stop if we have enough small chunks
+#         if len(chunks) > 10 and all(len(chunk) < 2000 for chunk in chunks):
+#             break
+#     
+#     # Final cleanup - remove empty chunks and ensure reasonable size
+#     final_chunks = []
+#     for chunk in chunks:
+#         if chunk and len(chunk.strip()) > 10:  # Minimum chunk size
+#             # If chunk is too large, split it manually
+#             if len(chunk) > 2500:
+#                 # Split large chunks into smaller pieces
+#                 for i in range(0, len(chunk), 1800):
+#                     sub_chunk = chunk[i:i+1800]
+#                     if sub_chunk.strip():
+#                         final_chunks.append(sub_chunk)
+#             else:
+#                 final_chunks.append(chunk)
+#     
+#     return final_chunks
 
-#Crea un splitter para dividir el texto en chunks
-def make_splitter() -> RecursiveCharacterTextSplitter:
-    # Always use simple separators for RecursiveCharacterTextSplitter
-    # We'll handle regex splitting in txt_to_documents if needed
-    simple_separators = ["\n\n", "\n", ". ", " "]
+#Crea un splitter para dividir el texto en chunks simples
+def make_splitter(chunk_size: int = 2000, chunk_overlap: int = 1000) -> RecursiveCharacterTextSplitter:
+    """
+    Crea un splitter simplificado con parámetros configurables.
+    Usa solo separadores naturales del texto sin regex complejos.
+    
+    Args:
+        chunk_size: Tamaño de cada chunk en caracteres
+        chunk_overlap: Overlap entre chunks en caracteres
+    """
+    # Separadores naturales simples - sin regex complejos
+    simple_separators = ["\n\n", "\n", ". ", " ", ""]
     
     return RecursiveCharacterTextSplitter(
-        chunk_size=1800,
-        chunk_overlap=200,
+        chunk_size=chunk_size,
+        chunk_overlap=chunk_overlap,
         separators=simple_separators,
         length_function=len,
         is_separator_regex=False,
     )
 
 
+# Pattern simplificado para detectar secciones (opcional)
 section_pattern = re.compile(
     r"(SECCIÓN\s+[IVXLC]+|FORMULARIO\s+ÚNICO\s+DE\s+LA\s+OFERTA|CONVOCATORIA|CONDICIONES\s+GENERALES|CONDICIONES\s+PARTICULARES|REQUISITOS\s+TÉCNICOS|ESPECIFICACIONES\s+TÉCNICAS|CONDICIONES\s+ECON[ÓO]MICAS|GARANT[IÍ]AS|PLAZOS|CRONOGRAMA)",
     re.I,
 )
 
 # Convierte texto de un archivo .txt a una lista de Documentos
-def txt_to_documents(txt_path: Path, source_name: str) -> List[Document]:
+def txt_to_documents(txt_path: Path, source_name: str, chunk_size: int = 2000, chunk_overlap: int = 1000) -> List[Document]:
+    """
+    Convierte un archivo txt a documentos usando chunking simplificado.
+    Ya no usa separadores regex complejos, solo chunks configurables con overlap.
+    
+    Args:
+        txt_path: Ruta al archivo txt
+        source_name: Nombre del documento fuente
+        chunk_size: Tamaño de cada chunk en caracteres
+        chunk_overlap: Overlap entre chunks en caracteres
+    """
     text = txt_path.read_text(encoding="utf-8")
     
     # Validate text content
@@ -210,30 +230,17 @@ def txt_to_documents(txt_path: Path, source_name: str) -> List[Document]:
     chunks = []
     
     try:
-        # First try custom regex splitting for better section detection
-        logger.info("Attempting custom regex splitting with SEPARATORS...")
-        regex_chunks = _custom_regex_split(text, SEPARATORS)
-        
-        if regex_chunks and len(regex_chunks) > 1:
-            logger.info(f"Custom regex splitting successful: {len(regex_chunks)} chunks")
-            chunks = regex_chunks
-        else:
-            raise ValueError("Custom regex splitting produced no useful chunks")
-            
+        # Usar solo RecursiveCharacterTextSplitter simplificado
+        logger.info(f"Using simplified RecursiveCharacterTextSplitter ({chunk_size}/{chunk_overlap})...")
+        splitter = make_splitter(chunk_size=chunk_size, chunk_overlap=chunk_overlap)
+        chunks = splitter.split_text(text)
+        logger.info(f"Splitter successful: {len(chunks)} chunks created")
     except Exception as e:
-        logger.warning(f"Custom regex splitting failed: {e}")
-        
-        try:
-            # Fallback to RecursiveCharacterTextSplitter
-            logger.info("Using RecursiveCharacterTextSplitter...")
-            splitter = make_splitter()
-            chunks = splitter.split_text(text)
-            logger.info(f"RecursiveCharacterTextSplitter successful: {len(chunks)} chunks")
-        except Exception as e2:
-            logger.error(f"RecursiveCharacterTextSplitter failed: {e2}")
-            # Last resort - manual chunking
-            logger.info("Using manual chunking as fallback")
-            chunks = [text[i:i+1800] for i in range(0, len(text), 1600)]
+        logger.error(f"Splitter failed: {e}")
+        # Last resort - manual chunking with same parameters
+        logger.info("Using manual chunking as fallback")
+        step_size = max(1, chunk_size - chunk_overlap)
+        chunks = [text[i:i+chunk_size] for i in range(0, len(text), step_size)]
     
     # Filter out empty or None chunks
     chunks = [str(ch).strip() for ch in chunks if ch is not None and str(ch).strip()]
@@ -294,12 +301,18 @@ def build_embeddings(
     model: Optional[str] = None,
     batch_size: int = 100,
     reset_db: bool = False,
+    chunk_size: int = 2000,
+    chunk_overlap: int = 1000,
 ):
     """
     1) Convierte DOC/DOCX a PDF (si hace falta)
     2) Extrae texto / OCR
-    3) Split + metadatos
+    3) Split simplificado con chunks de 2000/1000 + metadatos
     4) Embeddings y persistencia en Chroma
+    
+    Parámetros nuevos:
+    - chunk_size: Tamaño de cada chunk (por defecto 2000)
+    - chunk_overlap: Overlap entre chunks (por defecto 1000)
     """
 
     if not carpeta_lawdata or not ruta_db:
@@ -345,7 +358,7 @@ def build_embeddings(
     all_docs: List[Document] = []
     for txt in txt_paths:
         try:
-            all_docs.extend(txt_to_documents(txt, source_name=txt.stem))
+            all_docs.extend(txt_to_documents(txt, source_name=txt.stem, chunk_size=chunk_size, chunk_overlap=chunk_overlap))
         except Exception as e:
             archivos_con_error.append(txt.name)
             logger.error(f"Error creando docs de {txt.name}: {e}")
@@ -377,7 +390,13 @@ def build_embeddings(
                 except Exception:
                     logger.info(f"Documento duplicado (omitido): {d.metadata.get('source')}#{d.metadata.get('page')}")
 
-    db.persist()
+    # Persistir base de datos (en versiones nuevas de ChromaDB no es necesario)
+    try:
+        db.persist()
+        logger.info("Base de datos persistida correctamente")
+    except AttributeError:
+        # Las versiones nuevas de ChromaDB no requieren persist() explícito
+        logger.info("Base de datos auto-persistida (ChromaDB nueva versión)")
 
     sections_by_doc = defaultdict(set)
     for d in all_docs:
@@ -453,3 +472,110 @@ def verificar_dependencias() -> bool:
         logger.error("Faltan dependencias críticas")
 
     return dependencias_ok
+
+
+def test_simplified_embeddings(db_path: str, query: str = "requisitos técnicos", k: int = 5):
+    """
+    Función de prueba para verificar que los embeddings simplificados funcionan correctamente.
+    """
+    try:
+        from langchain_chroma import Chroma
+        
+        # Obtener proveedor de embeddings
+        embeddings, provider, model = get_embeddings_provider()
+        
+        # Cargar base de datos existente
+        db = Chroma(
+            persist_directory=db_path,
+            embedding_function=embeddings
+        )
+        
+        logger.info(f"🔍 Probando búsqueda: '{query}'")
+        
+        # Verificar que la base de datos tenga contenido
+        try:
+            collection = db._collection
+            count = collection.count()
+            logger.info(f"📊 Base de datos contiene {count} documentos")
+            
+            if count == 0:
+                logger.warning("⚠️ Base de datos vacía - no se pueden realizar búsquedas")
+                return []
+        except Exception as e:
+            logger.warning(f"No se pudo verificar el conteo de documentos: {e}")
+        
+        # Realizar búsqueda semántica
+        results = db.similarity_search(query, k=k)
+        
+        logger.info(f"📋 Encontrados {len(results)} resultados:")
+        
+        for i, doc in enumerate(results, 1):
+            source = doc.metadata.get('source', 'unknown')
+            section = doc.metadata.get('section', 'unknown')
+            page = doc.metadata.get('page', 'N/A')
+            
+            preview = doc.page_content[:200].replace('\n', ' ').strip()
+            
+            logger.info(f"   {i}. {source} (sección: {section}, página: {page})")
+            logger.info(f"      Vista previa: {preview}...")
+            logger.info("")
+        
+        return results
+        
+    except Exception as e:
+        logger.error(f"Error en búsqueda de prueba: {e}")
+        import traceback
+        traceback.print_exc()
+        return []
+
+
+if __name__ == "__main__":
+    # Ejemplo de uso del sistema simplificado
+    logging.basicConfig(level=logging.INFO)
+    
+    # Verificar dependencias
+    verificar_dependencias()
+    
+    # Probar sistema simplificado
+    logger.info("\n" + "="*60)
+    logger.info("🔬 PROBANDO SISTEMA DE EMBEDDINGS SIMPLIFICADO")
+    logger.info("="*60)
+    
+    # Configurar rutas
+    carpeta_docs = "./LawData"
+    ruta_db = "./db/chroma/simplified_embeddings"
+    
+    # Construir embeddings con el sistema simplificado
+    try:
+        db = build_embeddings(
+            carpeta_lawdata=carpeta_docs,
+            ruta_db=ruta_db,
+            collection_name="simplified_docs",
+            provider="auto",
+            chunk_size=2000,  # Chunks de 2000 caracteres
+            chunk_overlap=1000,  # Overlap de 1000 caracteres
+            reset_db=True
+        )
+        
+        if db:
+            logger.info("✅ Base de datos creada exitosamente")
+            
+            # Probar búsquedas
+            test_queries = [
+                "requisitos técnicos",
+                "garantías",
+                "cronograma", 
+                "objeto del contrato",
+                "condiciones generales"
+            ]
+            
+            for query in test_queries:
+                logger.info(f"\n{'='*40}")
+                test_simplified_embeddings(ruta_db, query, k=2)
+        else:
+            logger.error("❌ Error creando base de datos")
+            
+    except Exception as e:
+        logger.error(f"❌ Error en el proceso: {e}")
+        import traceback
+        traceback.print_exc()

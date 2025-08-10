@@ -27,7 +27,8 @@ class DatabaseManager:
         'validation': 'validation',
         'comparison': 'comparison',
         'proposal_comparison': 'proposal_comparison',
-        'extraction': 'extraction'
+        'extraction': 'extraction',
+        'ruc_validation': 'ruc_validation'
     }
     
     def __init__(self):

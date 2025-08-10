@@ -84,6 +84,28 @@ rfp_analyzer_cache: Dict[str, RFPAnalyzer] = {}
 # Security (básico)
 security = HTTPBearer(auto_error=False)
 
+# Función auxiliar para el cache de sistemas
+def get_or_create_system(document_id: str) -> BiddingAnalysisSystem:
+    """
+    Obtiene un sistema existente del cache o crea uno nuevo
+    
+    Args:
+        document_id: ID del documento para el sistema
+        
+    Returns:
+        BiddingAnalysisSystem: Instancia del sistema de análisis
+    """
+    if document_id in system_cache:
+        return system_cache[document_id]
+    
+    # Crear nuevo sistema
+    system = BiddingAnalysisSystem()
+    system.initialize_system()
+    system_cache[document_id] = system
+    
+    logger.info(f"Nuevo sistema creado para documento {document_id}")
+    return system
+
 # Modelos de datos para requests
 class AnalysisRequest(BaseModel):
     document_type: str = Field(default="unknown", description="Tipo de documento")
@@ -1379,6 +1401,211 @@ async def clear_system_cache():
         "cleared_items": cache_counts,
         "cleared_at": datetime.now().isoformat()
     })
+
+# ===================== ENDPOINTS DE VALIDACIÓN DE RUC =====================
+
+class RUCValidationRequest(BaseModel):
+    work_type: str = Field(default="CONSTRUCCION", description="Tipo de trabajo (CONSTRUCCION, SERVICIOS, SUMINISTROS)")
+
+@app.post("/api/validate-ruc/{document_id}")
+async def validate_ruc(
+    document_id: str,
+    request: RUCValidationRequest = RUCValidationRequest(),
+    credentials: HTTPAuthorizationCredentials = Depends(security)
+):
+    """
+    Valida RUC del contratista en un documento específico
+    
+    Args:
+        document_id: ID del documento a validar
+        request: Parámetros de validación
+        
+    Returns:
+        Resultado completo de validación de RUC
+    """
+    try:
+        logger.info(f"Iniciando validación de RUC para documento {document_id}")
+        
+        # Obtener sistema del cache
+        system = get_or_create_system(document_id)
+        
+        # Verificar si existe análisis previo
+        analysis_db_path = get_analysis_path(document_id)
+        if not analysis_db_path.exists():
+            raise HTTPException(
+                status_code=404, 
+                detail=f"Documento {document_id} no encontrado o no analizado"
+            )
+        
+        # Cargar contenido del documento
+        analysis_result_file = analysis_db_path / "analysis_result.json"
+        if not analysis_result_file.exists():
+            raise HTTPException(
+                status_code=404,
+                detail="Análisis del documento no encontrado"
+            )
+        
+        with open(analysis_result_file, 'r', encoding='utf-8') as f:
+            analysis_data = json.load(f)
+        
+        # Extraer contenido
+        content = ""
+        if 'stages' in analysis_data and 'extraction' in analysis_data['stages']:
+            extraction_data = analysis_data['stages']['extraction'].get('data', {})
+            content = extraction_data.get('content', '')
+        
+        if not content:
+            raise HTTPException(
+                status_code=400,
+                detail="No se pudo obtener contenido del documento para validación"
+            )
+        
+        # Realizar validación de RUC
+        ruc_result = system.ruc_validator.comprehensive_ruc_validation(
+            content=content,
+            work_type=request.work_type
+        )
+        
+        # Guardar resultados en la base de datos del documento
+        ruc_result_file = analysis_db_path / "ruc_validation_result.json"
+        with open(ruc_result_file, 'w', encoding='utf-8') as f:
+            json.dump(ruc_result, f, ensure_ascii=False, indent=2)
+        
+        # Actualizar análisis principal con validación de RUC
+        if 'stages' not in analysis_data:
+            analysis_data['stages'] = {}
+        
+        analysis_data['stages']['ruc_validation'] = {
+            'status': 'completed',
+            'data': ruc_result
+        }
+        
+        # Actualizar resumen
+        if 'summary' in analysis_data:
+            summary = analysis_data['summary']
+            ruc_summary = ruc_result.get('validation_summary', {})
+            
+            if ruc_summary.get('total_rucs', 0) > 0:
+                verified_rucs = ruc_summary.get('verified_online', 0)
+                total_rucs = ruc_summary.get('total_rucs', 0)
+                summary['key_findings'] = summary.get('key_findings', [])
+                summary['key_findings'].append(f"RUCs validados: {verified_rucs}/{total_rucs}")
+                
+                if ruc_result.get('overall_score'):
+                    ruc_score = ruc_result['overall_score']
+                    ruc_level = ruc_result.get('validation_level', 'DESCONOCIDO')
+                    summary['key_findings'].append(f"Validación RUC: {ruc_score}% ({ruc_level})")
+        
+        # Guardar análisis actualizado
+        with open(analysis_result_file, 'w', encoding='utf-8') as f:
+            json.dump(analysis_data, f, ensure_ascii=False, indent=2)
+        
+        return JSONResponse({
+            "status": "success",
+            "document_id": document_id,
+            "work_type": request.work_type,
+            "ruc_validation": ruc_result,
+            "processing_time": datetime.now().isoformat(),
+            "message": "Validación de RUC completada exitosamente"
+        })
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error en validación de RUC: {e}")
+        raise HTTPException(status_code=500, detail=f"Error en validación de RUC: {str(e)}")
+
+@app.post("/api/validate-ruc-content")
+async def validate_ruc_from_content(
+    content: str = Form(...),
+    work_type: str = Form(default="CONSTRUCCION"),
+    credentials: HTTPAuthorizationCredentials = Depends(security)
+):
+    """
+    Valida RUC directamente desde contenido de texto
+    
+    Args:
+        content: Contenido del documento
+        work_type: Tipo de trabajo para validar compatibilidad
+        
+    Returns:
+        Resultado de validación de RUC
+    """
+    try:
+        logger.info(f"Validando RUC desde contenido directo, tipo: {work_type}")
+        
+        # Crear instancia temporal del validador
+        from utils.agents.ruc_validator import RUCValidationAgent
+        ruc_validator = RUCValidationAgent()
+        
+        # Realizar validación
+        ruc_result = ruc_validator.comprehensive_ruc_validation(
+            content=content,
+            work_type=work_type
+        )
+        
+        return JSONResponse({
+            "status": "success",
+            "work_type": work_type,
+            "content_length": len(content),
+            "ruc_validation": ruc_result,
+            "processing_time": datetime.now().isoformat()
+        })
+        
+    except Exception as e:
+        logger.error(f"Error en validación de RUC desde contenido: {e}")
+        raise HTTPException(status_code=500, detail=f"Error en validación: {str(e)}")
+
+@app.get("/api/ruc-validation-status/{document_id}")
+async def get_ruc_validation_status(
+    document_id: str,
+    credentials: HTTPAuthorizationCredentials = Depends(security)
+):
+    """
+    Obtiene el estado de validación de RUC para un documento
+    
+    Args:
+        document_id: ID del documento
+        
+    Returns:
+        Estado y resultados de validación de RUC
+    """
+    try:
+        analysis_db_path = get_analysis_path(document_id)
+        
+        if not analysis_db_path.exists():
+            raise HTTPException(
+                status_code=404,
+                detail=f"Documento {document_id} no encontrado"
+            )
+        
+        # Verificar si existe validación de RUC
+        ruc_result_file = analysis_db_path / "ruc_validation_result.json"
+        
+        if ruc_result_file.exists():
+            with open(ruc_result_file, 'r', encoding='utf-8') as f:
+                ruc_data = json.load(f)
+            
+            return JSONResponse({
+                "status": "completed",
+                "document_id": document_id,
+                "has_ruc_validation": True,
+                "validation_data": ruc_data,
+                "validation_timestamp": ruc_data.get('timestamp')
+            })
+        else:
+            return JSONResponse({
+                "status": "not_validated",
+                "document_id": document_id,
+                "has_ruc_validation": False,
+                "message": "Validación de RUC no realizada para este documento"
+            })
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error obteniendo estado de validación RUC: {e}")
+        raise HTTPException(status_code=500, detail=f"Error: {str(e)}")
 
 # ===================== MANEJO DE ERRORES =====================
 

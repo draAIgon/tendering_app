@@ -11,6 +11,7 @@ from .agents.validator import ComplianceValidationAgent
 from .agents.comparison import ComparisonAgent
 from .agents.risk_analyzer import RiskAnalyzerAgent
 from .agents.reporter import ReportGenerationAgent
+from .agents.ruc_validator import RUCValidationAgent
 
 # Importar database manager
 from .db_manager import get_standard_db_path, get_analysis_path
@@ -46,6 +47,7 @@ class BiddingAnalysisSystem:
         self.comparator = ComparisonAgent()
         self.risk_analyzer = RiskAnalyzerAgent()
         self.reporter = ReportGenerationAgent()
+        self.ruc_validator = RUCValidationAgent()
         
         # Estado del sistema
         self.processed_documents = {}
@@ -195,10 +197,34 @@ class BiddingAnalysisSystem:
                 analysis_result['errors'].append(error_msg)
                 analysis_result['stages']['validation'] = {'status': 'failed', 'error': str(e)}
         
-        # 4. Análisis de riesgo (solo para análisis comprehensivo)
+        # 4. Validación de RUC (para análisis comprehensivo)
         if analysis_level == "comprehensive" and content:
             try:
-                logger.info("Etapa 4: Analizando riesgos...")
+                logger.info("Etapa 4: Validando RUC del contratista...")
+                
+                # Determinar tipo de trabajo basado en document_type
+                work_type = self._determine_work_type(content, document_type)
+                
+                ruc_result = self.ruc_validator.comprehensive_ruc_validation(
+                    content=content,
+                    work_type=work_type
+                )
+                
+                analysis_result['stages']['ruc_validation'] = {
+                    'status': 'completed',
+                    'data': ruc_result
+                }
+                
+            except Exception as e:
+                error_msg = f"Error en validación de RUC: {e}"
+                logger.error(error_msg)
+                analysis_result['errors'].append(error_msg)
+                analysis_result['stages']['ruc_validation'] = {'status': 'failed', 'error': str(e)}
+
+        # 5. Análisis de riesgo (solo para análisis comprehensivo)
+        if analysis_level == "comprehensive" and content:
+            try:
+                logger.info("Etapa 5: Analizando riesgos...")
                 
                 risk_result = self.risk_analyzer.analyze_document_risks(
                     content=content,
@@ -216,10 +242,8 @@ class BiddingAnalysisSystem:
                 logger.error(error_msg)
                 analysis_result['errors'].append(error_msg)
                 analysis_result['stages']['risk_analysis'] = {'status': 'failed', 'error': str(e)}
-                analysis_result['errors'].append(error_msg)
-                analysis_result['stages']['risk_analysis'] = {'status': 'failed', 'error': str(e)}
         
-        # 5. Generar resumen y métricas
+        # 6. Generar resumen y métricas
         analysis_result['summary'] = self._generate_analysis_summary(analysis_result)
         
         # Almacenar resultado en memoria
@@ -617,6 +641,20 @@ class BiddingAnalysisSystem:
                 risk_score = risk_data['overall_risk_score']
                 summary['key_findings'].append(f"Puntuación de riesgo general: {risk_score}")
         
+        if 'ruc_validation' in stages and stages['ruc_validation'].get('status') == 'completed':
+            ruc_data = stages['ruc_validation']['data']
+            ruc_summary = ruc_data.get('validation_summary', {})
+            if ruc_summary.get('total_rucs', 0) > 0:
+                valid_rucs = ruc_summary.get('verified_online', 0)
+                total_rucs = ruc_summary.get('total_rucs', 0)
+                summary['key_findings'].append(f"RUCs validados: {valid_rucs}/{total_rucs}")
+                
+                # Agregar hallazgos específicos de RUC
+                if ruc_data.get('overall_score'):
+                    ruc_score = ruc_data['overall_score']
+                    ruc_level = ruc_data.get('validation_level', 'DESCONOCIDO')
+                    summary['key_findings'].append(f"Validación RUC: {ruc_score}% ({ruc_level})")
+        
         # Generar recomendaciones básicas
         if summary['overall_status'] == 'success':
             summary['recommendations'].append("Análisis completado exitosamente. Revisar resultados detallados.")
@@ -640,7 +678,8 @@ class BiddingAnalysisSystem:
                 'ComplianceValidationAgent',
                 'ComparisonAgent',
                 'RiskAnalyzerAgent',
-                'ReportGenerationAgent'
+                'ReportGenerationAgent',
+                'RUCValidationAgent'
             ],
             'data_directory': str(self.data_dir),
             'timestamp': datetime.now().isoformat()
@@ -677,6 +716,58 @@ class BiddingAnalysisSystem:
         except Exception as e:
             logger.error(f"Error exportando resultados: {e}")
             return False
+
+    def _determine_work_type(self, content: str, document_type: str) -> str:
+        """
+        Determina el tipo de trabajo basado en el contenido del documento
+        
+        Args:
+            content: Contenido del documento
+            document_type: Tipo de documento
+            
+        Returns:
+            Tipo de trabajo: CONSTRUCCION, SERVICIOS, o SUMINISTROS
+        """
+        content_lower = content.lower()
+        
+        # Palabras clave para construcción
+        construction_keywords = [
+            'construcción', 'edificación', 'obra civil', 'infraestructura',
+            'concreto', 'acero', 'cemento', 'excavación', 'cimentación',
+            'estructura', 'albañilería', 'arquitectura', 'ingeniería civil',
+            'proyecto de construcción', 'obra pública', 'edificio',
+            'carretera', 'puente', 'túnel', 'drenaje', 'pavimento'
+        ]
+        
+        # Palabras clave para servicios
+        services_keywords = [
+            'servicios profesionales', 'consultoría', 'asesoría',
+            'auditoría', 'capacitación', 'entrenamiento', 'diseño',
+            'estudios técnicos', 'supervisión', 'interventoría',
+            'servicios de ingeniería', 'servicios de arquitectura',
+            'mantenimiento', 'soporte técnico', 'desarrollo de software'
+        ]
+        
+        # Palabras clave para suministros
+        supplies_keywords = [
+            'suministro', 'adquisición', 'compra', 'equipos',
+            'materiales', 'insumos', 'productos', 'bienes',
+            'mobiliario', 'tecnología', 'software', 'hardware',
+            'vehículos', 'maquinaria', 'herramientas', 'instrumentos'
+        ]
+        
+        # Contar coincidencias
+        construction_score = sum(1 for keyword in construction_keywords if keyword in content_lower)
+        services_score = sum(1 for keyword in services_keywords if keyword in content_lower)
+        supplies_score = sum(1 for keyword in supplies_keywords if keyword in content_lower)
+        
+        # Determinar tipo basado en el mayor score
+        if construction_score >= services_score and construction_score >= supplies_score:
+            return 'CONSTRUCCION'
+        elif services_score >= supplies_score:
+            return 'SERVICIOS'
+        else:
+            return 'SUMINISTROS'
 
 
 class RFPAnalyzer:
@@ -848,6 +939,47 @@ class RFPAnalyzer:
                     comparison_result['comparisons'].append(comparison)
         
         except Exception as e:
+            # Preparar documentos para comparación
+            comparator = ComparisonAgent()
+            
+            # Añadir RFP actual
+            current_content = ""
+            if 'extraction' in current_analysis['stages']:
+                current_content = current_analysis['stages']['extraction']['data'].get('content', '')
+            
+            if current_content:
+                comparator.add_document(
+                    doc_id="current_rfp",
+                    content=current_content,
+                    doc_type="rfp",
+                    metadata={'path': current_rfp_path}
+                )
+            
+            # Añadir RFPs anteriores
+            for i, prev_analysis in enumerate(previous_analyses):
+                prev_content = ""
+                if 'extraction' in prev_analysis['stages']:
+                    prev_content = prev_analysis['stages']['extraction']['data'].get('content', '')
+                
+                if prev_content:
+                    comparator.add_document(
+                        doc_id=f"previous_rfp_{i}",
+                        content=prev_content,
+                        doc_type="rfp",
+                        metadata={'path': previous_rfp_paths[i]}
+                    )
+            
+            # Realizar comparaciones
+            if len(previous_analyses) > 0:
+                comparator.setup_vector_database()
+                
+                for i in range(len(previous_analyses)):
+                    comparison = comparator.comprehensive_comparison(
+                        "current_rfp", 
+                        f"previous_rfp_{i}"
+                    )
+                    comparison_result['comparisons'].append(comparison)
+        
             logger.error(f"Error en comparación de RFPs: {e}")
             comparison_result['error'] = str(e)
         

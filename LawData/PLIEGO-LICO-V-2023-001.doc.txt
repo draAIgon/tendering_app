@@ -1,0 +1,1851 @@
+
+=== PÁGINA 1 ===
+MODELO DE PLIEGO DE LOS PROCEDIMIENTOS DE LICITACIÓN
+DE OBRAS
+Versión 2023-001
+
+=== PÁGINA 2 ===
+MODELO DE PLIEGO DE LOS PROCEDIMIENTOS DE LICITACIÓN DE
+OBRAS
+Versión 2023-001
+
+ÍNDICE
+
+I. CONDICIONES DEL PLIEGO DE LICITACIÓN DE OBRAS
+
+SECCIÓN I
+
+CONVOCATORIA
+
+SECCIÓN II
+
+OBJETO DE LA CONTRATACIÓN, PRESUPUESTO
+REFERENCIAL Y ESPECIFICACIONES TÉCNICAS
+2.1.​Objeto de la contratación
+2.2.​Presupuesto referencial
+2.3.​Especificaciones técnicas
+2.3.1. Planos del proyecto
+2.3.2. Participación ecuatoriana mínima del proyecto
+establecida por la entidad contratante en base al Estudio de
+Desagregación Tecnológica
+
+SECCIÓN III
+
+CONDICIONES DEL PROCEDIMIENTO
+3.1.​ Cronograma del procedimiento
+3.2.​ Vigencia de la oferta
+3.3.​ Precio de la oferta
+3.3.1. Alcance del precio de la oferta
+3.4 Forma de presentar la oferta
+3.5.​ Plazo de ejecución
+3.6.​ Forma de pago
+3.6.1. Anticipo:
+3.6.2. Valor restante de la obra
+
+=== PÁGINA 3 ===
+SECCIÓN IV
+
+VERIFICACIÓN Y EVALUACIÓN DE LAS OFERTAS
+4.1. Verificación de las ofertas
+4.1.1. Integridad de las ofertas
+4.1.2. Equipo mínimo
+4.1.3. Personal técnico mínimo
+4.1.4. Experiencia general y específica mínima
+4.1.5. Experiencia mínima del personal técnico
+4.1.6. Patrimonio
+4.1.7. Metodología de construcción y cronograma de
+ejecución del proyecto
+4.1.8. Cronograma de ejecución del proyecto
+4.1.9. Verificación de cumplimiento de integridad y
+requisitos mínimos de la oferta
+4.1.10. Información financiera de referencia
+4.2. Evaluación por puntaje
+
+SECCIÓN V
+
+OBLIGACIONES DE LAS PARTES
+5.1. Obligaciones del adjudicatario en la aplicación de
+transferencia de tecnología
+5.2.​Obligaciones del contratista
+5.3.​Obligaciones de la contratante
+5.3.1. Obligaciones del contratante en la aplicación de
+transferencia de tecnología
+5.4. Ejecución del contrato
+5.4.1. Inicio, planificación y control de obra
+5.4.2. Facturación y reajuste
+
+Nota: Edición del modelo de pliego.- El presente modelo de pliego es de uso
+obligatorio para las entidades contratantes, éstas señalarán las condiciones
+particulares del procedimiento de Licitación, así como las especificidades del
+procedimiento al que convocan. Para el efecto detallarán e individualizarán las
+condiciones del mismo, considerando la normativa vigente aplicable. En
+consecuencia, las entidades contratantes asumen la responsabilidad por los ajustes
+y/o modificaciones realizadas a las condiciones particulares del presente pliego,
+así como también por la determinación y aplicabilidad de los formularios
+
+=== PÁGINA 4 ===
+previstos para el presente procedimiento, y finalmente, reemplazarán todo texto
+que conste en paréntesis por el contenido pertinente.
+
+=== PÁGINA 5 ===
+LICITACIÓN DE OBRAS
+
+(CÓDIGO DEL PROCESO)
+
+I. CONDICIONES DEL PLIEGO DEL PROCEDIMIENTO DE
+LICITACIÓN DE OBRAS
+
+SECCIÓN I
+CONVOCATORIA
+
+Se convoca a las personas naturales o jurídicas, nacionales o extranjeras,
+asociaciones de éstas; o, consorcios o compromisos de asociación, que se
+encuentren habilitadas en el Registro Único de Proveedores, legalmente capaces
+para contratar, a que presenten sus ofertas para (describir objeto de contratación).
+
+Aquellos proveedores que no hayan sido invitados automáticamente a través del
+Portal COMPRASPÚBLICAS, siempre que estén registrados en la categoría del
+producto, CPC, correspondiente, para participar en el procedimiento podrán auto
+invitarse, hasta antes de la fecha límite para presentación de ofertas.
+
+El presupuesto referencial es de (valor en números y letras) dólares de los Estados
+Unidos de América, sin incluir el IVA. El plazo estimado para la ejecución del
+contrato es de (días), contados a partir de (establecer si desde la fecha de la
+suscripción del contrato, desde la fecha de notificación de que el anticipo se
+encuentra disponible, o desde cualquier otra condición, de acuerdo a la
+naturaleza del contrato).
+
+Las condiciones de esta convocatoria son las siguientes:
+
+1.​ El
+pliego
+está
+disponible,
+sin
+ningún
+costo,
+en
+el
+Portal
+COMPRASPÚBLICAS, únicamente el oferente que resulte adjudicado,
+una vez recibida la notificación de la adjudicación, pagará a la entidad el
+valor de (valor en números y letras), de conformidad con lo previsto en la
+Ley Orgánica del Sistema Nacional de Contratación Pública.
+
+2.​ Los interesados podrán formular preguntas, para lo cual deberán observar
+los términos establecidos por la ENTIDAD MANTENIMIENTO para cada
+
+=== PÁGINA 6 ===
+procedimiento de contratación conforme a la normativa emitida por el
+Servicio Nacional de Contratación Pública para el efecto.
+
+3.​ La oferta se presentará a través del Portal de COMPRASPÚBLICAS,
+misma que para ser válida deberá estar firmada electrónicamente a través
+del aplicativo oficial de suscripción y validación provisto por el Ministerio
+rector de las Telecomunicaciones o los autorizados por dicho ente rector;
+hasta las (hora a definir por la entidad) del día (fecha).
+
+La entidad contratante será responsable de la validación de dicha firma
+electrónica, de conformidad a la normativa aplicable.
+
+4.​ El acto de apertura de ofertas será público y se efectuará el (día y hora) en
+(señalar la dirección).
+
+5.​ Para poder participar en el presente procedimiento, al momento de la
+presentación de la propuesta, los oferentes interesados deberán encontrarse
+habilitados en el Registro Único de Proveedores.
+
+6.​ La oferta debe presentarse por la totalidad de la contratación.
+
+7.​ (Indicar si este procedimiento contempla o no reajuste de precios siempre
+que el pago sea bajo el sistema de precios unitarios)
+
+8.​ La evaluación de las ofertas se realizará aplicando los parámetros de
+calificación previstos en el pliego, conforme lo dispone el Reglamento
+General a la Ley Orgánica del Sistema Nacional de Contratación Pública.
+
+9.​ La fecha estimada de adjudicación es (definir fecha y hora).
+
+10.​Los pagos del contrato se realizarán con cargo a los fondos propios
+provenientes del presupuesto de la entidad contratante relacionados con la
+(s) partida (s) presupuestaria (s) (nombre, número y valor). La partida
+presupuestaria deberá certificarse por la totalidad de la contratación
+incluyéndose el IVA.
+
+Los pagos se realizarán de la siguiente manera:
+
+Anticipo: (Si la entidad contratante considera necesario el pago de un
+anticipo, se lo establecerá el particular en este espacio, pudiendo
+otorgárselo hasta el 50%).
+
+=== PÁGINA 7 ===
+Valor restante de la obra: (contra presentación de planillas por avance de
+obra, de conformidad con lo indicado en las especificaciones técnicas).
+
+11.​La (nombre de la entidad contratante) se reserva el derecho de cancelar o
+declarar desierto el procedimiento de contratación, situación en la que no
+habrá lugar a pago de indemnización alguna.
+
+(Ciudad y fecha)
+
+FIRMA DE LA MÁXIMA AUTORIDAD DE LA ENTIDAD CONTRATANTE (o su
+delegado)
+Cargo de la Máxima Autoridad o su delegado
+NOMBRE DE LA ENTIDAD CONTRATANTE
+
+=== PÁGINA 8 ===
+SECCIÓN II
+OBJETO DE LA CONTRATACIÓN, PRESUPUESTO REFERENCIAL Y
+ESPECIFICACIONES TÉCNICAS
+
+2.1.​
+Objeto de la contratación: (Detallar)
+
+2.2.​
+Presupuesto referencial: El presupuesto referencial es (monto en números
+y letras del objeto de contratación determinado por la entidad contratante, con
+sujeción al Plan Anual de Contratación respectivo), NO INCLUYE IVA, de
+conformidad con el siguiente detalle:
+
+No.
+Descripción del
+Rubro
+Unidad
+Cantidad
+Precio
+Unitario
+Subtotal
+
+Presupuesto Referencial (SIN IVA)
+USD $
+
+(La entidad contratante deberá publicar la tabla de descripción de rubros,
+unidades, cantidades y precios unitarios que justifique el valor establecido como
+presupuesto referencial, el que representará la ejecución total de la obra a
+contratarse)
+
+2.3.​
+Especificaciones técnicas: Las especificaciones técnicas para la presente
+contratación se detallan a continuación:
+
+(Establecer las especificaciones técnicas)
+
+2.3.1.​ Planos del proyecto: (Los planos completos son parte del pliego, y se
+publicarán en el Portal COMPRASPÚBLICAS, como un anexo; si el tamaño del
+archivo supera la capacidad de almacenamiento prevista en el Portal
+COMPRASPÚBLICAS, se publicarán en la página web de la entidad contratante
+y estarán a disposición de los proveedores interesados en forma digital.
+
+Todos los planos deben llevar las firmas de responsabilidad y el número de la
+licencia profesional de los diseñadores y de quienes aprobaron los documentos,
+incluyendo a quienes fiscalizaron los respectivos diseños).
+
+=== PÁGINA 9 ===
+(Detallar los planos que se anexarán)
+
+2.3.2.​ Participación ecuatoriana mínima del proyecto establecida por la
+entidad contratante con base al Estudio de Desagregación Tecnológica: El
+porcentaje de participación ecuatoriana mínimo exigible para el presente
+procedimiento de contratación se presenta a continuación:
+
+Descripción del
+Rubro
+Cantidad
+Precio
+Unitario
+del rubro
+($)
+Precio
+Global
+del
+rubro
+($)
+Precio
+Relativo
+del
+rubro
+(%)
+Agregado
+ecuatoriano del
+Rubro (%)
+Agregado
+ecuatoriano
+Ponderado
+(%)
+
+PORCENTAJE DE PARTICIPACIÓN ECUATORIANA MÍNIMO DEL
+PROYECTO
+
+SECCION III
+CONDICIONES DEL PROCEDIMIENTO
+
+3.1.​
+Cronograma del procedimiento: El cronograma que regirá el
+procedimiento será el siguiente:
+
+No.
+Concepto
+Día
+Hora
+1
+Fecha de publicación
+
+2
+Fecha límite de preguntas
+
+3
+Fecha límite para emitir respuestas y
+aclaraciones
+
+4
+Fecha límite entrega de ofertas
+
+5
+Fecha límite de apertura de ofertas
+
+6
+Fecha estimada de adjudicación
+
+En el caso de ser necesario, el término para la convalidación de errores será de
+(número de días), de acuerdo al siguiente cronograma:
+
+=== PÁGINA 10 ===
+No.
+Concepto
+Día
+Hora
+7
+Fecha límite para solicitar convalidación
+de errores
+8
+Fecha límite para convalidación de errores
+9
+Fecha estimada de adjudicación
+
+La máxima autoridad de la entidad contratante o su delegado, de considerarlo de
+manera motivada, podrá cambiar el cronograma, únicamente en las fases de
+preguntas, respuestas y aclaraciones. Para el efecto publicará en el Portal
+COMPRASPÚBLICAS la resolución motivada respectiva y procederá con el
+cambio requerido, previo a la fecha límite de la fase indicada.
+
+3.2.​
+Vigencia de la oferta: Las ofertas se entenderán vigentes hasta
+(determinar vigencia en días calendario). En caso de que no se señale una fecha
+estará vigente hasta la celebración del contrato, de acuerdo a lo establecido en la
+Ley Orgánica del Sistema Nacional de Contratación Pública.
+
+3.3.​
+Precio de la oferta: Se entenderá por precio de la oferta al valor que el
+oferente haga constar en el Portal COMPRASPÚBLICAS, información que se
+completará a través del formulario único de la oferta.
+
+3.3.1.​ Alcance del precio de la oferta: El precio de la oferta deberá cubrir el
+valor de la depreciación, operación y mantenimiento de los equipos, (si son de
+propiedad del oferente) y el costo de arrendamiento en el caso de ser alquilados, el
+costo de los materiales, equipos y accesorios a incorporarse definitivamente en el
+proyecto, mano de obra, transporte, etc.; los costos indirectos, los impuestos y
+tasas vigentes; así como, los servicios para la ejecución completa de la obra a
+contratarse, es decir, todo lo necesario para entregar la obra contratada lista para
+ser puesta en servicio.
+
+De existir errores aritméticos se procederá a su corrección conforme a lo previsto en la
+normativa expedida por el Servicio Nacional de Contratación Pública para el efecto.
+
+3.4.​
+Forma de presentar la oferta: La oferta se deberá presentar a través del
+Portal de COMPRASPÚBLICAS.
+
+=== PÁGINA 11 ===
+No se exigirá a los oferentes la entrega de documentos que previamente hayan sido
+entregados para efectos de habilitarse en el Registro Único de Proveedores.
+Tampoco se exigirá que la documentación presentada por los oferentes sea
+notariada; únicamente el oferente adjudicatario deberá cumplir con la entrega
+notariada de documentos para la suscripción del contrato.
+
+3.5.​
+Plazo de ejecución: El plazo estimado para la ejecución del contrato es de
+(días), contado a partir (Definir por la entidad contratante)
+​
+La recepción definitiva se realizará en el término de (plazo), a contarse desde la
+suscripción del acta de recepción provisional total o de la última recepción
+provisional parcial, si se hubiere previsto realizar varias de éstas.
+
+3.6.​
+Forma de pago: Los pagos se realizarán de la manera prevista en el pliego
+y en el contrato.
+
+3.6.1.​ Anticipo: (Establecer porcentaje no mayor a cincuenta por ciento (50%);
+en caso de pactarse anticipo).
+
+3.6.2.​ Valor restante de la obra: Se lo hará mediante pago contra presentación
+de planillas (establecer periodo: mensual, bimensual, etc.), debidamente
+aprobadas por la fiscalización y autorizadas por el administrador del contrato. De
+cada planilla se descontará la amortización del anticipo y cualquier otro cargo al
+contratista, que sea en legal aplicación del contrato. El monto del anticipo
+entregado por la entidad será devengado proporcionalmente al momento del pago
+de cada planilla hasta la terminación del plazo contractual inicialmente estipulado
+y constará en el cronograma pertinente que es parte del contrato.
+
+=== PÁGINA 12 ===
+SECCIÓN IV
+VERIFICACIÓN Y EVALUACIÓN DE LAS OFERTAS
+
+4.1.​
+Verificación de las ofertas: Para la verificación del cumplimiento de
+integridad y requisitos mínimos, se estará a la metodología cumple / no
+cumple.
+
+4.1.1.​ Integridad de las ofertas: La integridad de las ofertas consiste en la
+verificación de la presentación de los formularios previstos en el pliego de
+acuerdo al siguiente detalle:
+
+I. Formulario Único de la Oferta
+
+1.1.​Presentación y compromiso
+1.2.​Datos generales del oferente.
+1.3.​Nómina de accionistas, partícipes o socios mayoritarios de personas
+jurídicas y declaración de beneficiario final.
+1.4.​Situación financiera
+1.5.​Tabla de descripción de rubros, unidades, cantidades y precios
+1.6.​Análisis de precios unitarios
+1.7.​Metodología de construcción
+1.8.​Cronograma valorado de trabajos
+1.9.​Experiencia del oferente
+1.10.​ Personal técnico propuesto para el proyecto
+1.11. ​Equipo asignado al proyecto
+1.12 Participación ecuatoriana para el proyecto, propuesta por el oferente
+
+II. Formulario de compromiso de cumplimiento de parámetros en etapa
+contractual
+
+2.1. Compromiso de cumplimiento de parámetros en etapa contractual:
+equipo mínimo requerido; personal técnico mínimo requerido y
+experiencia mínima del personal técnico; y, metodología.
+
+III. Formulario de compromiso de asociación o consorcio (de ser
+procedente)
+
+=== PÁGINA 13 ===
+IV. Formulario de compromiso de subcontratación (de ser procedente)
+
+Observaciones: (La entidad contratante podrá determinar las observaciones que
+considere)
+
+4.1.2.​ Equipo mínimo:
+
+No.
+Equipo y/o instrumentos
+Cantidad
+Característica
+s
+
+4.1.3.​ Personal técnico mínimo:
+
+No.
+Función
+Nivel de
+Estudio
+Titulación
+Académica
+Cantidad
+
+4.1.4.​ Experiencia general y específica mínima:
+
+a.​ La entidad contratante definirá con precisión cuál es la experiencia mínima
+que deberá acreditar el oferente, de acuerdo al cumplimiento de las
+condiciones en relación a los montos mínimos requeridos para cada tipo de
+experiencia; se definirá exactamente qué tipo de obras se aceptarán como
+experiencia general y cuales como experiencia específica; así como el
+instrumento por el que se demostrará la misma.
+
+b.​ Para la determinación del cumplimiento de la experiencia general y
+específica mínima se estará a lo establecido, por el Servicio Nacional de
+Contratación Pública para los procedimientos de contratación.
+
+c.​ La experiencia específica mínima deberá estar directamente relacionada
+con el objeto de la contratación.
+
+=== PÁGINA 14 ===
+d.​ La experiencia adquirida en calidad de subcontratista será reconocida y
+aceptada por la entidad contratante, siempre y cuando tenga directa
+relación al objeto contractual.
+
+De igual manera, para los profesionales que participan individualmente,
+será acreditable la experiencia adquirida en relación de dependencia, ya
+sea en calidad de residente o superintendente de trabajos y su valoración,
+cuando gire en torno a los montos contractuales, se cumplirá considerando
+el 40% del valor del contrato en el que tales profesionales participaron en
+las calidades que se señalaron anteriormente. No se aceptará experiencia
+adquirida como administrador o fiscalizador de un contrato en calidad de
+servidor público.
+
+e.​ La
+entidad contratante obligatoriamente deberá dimensionar los
+parámetros de calificación de experiencia general y específica mínima
+requerida de conformidad con el contenido de la siguiente tabla y en
+función del presupuesto referencial del procedimiento de contratación:
+
+Experiencia general y especifica mínima requerida para procedimientos de contratación
+de Régimen Común
+Coeficiente respecto al
+presupuesto inicial del
+Estado
+Monto de
+experiencia
+general mínima
+requerida en
+relación al
+presupuesto
+referencial
+Monto de
+experiencia
+específica mínima
+requerida en
+relación al
+presupuesto
+referencial
+Monto mínimo
+requerido por
+cada contrato en
+relación al monto
+determinado en
+la experiencia
+mínima general o
+específica, según
+corresponda.
+Mayor a
+Hasta
+
+0
+0,000002 No mayor a 10 %
+No mayor a 5 %
+No mayor a 5%
+0,000002
+0,000007 No mayor a 20 %
+No mayor a 10 %
+No mayor a 10 %
+0,000007
+0,000015 No mayor a 30 %
+No mayor a 15 %
+No mayor a 15 %
+0,000015
+0,00003
+No mayor a 40 %
+No mayor a 20 %
+No mayor a 20 %
+0,00003
+0,0002
+No mayor a 50 %
+No mayor a 25 %
+No mayor a 25 %
+0,0002
+0,0004
+No mayor a 60 %
+No mayor a 30 %
+No mayor a 30 %
+
+=== PÁGINA 15 ===
+0,0004
+0,0007
+No mayor a 70 %
+No mayor a 40 %
+No mayor a 30 %
+mayor a
+0,0007
+No mayor a 75 %
+No mayor a 60 %
+No mayor a 50 %
+
+Estas condiciones no estarán sujetas al número de contratos o instrumentos
+presentados por el oferente para acreditar la experiencia mínima general o
+específica requerida, sino, al cumplimiento de estas condiciones en
+relación a los montos mínimos requeridos para cada tipo de experiencia.
+
+Si con la presentación de un contrato o instrumento que acredite la
+experiencia mínima específica, el proveedor cumpliere el monto mínimo
+solicitado para la experiencia mínima general, este contrato o instrumento
+será considerado como válido para acreditar los dos tipos de experiencias.
+
+La entidad contratante deberá solicitar como temporalidad de experiencia
+general y específica al menos diez (10) años, contados hasta la fecha límite
+de presentación de las ofertas. Por lo tanto, el contratista podrá acreditar la
+experiencia general y específica dentro de dicho período.
+
+f.​ La experiencia presentada por el oferente será acreditable y aceptada,
+siempre que se haya ejecutado legalmente dentro del límite de cualquier
+jurisdicción ecuatoriana. Únicamente, cuando la entidad contratante con la
+debida motivación técnica y legal así lo justifique, en la que compruebe
+que no existe experiencia previa suficiente obtenida por ningún oferente
+ecuatoriano dentro del límite de cualquier jurisdicción ecuatoriana, de
+conformidad a los requisitos del procedimiento de contratación, y, previa
+autorización de la máxima autoridad o su delegado, se podrá aceptar y
+acreditar experiencia legalmente obtenida en el extranjero. Sin perjuicio de
+lo anterior, cuando un consorcio o asociación o compromiso de asociación
+o consorcio conformado por una persona natural o jurídica ecuatoriana y
+una persona natural o jurídica extranjera que provea el financiamiento para
+la ejecución de una obra en un porcentaje superior al 60% del valor del
+objeto contractual, la experiencia que acredite el integrante extranjero del
+consorcio en el exterior, será acreditada.
+
+=== PÁGINA 16 ===
+4.1.5.​ Experiencia mínima del personal técnico:
+
+No.
+Función
+Nivel de
+estudio
+Titulación
+Académica
+Cantidad
+
+No.
+Descripción
+Tiempo
+Número de
+Proyectos
+Monto de
+Proyectos
+
+4.1.6.​ Patrimonio: (Aplicable a personas jurídicas)
+
+4.1.7.​ Metodología de construcción
+
+La entidad contratante deberá especificar los aspectos puntuales que el oferente
+deberá cumplir como parte de la metodología de construcción. Este requisito será
+exigido en pliego pero no será considerado como un parámetro de verificación de
+la oferta ni será objeto de evaluación por puntaje.
+
+4.1.8.​ Cronograma de ejecución del proyecto:
+
+El cronograma de ejecución de la obra será presentado por el oferente y verificado
+por la entidad contratante conforme lo establecido en este pliego.
+
+4.1.9. Verificación de cumplimiento de integridad y requisitos mínimos de la
+oferta:
+
+PARÁMETRO
+CUMPLE NO CUMPLE
+OBSERVACIONES
+Integridad de la oferta
+
+Equipo mínimo
+
+Este parámetro se considerará
+cumplido
+con
+la
+sola
+presentación del Formulario de
+
+=== PÁGINA 17 ===
+compromiso de cumplimiento
+de
+parámetros
+en
+etapa
+contractual.
+Personal
+técnico
+mínimo
+
+Este parámetro se considerará
+cumplido
+con
+la
+sola
+presentación del Formulario de
+compromiso de cumplimiento
+de
+parámetros
+en
+etapa
+contractual.
+Experiencia
+General
+mínima
+
+Experiencia Específica
+mínima
+
+Experiencia mínima del
+personal técnico
+
+Este parámetro se considerará
+cumplido
+con
+la
+sola
+presentación del Formulario de
+compromiso de cumplimiento
+de
+parámetros
+en
+etapa
+contractual.
+Patrimonio
+(Personas
+Jurídicas)
+
+Metodología
+de
+ejecución de la obra
+
+Este parámetro se considerará
+cumplido
+con
+la
+sola
+presentación del Formulario de
+compromiso de cumplimiento
+de
+parámetros
+en
+etapa
+contractual.
+Cronograma
+de
+ejecución de la obra
+
+Porcentaje
+de
+participación
+ecuatoriana
+mínimo
+(Desagregación
+Tecnológica)
+
+=== PÁGINA 18 ===
+Aquellas ofertas que cumplan integralmente con los parámetros mínimos, pasarán
+a la etapa de evaluación de ofertas con puntaje, caso contrario serán
+descalificadas.
+
+4.1.10.​Información financiera de referencia:
+
+Análisis índices financieros: Las entidades contratantes especificarán y
+determinarán cuál (es) es (son) el (los) índice (s) financieros y, cuál es el valor
+mínimo/máximo aceptable respecto de éstos.
+
+Los índices regularmente aceptados son: índice de Solvencia (mayor o igual a
+1,0); Índice de Endeudamiento (menor a 1,5), siendo estos índices y valores
+recomendados, pudiendo la entidad contratante modificarlos a su criterio. Los
+factores para su cálculo estarán respaldados en la correspondiente declaración de
+impuesto a la renta del ejercicio fiscal correspondiente y/o los balances
+presentados al órgano de control respectivo.
+
+Los índices financieros constituirán información de referencia respecto de los
+participantes en el procedimiento y en tal medida, su análisis se registrará
+conforme el detalle a continuación:
+
+Índice
+Indicador
+solicitado
+Observaciones
+Solvencia*
+
+Endeudamiento*
+
+Otro índice resuelto por la entidad
+contratante *
+
+*Los índices son referenciales; la entidad contratante podrá escoger los señalados
+o aquel (aquellos) que considere pertinente (s).
+
+4.2.​
+Evaluación por puntaje: Solo las ofertas que cumplan con los requisitos
+mínimos serán objeto de evaluación por puntaje.
+
+Se debe considerar que ninguna condición o capacidad requerida a través de los
+parámetros de evaluación que fueran analizados bajo la metodología “Por puntaje”
+
+=== PÁGINA 19 ===
+podrá constituir causal para la descalificación o rechazo del oferente o de su
+oferta.
+
+La entidad contratante deberá determinar los parámetros que serán evaluadas por
+puntaje, los cuales deberán estar definidos, dimensionados y establecer el
+documento o instrumento por medio del cual acreditará las condiciones
+requeridas. De igual manera, se establecerá la condición a la cual se otorgará el
+máximo puntaje y definirá la metodología que se utilizará para valorar a las
+ofertas que no cumplan con las mejores condiciones que considere la entidad
+contratante.
+
+Parámetro sugerido
+Descripción y recomendaciones
+Experiencia General
+No se otorgará puntaje a la experiencia general mínima
+requerida, por ser de cumplimiento obligatorio.
+
+Para que la experiencia general presentada sea susceptible de
+calificación por puntaje, está deberá ser mayor a la establecida
+como requisito mínimo.
+
+El valor total de la experiencia general solicitada adicional al
+requisito mínimo que será puntuada, no podrá superar el valor
+del presupuesto referencial del procedimiento de contratación
+multiplicado por un factor de 1,25.
+
+Se otorgará el máximo puntaje a la o las ofertas que presenten
+como experiencia general adicional el monto más alto y, a las
+demás
+ofertas
+se
+asignará
+un
+puntaje
+directamente
+proporcional.
+Experiencia Específica
+No se otorgará puntaje a la experiencia específica mínima
+requerida, por ser de cumplimiento obligatorio.
+
+Para que la experiencia específica presentada sea susceptible
+de calificación por puntaje, está deberá ser mayor a la
+establecida como requisito mínimo.
+
+=== PÁGINA 20 ===
+El valor total de la experiencia específica solicitada adicional
+al requisito mínimo que será puntuada, no podrá superar el
+valor del presupuesto referencial del procedimiento de
+contratación multiplicado por un factor de 1,25.
+
+Se otorgará el máximo puntaje a la o las ofertas que presenten
+como experiencia específica adicional el monto más alto y, a
+las demás ofertas se asignará un puntaje directamente
+proporcional.
+Oferta económica
+La oferta económica se evaluará aplicando un criterio
+inversamente proporcional; a menor precio, mayor puntaje.
+Participación
+Ecuatoriana
+
+Se otorgarán 10 puntos a las ofertas que, cumpliendo con el
+porcentaje de participación ecuatoriana mínima determinado
+por la entidad a través del Estudio de Desagregación
+Tecnológica, presenten el mayor porcentaje de Participación
+Ecuatoriana; a las demás ofertas se les otorgará el puntaje en
+forma directamente proporcional.
+
+Subcontratación
+preferente
+Se otorgarán 5 puntos a aquellos participantes que propongan
+el mayor porcentaje de subcontratación con Micro o Pequeñas
+Empresas o Actores de la Economía Popular y Solidaria de la
+localidad en donde se ejecutará la obra, con un límite de hasta
+el 30% respecto del valor de su oferta económica.
+
+A las demás, siempre que oferten al menos un porcentaje de
+subcontratación equivalente al 10% del valor de su oferta
+económica, se les otorgará el puntaje en forma directamente
+proporcional con relación al mayor porcentaje propuesto.
+Criterios generales
+En todos los casos se debe identificar la metodología para
+otorgar el máximo puntaje y, a partir de éste, como se
+ponderarán las calificaciones para los demás oferentes.
+- La metodología debe estar íntegramente desarrollada, de tal
+modo que no haya lugar a confusión o discrecionalidad en su
+aplicación. Debe ser universal y aplicable a cualquier
+condición de tal modo que arroje siempre resultados reales y
+coherentes con la condición evaluada.
+
+=== PÁGINA 21 ===
+- En este pliego se señalará la fórmula de ponderación a utilizar
+para la valoración, identificando los parámetros que la
+componen.
+
+Para la valoración se observarán los siguientes criterios:
+
+Parámetro
+Valoración
+Experiencia general
+
+Experiencia específica
+
+Experiencia del personal técnico
+
+Otro(s) parámetro(s) resuelto(s) por la
+entidad *
+Hasta 1 punto
+Oferta económica
+Desde 50 hasta 60 puntos
+Subtotal La sumatoria debe ser 85 puntos
+Subcontratación
+5 puntos
+Participación Ecuatoriana
+10 puntos
+TOTAL La sumatoria debe ser 100 puntos
+
+* La entidad contratante podrá añadir otro u otros parámetros adicionales para
+evaluación de las ofertas, estableciendo su indicador, el medio de comprobación y
+su puntaje que en ningún caso será mayor a 1 punto. No será restrictivo ni
+discriminatorio y deberá estar vinculado con las necesidades del proyecto y
+debidamente justificado.
+
+** Los oferentes deberán llenar la información correspondiente a la
+“Subcontratación” a través del portal de COMPRASPÚBLICAS, la cual deberá
+contener la identificación del rubro, el valor, y la identificación del porcentaje de
+participación del subcontratado respecto del monto contractual.
+
+SECCIÓN V
+OBLIGACIONES DE LAS PARTES
+
+5.1.​
+Obligaciones del adjudicatario en la aplicación de transferencia de
+tecnología:
+
+=== PÁGINA 22 ===
+El adjudicatario deberá cumplir con la transferencia tecnológica, según el nivel
+que corresponda al respectivo código CPC.
+
+5.2.​
+Obligaciones del contratista:
+
+La contratista entregará, en un plazo máximo de cinco (5) día de finalizado el
+(mes o el plazo establecido), la(s) planilla(s), las cuales se pondrán a
+consideración de la fiscalización y serán aprobadas por ella en el término de
+(número de días), luego de lo cual, en forma inmediata, se continuará el trámite de
+autorización del administrador del contrato y solo con dicha autorización se
+procederá al pago.
+
+Además, el contratista presentará con las planillas el estado de avance del
+proyecto y un cuadro informativo resumen, que indicará, para cada concepto de
+trabajo, el rubro, la descripción, unidad, la cantidad total y el valor total
+contratado, las cantidades y el valor ejecutado hasta el (periodo) anterior, y en el
+período en consideración, y la cantidad y el valor acumulado hasta la fecha,
+incluyendo el valor de los rubros subcontratados. Estos documentos se elaborarán
+según el modelo preparado por la fiscalización y serán requisito indispensable
+para tramitar la planilla correspondiente.
+
+5.3.​
+Obligaciones de la contratante:
+
+a.​
+Designar al administrador del contrato.
+b.​
+Dar solución a las peticiones y problemas que se presentaren en la
+ejecución del contrato, en un término de 5 días contados a partir de la
+petición escrita formulada por el contratista.
+c.​
+Proporcionar al contratista los documentos, permisos y autorizaciones
+que se necesiten para la ejecución correcta y legal de la obra, y
+realizar las gestiones que le corresponda efectuar al contratante, ante
+los distintos organismos públicos.
+d.​
+En caso de ser necesario y previo el trámite legal y administrativo
+respectivo, autorizar ordenes de cambio y órdenes de trabajo, a través
+de las modalidades de costo más porcentaje y aumento de cantidades
+de obra, respectivamente.
+
+=== PÁGINA 23 ===
+e.​
+En caso de ser necesario y previo el trámite legal y administrativo
+respectivo, se celebrará los contratos complementarios.
+
+f.​
+Entregar oportunamente y antes del inicio de las obras (describir ej.:
+los terrenos, materiales, equipos, etc.) previstos en el contrato, en
+tales condiciones que el contratista pueda iniciar inmediatamente el
+desarrollo normal de sus trabajos; siendo correspondientes a la entidad
+los costos de expropiaciones, indemnizaciones, derechos de paso y
+otros conceptos similares.
+g.​
+Suscribir las actas de entrega recepciones parciales, provisionales y
+definitivas de las obras contratadas, siempre que se haya cumplido con
+lo previsto en la ley para la entrega recepción; y, en general, cumplir
+con las obligaciones derivadas del contrato.
+
+(De acuerdo con la naturaleza de la contratación, la entidad contratante podrá
+establecer las condiciones adicionales que considere pertinentes.)
+
+5.3.1.​ Obligaciones del contratante en la aplicación de transferencia de
+tecnología:
+​
+
+Las entidades contratantes, de manera obligatoria deberán exigir transferencia
+tecnológica en la compra de bienes, según el nivel de transferencia
+correspondiente y acorde a cada código CPC, de conformidad con lo establecido
+en el Anexo correspondiente de la normativa secundaria expedida por el Servicio
+Nacional de Contratación Pública.
+
+5.4.​
+Ejecución del contrato:
+
+5.4.1.​ Inicio, planificación y control de obra:
+
+Al inicio de la ejecución contractual el administrador del contrato, conjuntamente
+con el fiscalizador, deberán verificar que el contratista cumpla la presentación de
+la documentación relacionada con el equipo mínimo requerido por la entidad
+contratante en los pliegos, y los cronogramas de incorporación de estos; la
+presentación de la documentación relacionada con el personal técnico mínimo y
+su experiencia mínima; y, la presentación de la metodología de ejecución de la
+
+=== PÁGINA 24 ===
+obra. Parámetros que serán utilizados a lo largo de la ejecución de la obra, y que
+en caso de existir algún cambio o modificación, serán revisados y valorados por el
+fiscalizador y administrador del contrato, respectivamente.
+
+En las planillas de ejecución de trabajos o avance de obra, se incluirán los
+resultados de verificación de origen de los componentes y elementos (mano de
+obra, materiales, equipos y servicios) utilizados para la ejecución de los trabajos a
+ser planillados, declarado por la Fiscalización con base a la supervisión in situ de
+los trabajos, las facturas de provisión de materiales y servicios, y formularios de
+pago de aportes al IESS de la mano de obra.
+
+5.4.2.​ Facturación y reajuste: El contratista preparará las planillas, las cuales se
+pondrán a consideración de la fiscalización en los (número de días) de cada
+(período), y serán aprobadas por ella en el término de (número de días), luego de
+lo cual, en forma inmediata, se continuará el trámite de autorización del
+administrador del contrato y solo con dicha autorización se procederá al pago.
+
+A cada planilla se adjuntarán los anexos de medidas, ensayos de suelos y
+materiales, aprobaciones y otros que correspondan.
+
+Además, el contratista presentará con las planillas el estado de avance del
+proyecto y un cuadro informativo resumen, que indicará, para cada concepto de
+trabajo, el rubro, la descripción, unidad, la cantidad total y el valor total
+contratado, las cantidades y el valor de los trabajos ejecutados hasta el periodo
+anterior, y en el período en consideración, y la cantidad y el valor de los trabajos
+acumulado hasta la fecha, incluyendo el valor de los rubros subcontratados. Estos
+documentos se elaborarán según el modelo preparado por la fiscalización y serán
+requisito indispensable para tramitar la planilla correspondiente.
+
+En cada planilla de obra ejecutada, el fiscalizador o la unidad de control de cada
+obra, calculará el reajuste de precios provisional, aplicando las fórmulas de
+reajuste que se indican en el contrato. En el caso de aplicar el reajuste de precios,
+se establecerá como fecha de partida -sub cero-, la correspondiente a los treinta
+(30) días anteriores de la fecha límite de presentación de las ofertas.
+
+=== PÁGINA 25 ===
+El fiscalizador realizará el reajuste definitivo tan pronto se publiquen los índices
+del INEC.
+
+=== PÁGINA 26 ===
+FORMULARIO ÚNICO DE LA OFERTA
+MODELO DE PLIEGO DE LOS PROCEDIMIENTOS DE LICITACIÓN
+DE OBRAS
+Versión 2023-001
+
+=== PÁGINA 27 ===
+MODELO DE PLIEGO DE LOS PROCEDIMIENTOS DE LICITACIÓN DE
+OBRAS
+Versión 2023-001
+
+III. FORMULARIOS DE LICITACIÓN DE OBRAS
+
+SECCIÓN I
+FORMULARIO ÚNICO DE LA OFERTA
+1.1.​
+PRESENTACIÓN Y COMPROMISO
+1.2.​
+DATOS GENERALES DEL OFERENTE
+1.3.​
+NÓMINA DE ACCIONISTAS, PARTÍCIPES O SOCIOS
+MAYORITARIOS DE PERSONAS JURÍDICAS Y DECLARACIÓN DE
+BENEFICIARIO FINAL.
+1.4.​
+SITUACIÓN FINANCIERA
+1.5.​
+TABLA DE DESCRIPCIÓN DE RUBROS, UNIDADES,
+CANTIDADES Y PRECIOS
+1.6.​
+ANÁLISIS DE PRECIOS UNITARIOS
+1.7.​
+METODOLOGÍA DE CONSTRUCCIÓN
+1.8.​
+CRONOGRAMA VALORADO DE TRABAJOS
+1.9.​
+EXPERIENCIA DEL OFERENTE
+1.10.​ PERSONAL TÉCNICO PROPUESTO PARA EL PROYECTO
+1.11.​ EQUIPO ASIGNADO AL PROYECTO
+SECCIÓN II​
+
+FORMULARIO DE COMPROMISO DE CUMPLIMIENTO DE
+PARÁMETROS EN ETAPA CONTRACTUAL
+2.1. Compromiso de cumplimiento de parámetros en etapa contractual:
+equipo mínimo requerido; personal técnico mínimo requerido y
+experiencia del personal técnico; metodología
+SECCIÓN III
+
+FORMULARIO DE COMPROMISO DE ASOCIACIÓN O
+CONSORCIO
+SECCIÓN IV
+FORMULARIO DE COMPROMISO PARA SUBCONTRATACIÓN
+
+SECCIÓN I
+
+=== PÁGINA 28 ===
+FORMULARIO ÚNICO DE LA OFERTA
+
+NOMBRE DEL OFERENTE:
+……………………………………………………….
+
+1.1.​
+PRESENTACIÓN Y COMPROMISO
+
+El que suscribe, en atención a la convocatoria efectuada por (nombre de la
+entidad contratante) para la ejecución de (nombre de la obra o proyecto), luego
+de examinar el pliego del presente procedimiento de ejecución de obras, al
+presentar esta oferta por (sus propios derechos, si es persona natural) /
+(representante legal o apoderado de si es persona jurídica), (procurador común
+si se trata de asociación o consorcio) declara que:
+
+1.​ La única persona o personas interesadas en esta oferta está o están
+nombradas en ella, sin que incurra en actos de ocultamiento o simulación
+con el fin de que no aparezcan sujetos inhabilitados para contratar con el
+Estado.
+
+2.​ La oferta la hace en forma independiente y sin conexión abierta u oculta
+con otra u otras personas, compañías o grupos participantes en este
+procedimiento de ejecución de obras
+
+3.​ Al presentar esta oferta, cumple con toda la normativa general, sectorial y
+especial aplicable a su actividad económica, profesión, ciencia u oficio; y,
+que los equipos vehículos y materiales que se incorporarán a la obra, así
+como los que se utilizarán para su ejecución, en caso de adjudicación del
+contrato, serán de propiedad del oferente o arrendados y contarán con
+todos los permisos que se requieran para su utilización.
+
+4.​ Suministrará la mano de obra, equipos y materiales requeridos para la
+construcción del proyecto, de acuerdo con el pliego, realizará las obras en
+el plazo y por los precios unitarios indicados en el Formulario Único de la
+Oferta; que, al presentar esta oferta, ha considerado todos los costos
+obligatorios que debe y deberá asumir en la ejecución contractual,
+especialmente aquellos relacionados con obligaciones sociales, laborales,
+de seguridad social, ambientales y tributarias vigentes.
+
+5.​ Acepta que en el caso de que se comprobare una violación a los
+compromisos establecidos en el presente Formulario, la entidad
+contratante le descalifique como oferente, o dé por terminado en forma
+
+=== PÁGINA 29 ===
+inmediata el contrato, observando el debido proceso, para lo cual se allana
+a responder por los daños y perjuicios que tales violaciones hayan
+ocasionado.
+
+6.​ Conoce las condiciones del sitio de la obra, ha estudiado los planos,
+especificaciones técnicas y demás información del pliego, las aclaraciones
+y respuestas realizadas en el proceso, y en esa medida renuncia a cualquier
+reclamo posterior, aduciendo desconocimiento por estas causas.
+
+7.​ Entiende que las cantidades indicadas en el Formulario de Oferta para este
+proyecto son solamente aproximadas y, por tanto sujetas a aumento o
+disminución, por lo que está dispuesto a efectuar los aumentos y/o
+disminuciones de las cantidades requeridas que fueren necesarios, a los
+precios unitarios de la oferta, y dentro de los límites indicados en los
+planos y especificaciones técnicas, y utilizando la modalidad que aplique
+de acuerdo con la Ley Orgánica del Sistema Nacional de Contratación
+Pública.
+
+8.​ De resultar adjudicatario, manifiesta que suscribirá el contrato
+comprometiéndose a ejecutar la obra sobre la base de los estudios con los
+que cuente la entidad contratante, los mismos que declara conocerlos; y en
+tal virtud, no podrá aducir error, falencia o cualquier inconformidad de
+dichos estudios, como causal para solicitar ampliación del plazo,
+contratación de rubros nuevos o contratos complementarios.
+
+9.​ Garantiza la veracidad y exactitud de la información y documentación
+proporcionada; así como de las declaraciones realizadas para el presente
+procedimiento de contratación, inclusive aquellas respecto de la calidad de
+productor nacional; contenidas en los documentos de la oferta, formularios
+y otros anexos.
+
+10.​No contratará a personas menores de edad para realizar actividad alguna
+durante la ejecución contractual; y que, en caso de que las autoridades del
+ramo determinaren o descubrieren tal práctica, se someterán y aceptarán
+las sanciones que de tal práctica puedan derivarse, incluso la terminación
+unilateral y anticipada del contrato, con las consecuencias legales y
+reglamentarias pertinentes.
+
+11.​Declaro que en calidad de oferente, no me encuentro incurso en las
+inhabilidades generales y especiales para contratar, establecidas en la
+LOSNCP y su Reglamento General y demás normativa aplicable.
+
+=== PÁGINA 30 ===
+12.​Declaro libre y voluntariamente que la procedencia de los fondos y
+recursos utilizados para el presente procedimiento de contratación pública
+son de origen lícito; para lo cual, proporcionaré a la entidad contratante, al
+Servicio Nacional de Contratación Pública y a los organismos de control
+competentes, la información necesaria referente al representante legal, en
+el caso de personas jurídicas; o, del procurador común de los compromisos
+de asociación o consorcio o de las asociaciones o consorcios constituidos;
+así como de sus socios o partícipes, hasta identificar a la última persona
+natural. Información que le permitirá a la entidad contratante, al Servicio
+Nacional de Contratación Pública y a los organismos de control
+competentes, verificar que el oferente se encuentra debidamente habilitado
+para participar del presente procedimiento de contratación pública.
+
+13.​Así también, en la letra C, del numeral 1.3 de la Sección I del presente
+formulario, declaro la identidad de la persona natural que será el
+beneficiario final de los recursos públicos y/o quien ejerza el control de las
+cuentas bancarias relacionadas o inmersas en el flujo de los recursos
+públicos obtenidos como consecuencia del contrato respectivo.
+
+14.​El oferente adjudicatario, una vez suscrito el contrato, acepta presentar al
+inicio de la ejecución contractual, la documentación relacionada con el
+equipo mínimo requerido por la entidad contratante en los pliegos; la
+documentación relacionada con el personal técnico mínimo y su
+experiencia; y, la presentación de la metodología de ejecución, conforme
+los cronogramas de incorporación de equipo y personal operativo de
+acuerdo al cronograma valorado de la oferta.
+
+15.​Así mismo, declaro conocer que toda la información relacionada con los
+pagos recibidos como contratista o subcontratista del Estado; así como, sus
+movimientos financieros, tendrán el carácter de públicos y deberán ser
+difundidos a través de un portal de información o página web destinada
+para el efecto, que permitan detectar con certeza el flujo de los fondos
+públicos. No se podrá alegar reserva tributaria, societaria, bursátil ni
+bancaria sobre este tipo de información.
+
+16.​Según el caso, se deberá agregar los siguientes numerales:
+
+*(Si el oferente fuere extranjero, se añadirá un literal que dirá: d)
+Previamente a la firma del contrato, el oferente se compromete a
+
+=== PÁGINA 31 ===
+domiciliarse en el país conforme lo dispone la Ley de Compañías; y, a
+obtener el RUP).
+
+*(Si el lugar donde se va a ejecutar la obra o se destinarán los bienes y/o
+servicios objeto de la contratación pertenece al ámbito territorial
+determinado en la Ley Orgánica para la Planificación Integral de la
+Circunscripción Territorial Especial Amazónica, se agregará un numeral
+que dirá: El oferente, de resultar adjudicado, declara y acepta que para
+la ejecución del contrato, contará con al menos el 70% de servicios o
+mano de obra de residentes de esa Circunscripción, con excepción de
+aquellas actividades para las que no exista personal calificado o que el
+bien sea de imposible manufacturación en esa Circunscripción.)
+
+Para constancia de lo ofertado, suscribo este formulario,
+
+-------------------------------------------------------
+FIRMA DEL OFERENTE, SU REPRESENTANTE LEGAL, APODERADO
+O PROCURADOR COMÚN (según el caso) **
+
+(LUGAR Y FECHA)
+
+1.2.​
+DATOS GENERALES DEL OFERENTE.
+
+NOMBRE DEL OFERENTE: (determinar si es persona natural, jurídica,
+consorcio o asociación; en este último caso, se identificará a los miembros del
+consorcio o asociación. Se determinará al representante legal, apoderado o
+procurador común, de ser el caso).
+
+DATOS GENERALES DEL OFERENTE
+
+Participación:
+
+Nombre del oferente:
+
+Origen:
+
+=== PÁGINA 32 ===
+R.U.C.
+
+Naturaleza:
+
+DOMICILIO DEL OFERENTE
+
+Provincia:
+
+Cantón:
+
+Calle principal:
+
+Número:
+
+Calle secundaria:
+
+Código Postal:
+
+Teléfono:
+
+Correo electrónico:
+
+1.3.​
+NÓMINA
+DE
+ACCIONISTAS,
+PARTÍCIPES
+O
+SOCIOS
+MAYORITARIOS DE PERSONAS JURÍDICAS Y DECLARACIÓN DEL
+BENEFICIARIO FINAL.
+​
+​
+A.​
+DECLARACIÓN
+
+En mi calidad de representante legal de (razón social) declaro bajo juramento y en
+pleno conocimiento de las consecuencias legales que conlleva faltar a la verdad,
+que:
+
+1. Libre y voluntariamente presento la nómina de socios, accionistas o partícipes
+mayoritarios que detallo más adelante, para la verificación de que ninguno de ellos
+esté inhabilitado en el RUP para participar en los procedimientos de contratación
+pública;
+
+1.1.- Libre y voluntariamente autorizo al SERCOP a publicar la información
+declarada en esta oferta sobre las personas naturales identificadas como
+beneficiarios finales y/o que ejerzan el control de las cuentas bancarias relacionadas
+o inmersas en el flujo de los recursos públicos obtenidos como consecuencia del
+contrato respectivo, conjuntamente con el listado de los socios, accionistas y
+partícipes mayoritarios. Información que le permitirá a la entidad contratante, al
+Servicio Nacional de Contratación Pública y a los organismos de control
+competentes, verificar lo siguiente:
+
+=== PÁGINA 33 ===
+- Que el oferente y sus socios, accionistas o partícipes mayoritarios, se encuentran
+debidamente habilitados para participar en el presente procedimiento de
+contratación pública; y,
+
+- Detectar con certeza el flujo de los recursos públicos, otorgados en calidad de
+pagos a los contratistas y subcontratistas del Estado.
+
+2. La compañía a la que represento (SI/NO) está registrada en la BOLSA DE
+VALORES; y la misma, (SI/NO) cotiza en bolsa.
+
+En caso de que, la persona jurídica este REGISTRADA en alguna bolsa de
+valores, deberá agregar el siguiente cuadro:
+
+NUMERO DE REGISTRO
+FECHA DE REGISTRO
+
+(En caso de que la persona jurídica COTICE en bolsa de valores, deberá agregar
+el siguiente cuadro:
+
+3. Garantizo la veracidad y exactitud de la información; y, autorizo a la entidad
+contratante, al Servicio Nacional de Contratación Pública, o a los órganos de
+control, a efectuar averiguaciones para comprobar tal información.
+
+4. Acepto que, si el contenido de la presente declaración no corresponda a la
+verdad, la entidad contratante:
+
+a) Observando el debido proceso, aplique la sanción indicada la Ley Orgánica
+del Sistema Nacional de Contratación Pública;
+
+b) Descalifique a mi representada como oferente; o,
+
+c) Proceda a la terminación unilateral del contrato respectivo, en cumplimiento
+de la Ley Orgánica del Sistema Nacional de Contratación Pública, si tal
+comprobación ocurriere durante la vigencia de la relación contractual.
+
+B. NÓMINA DE ACCIONISTAS, PARTÍCIPES O SOCIOS
+MAYORITARIOS DE PERSONAS JURÍDICAS:
+
+DECLARO QUE COTIZO EN LA BOLSA DE VALORES
+(nombre de la bolsa de valores)
+
+=== PÁGINA 34 ===
+TIPO DE PERSONA JURÍDICA:…………………………………….
+
+Los accionistas, partícipes o socios mayoritarios de cada uno de los oferentes que
+sean personas jurídicas, deberán completar el siguiente cuadro:
+
+Nombres completos
+del accionista,
+partícipe o socio
+mayoritario de la
+persona jurídica
+Número de cédula de
+ciudadanía, RUC o
+identificación similar
+emitida por país
+extranjero, de ser el caso
+Porcentaje de
+participación en la
+estructura de
+propiedad
+de la persona jurídica
+Domicili
+o Fiscal
+
+NOTA: Este apartado aplica únicamente para personas jurídicas. En el caso que
+requiera mayor desglose deberá incluirlo como anexo en su oferta. De no incluir
+dicha información será causal de descalificación.
+
+C. DECLARACIÓN DE BENEFICIARIO FINAL
+
+Declaro que las siguientes personas naturales, son los beneficiarios finales del
+flujo de recursos públicos en el presente procedimiento de contratación pública:
+
+Nombre
+Cédula/Pasaporte Nacionalidad
+Nro. (s) de
+Cuenta (s)
+Institución
+Financiera
+
+NOTA: Este apartado debe llenarse obligatoriamente en todos los casos, sin
+importar si el oferente es persona natural o persona jurídica, de conformidad con
+lo señalado en la Normativa Secundaria.
+
+1.4.​
+SITUACIÓN FINANCIERA
+
+La situación financiera del oferente se demostrará con la presentación del
+formulario de declaración de impuesto a la renta del ejercicio fiscal inmediato
+anterior que fue entregada al Servicio de Rentas Internas SRI.
+
+El participante presentará la información requerida por la entidad contratante para
+los índices financieros por ella solicitada, conforme el siguiente cuadro:
+
+=== PÁGINA 35 ===
+Índice
+Indicador
+solicitado
+Indicador
+declarado por el
+oferente
+Observaciones
+(Adjuntar
+documentos de
+respaldo)
+Solvencia
+
+Endeudamiento
+
+Otro índice resuelto por la
+entidad contratante
+
+1.5.​
+TABLA DE DESCRIPCIÓN DE RUBROS, UNIDADES,
+CANTIDADES Y PRECIOS
+
+No.
+Rubro /
+Descripción
+Unidad
+Cantidad
+Precio
+referencial
+unitario
+Precio
+referencial
+global
+
+TOTAL
+
+PRECIO TOTAL DE LA OFERTA: (en números), sin IVA
+
+Para el caso de Licitación de Obras se utilizará la siguiente Tabla:
+
+No.
+Descripción Cantidad
+Unidad
+Precio
+referencia
+unitario
+Precio
+referencial
+global
+Precio
+relativo del
+rubro
+Agregado
+Ecuatoriano
+del rubro
+Agregado
+Ecuatoriano
+Ponderado
+
+TOTAL
+
+1.6.​
+ANALISIS DE PRECIOS UNITARIOS
+
+Rubro:................................................
+
+Unidad ..........
+
+=== PÁGINA 36 ===
+Detalle:……….....................................
+
+EQUIPOS
+Descripción
+Cantidad
+Tarifa
+Costo hora
+Rendimiento
+Costo
+
+A
+B
+C=A*B
+R
+D=C*R
+
+SUBTOTAL M
+
+MANO DE OBRA
+Descripción
+Cantidad
+Jornal/hr
+Costo hora
+Rendimiento
+Costo
+
+A
+B
+C=A*B
+R
+D=C*R
+
+SUBTOTAL N
+
+MATERIALES
+Descripción
+
+Unidad
+Cantidad
+Precio unitario
+Costo
+
+A
+B
+C=A*B
+
+SUBTOTAL O
+
+TRANSPORTE
+Descripción
+
+Unidad
+Cantidad
+Tarifa
+Costo
+
+A
+B
+C=A*B
+
+SUBTOTAL P
+ 
+
+TOTAL COSTO DIRECTO (M+N+O+P)
+
+INDIRECTOS %
+
+UTILIDAD %
+
+COSTO TOTAL DEL RUBRO
+
+VALOR OFERTADO
+
+ESTE PRECIO NO INCLUYE IVA.
+
+1.7.​
+METODOLOGÍA DE CONSTRUCCIÓN
+
+(Indicar con el suficiente detalle la metodología y procedimientos a seguirse para
+los diferentes trabajos de ejecución de las obras. Se considerará la correcta
+secuencia de actividades y el número de frentes de trabajo simultáneo que se
+propone. Usar las hojas que se consideren necesarias. El oferente no reproducirá
+
+=== PÁGINA 37 ===
+las especificaciones técnicas de la obra para describir la metodología que
+propone usar.)
+
+1.8.​
+CRONOGRAMA VALORADO DE TRABAJOS
+
+Rubro
+
+Cantidad
+
+Precio
+unitario
+Precio
+total
+Tiempo en (semanas, meses)
+
+1
+2
+3
+4
+5
+6
+7
+8
+9 10 11 12
+
+Inversión mensual
+
+Avance parcial en %
+
+Inversión acumulada 
+
+Avance acumulado en %
+
+1.9.​
+EXPERIENCIA DEL OFERENTE
+
+No.
+
+Tipo
+
+Contratante
+
+Objeto de contrato
+
+Valor del Contrato
+Fecha de
+recepción
+
+A) Experiencia en obras similares
+ Con un acta de entrega-recepción provisional o definitiva
+ 1
+
+ 2
+
+ 3
+
+B) Contratos en ejecución con un avance de al menos el 75% contratado
+1
+
+2
+
+3
+
+=== PÁGINA 38 ===
+NOTA: Se adjuntará la planilla de avance que justifica el porcentaje requerido o
+la certificación correspondientes según el caso.
+
+1.10.​ PERSONAL TÉCNICO PROPUESTO PARA EL PROYECTO
+
+Nombre Nacionalidad Título Fecha
+grado
+Cargo a
+ocupar Participación Experiencia en
+obras similares Observaciones
+
+NOTA: De acuerdo con la Ley de Ejercicio Profesional de la Ingeniería, se
+deberá cumplir con lo siguiente:
+
+a)​
+Las empresas nacionales o extranjeras, para realizar trabajos de ingeniería
+en el Ecuador, deberán contar con los servicios de un ingeniero ecuatoriano en
+ejercicio legal de su profesión, en calidad de representante técnico afín a la
+naturaleza del trabajo que se realice.
+
+zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz
+as empresas nacionales o extranjeras, así como los consorcios de las empresas
+nacional y/o extranjeras que se formaren para la ejecución de trabajos de
+ingeniería deberán tener, obligatoriamente para la realización de dicho trabajo, un
+personal de ingenieros empleados en el proyecto no menor del 80% del total de
+ingenieros, hasta el año décimo de su establecimiento en el país; a partir del
+undécimo año deberán incrementar el porcentaje de profesionales nacionales en
+un 4% por año, hasta completar un 90%. En caso de que no hubiere en el país
+profesionales nacionales especializados en la labor que efectúan esas empresas o
+consorcios, éstos quedan obligados a emplearlos para su capacitación en el campo
+de especialidad.
+
+=== PÁGINA 39 ===
+1.11.​
+EQUIPO ASIGNADO AL PROYECTO
+
+Detalle del
+equipo (Tipo,
+potencia,
+capacidad, etc.)
+Fecha de
+fabricación
+Ubicación
+actual
+Propietario
+actual
+Matrícula
+No. **
+Observaciones
+
+** La columna con información de matrícula deberá ser completada
+exclusivamente tratándose de vehículos y equipo caminero.
+
+Para constancia de lo ofertado, suscribo este formulario,
+
+-------------------------------------------------------
+FIRMA DEL OFERENTE, SU REPRESENTANTE LEGAL, APODERADO
+O PROCURADOR COMÚN (según el caso)
+
+(LUGAR Y FECHA)
+
+=== PÁGINA 40 ===
+SECCIÓN III
+FORMULARIO DE COMPROMISO DE ASOCIACIÓN O CONSORCIO
+
+Comparecen
+a
+la
+suscripción
+del
+presente
+compromiso,
+por
+una
+parte,……………………….(persona natural o representante legal de persona
+jurídica), debidamente representada por…………… ………….; y, por otra parte,
+(personas natural o representante legal de persona jurídica),…..………
+representada por…………… …………., todos debidamente registrados y
+habilitados en el RUP.
+
+Los comparecientes, en las calidades que intervienen, capaces para contratar y
+obligarse, acuerdan suscribir el presente compromiso de Asociación o Consorcio
+para participar en el procedimiento de contratación No. ……., cuyo objeto
+es………………………. y por lo tanto expresamos lo siguiente:
+
+a)​ El Procurador Común de la Asociación o Consorcio será (indicar el
+nombre), con cédula de ciudadanía o pasaporte No. ______________ de
+(Nacionalidad), quien está expresamente facultado representar en la fase
+precontractual.
+
+b)​ El detalle valorado de los aportes de cada uno de los miembros es el
+siguiente: (incluir el detalle de los aportes sea en monetario o en especies,
+así como en aportes intangibles, de así acordarse).
+
+c)​ Los compromisos y obligaciones que asumirán las partes en la fase de
+ejecución contractual, de resultar adjudicada; son los siguientes: (detallar)
+
+d)​ En caso de resultar adjudicados, los oferentes comprometidos en la
+conformación de la asociación o consorcio, declaran bajo juramento que
+formalizarán el presente compromiso mediante la suscripción de la
+pertinente escritura pública y se habilitará al Consorcio constituido en el
+RUP, para dar cumplimiento a lo previsto en la normativa expedida por el
+Servicio Nacional de Contratación Pública, aplicable a este caso.
+
+e)​ La asociación o consorcio está integrado por:
+
+=== PÁGINA 41 ===
+Número
+Asociados o Consorciados
+Porcentaje de
+participación
+1
+
+2
+
+El total de la columna, es decir la suma de los porcentajes de participación
+de los miembros, debe ser igual al 100%.
+
+f)​ La responsabilidad de los integrantes de la asociación o consorcio es
+solidaria e indivisible para el cumplimiento de todas y cada una de las
+responsabilidades
+y
+obligaciones
+emanadas
+del
+procedimiento
+precontractual, con renuncia a los beneficios de orden y excusión.
+
+g)​ La constitución de la asociación o consorcio se la realizará dentro del
+plazo establecido en la normativa vigente o en el pliego, previo a la
+suscripción del contrato.
+
+h)​ El plazo del compromiso de asociación o consorcio y plazo del acuerdo en
+caso de resultar adjudicatario, cubrirá la totalidad del plazo precontractual,
+hasta antes de suscribir el contrato de asociación o consorcio respectivo, y
+noventa días adicionales.
+
+Además, manifestamos que el consorcio cumplirá con todo lo determinado en la
+Ley Orgánica del Sistema Nacional de Contratación Pública y su Reglamento
+General, así como con lo establecido en la normativa que expida el Servicio
+Nacional de Contratación Pública.
+Atentamente,
+
+Asociado o consorciado 1.-
+Firma: Representante Legal o persona
+natural.
+Nombre:
+Representante
+Legal
+o
+persona natural.
+Domicilio:
+Lugar de recepción de notificaciones:
+Asociado o consorciado 2.-
+Firma: Representante Legal o persona
+natural
+Nombre:
+Representante
+Legal
+o
+persona natural.
+Domicilio:
+Lugar de recepción de notificaciones:
+
+=== PÁGINA 42 ===
+SECCIÓN III
+FORMULARIO DE COMPROMISO PARA SUBCONTRATACIÓN
+Versión 2023-001
+
+Hoja....de .....
+
+Yo,.........................................,
+en
+mi
+calidad
+de
+persona
+natural
+/
+REPRESENTANTE
+LEGAL
+de……………………,
+de
+profesión.............................., con número de RUP…………., me comprometo a
+prestar
+los
+servicios
+de
+mi
+representada,
+como
+subcontratista
+del
+oferente…………………, en el procedimiento de ejecución de obra para la
+construcción de (objeto del contrato), durante el período que dure la ejecución de
+la obra, con (nombre del oferente) en el caso de que suscriba el contrato de
+ejecución de las obras.
+
+Declaro bajo juramento que no tengo relación de asociación, dependencia,
+parentesco de ningún tipo con los accionistas, representantes y/o propietarios de la
+oferente a la cual me comprometo a prestar mis servicios en calidad de
+subcontratista. Asimismo, declaro que la información que a continuación se
+agrega es cierta y que ni mi persona o los socios, aportantes y/o integrantes de la
+MYPE y/o EPS que represento no tiene relación de naturaleza alguna con los
+accionistas, representantes y/o propietarios de la oferente.
+
+Para tal efecto, dejo señalado que los rubros que se subcontratará son los
+determinados a continuación, de conformidad con el presupuesto detallado en la
+Tabla de Cantidades y Precios ofertada.
+
+Identificación del rubro
+Valor ($)
+% respecto el monto
+contractual
+
+​
+​
+​
+​
+​
+​
+SUMA TOTAL SUMA TOTAL
+
+----------------------------------------
+(LUGAR Y FECHA)
+
+​
+​
+​
+​
+----------------------------------------
+​
+(FIRMA DEL REPRESENTANTE LEGAL)
+RAZÓN SOCIAL…………………
+
+Cantón:
+
+=== PÁGINA 43 ===
+Parroquia:
+Dirección:
+Teléfono(s):
+Télex o fax:
