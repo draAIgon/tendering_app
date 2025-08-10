@@ -776,6 +776,18 @@ async def upload_and_compare_proposals(
         for temp_file in temp_files:
             os.unlink(temp_file)
         
+        # Guardar resultado de comparación en disco
+        try:
+            comparison_result_file = ANALYSIS_DB_DIR / comparison_id / "comparison_result.json"
+            comparison_result_file.parent.mkdir(parents=True, exist_ok=True)
+            
+            with open(comparison_result_file, 'w', encoding='utf-8') as f:
+                json.dump(comparison_result, f, indent=2, ensure_ascii=False, default=str)
+            
+            logger.info(f"Resultado de comparación guardado en: {comparison_result_file}")
+        except Exception as e:
+            logger.warning(f"Error guardando resultado de comparación: {e}")
+        
         # Cachear sistema
         system_cache[comparison_id] = system
         
@@ -805,30 +817,73 @@ async def upload_and_compare_proposals(
 async def get_comparison_result(comparison_id: str):
     """Obtener resultados de comparación"""
     
-    if comparison_id not in system_cache:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Comparación '{comparison_id}' no encontrada"
-        )
+    # Primero intentar obtener desde caché
+    if comparison_id in system_cache:
+        try:
+            system = system_cache[comparison_id]
+            
+            # Obtener todos los resultados de comparación disponibles
+            comparison_data = {
+                "comparison_id": comparison_id,
+                "system_status": system.get_system_status(),
+                "analysis_results": system.analysis_results
+            }
+            
+            return JSONResponse(content={
+                "status": "success",
+                "comparison": comparison_data
+            })
+            
+        except Exception as e:
+            logger.error(f"Error obteniendo comparación desde caché: {e}")
     
+    # Si no está en caché, intentar cargar desde disco
     try:
-        system = system_cache[comparison_id]
-        
-        # Obtener todos los resultados de comparación disponibles
-        comparison_data = {
-            "comparison_id": comparison_id,
-            "system_status": system.get_system_status(),
-            "analysis_results": system.analysis_results
-        }
-        
-        return JSONResponse(content={
-            "status": "success",
-            "comparison": comparison_data
-        })
-        
+        comparison_db_path = ANALYSIS_DB_DIR / comparison_id
+        if comparison_db_path.exists():
+            # Buscar archivo de resultados de comparación
+            comparison_files = list(comparison_db_path.glob("*comparison*"))
+            analysis_files = list(comparison_db_path.glob("*analysis_result*"))
+            
+            if comparison_files or analysis_files:
+                # Reconstruir sistema desde disco
+                system = BiddingAnalysisSystem(data_dir=str(comparison_db_path))
+                system.initialize_system()
+                
+                # Cargar resultados existentes
+                comparison_data = {
+                    "comparison_id": comparison_id,
+                    "system_status": "reconstructed_from_disk",
+                    "analysis_results": {},
+                    "available_files": [f.name for f in comparison_db_path.glob("*.json")]
+                }
+                
+                # Cargar archivos JSON disponibles
+                for json_file in comparison_db_path.glob("*.json"):
+                    try:
+                        with open(json_file, 'r', encoding='utf-8') as f:
+                            data = json.load(f)
+                            comparison_data["analysis_results"][json_file.stem] = data
+                    except Exception as e:
+                        logger.warning(f"Error cargando {json_file}: {e}")
+                
+                # Cachear sistema reconstruido
+                system_cache[comparison_id] = system
+                
+                return JSONResponse(content={
+                    "status": "success",
+                    "comparison": comparison_data,
+                    "note": "Resultados cargados desde disco"
+                })
+    
     except Exception as e:
-        logger.error(f"Error obteniendo comparación: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"Error cargando comparación desde disco: {e}")
+    
+    # Si no se encuentra en ningún lado
+    raise HTTPException(
+        status_code=404,
+        detail=f"Comparación '{comparison_id}' no encontrada. Resultados de análisis no disponibles."
+    )
 
 # ===================== GENERACIÓN DE REPORTES =====================
 

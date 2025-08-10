@@ -53,6 +53,7 @@ export interface AnalysisResult {
     financial_analysis?: Record<string, unknown>;
     legal_analysis?: Record<string, unknown>;
     risk_analysis?: Record<string, unknown>;
+    comparison_analysis?: Record<string, unknown>;
     recommendations?: string[];
     summary?: Record<string, unknown>;
   };
@@ -311,6 +312,50 @@ class TenderAIApi {
       throw error;
     }
   }
+
+  async getComparisonResult(comparisonId: string): Promise<AnalysisResult> {
+    debugLog('Obteniendo resultado de comparación', { comparisonId });
+    
+    try {
+      const url = `${this.baseUrl}/api/v1/comparison/${comparisonId}`;
+      debugLog('URL de consulta de comparación:', url);
+      
+      const response = await fetch(url);
+      
+      debugLog('Respuesta de comparación recibida', { 
+        status: response.status, 
+        statusText: response.statusText 
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ detail: 'Error desconocido' }));
+        throw new Error(errorData.detail || `Error HTTP: ${response.status}`);
+      }
+
+      const result = await response.json();
+      debugLog('Resultado de comparación obtenido', result);
+      
+      // Transformar respuesta de comparación a formato AnalysisResult
+      const transformedResult: AnalysisResult = {
+        document_id: comparisonId,
+        status: result.status === 'success' ? 'success' : 'error',
+        results: {
+          comparison_analysis: result.comparison,
+          technical_analysis: result.comparison?.analysis_results || {},
+          summary: {
+            comparison_type: 'multiple_documents',
+            documents_compared: result.comparison?.system_status || 'N/A',
+            available_files: result.comparison?.available_files || []
+          }
+        }
+      };
+      
+      return transformedResult;
+    } catch (error) {
+      debugError('Error en getComparisonResult', error);
+      throw error;
+    }
+  }
 }
 
 export const apiClient = new TenderAIApi();
@@ -337,7 +382,19 @@ export const useAnalysisPolling = (documentId: string | null, interval: number =
       try {
         setIsLoading(true);
         setError(null);
-        const data = await apiClient.getAnalysisResult(documentId);
+        
+        // Detectar si es comparison_id o document_id
+        const isComparisonId = documentId.startsWith('comparison_');
+        
+        let data;
+        if (isComparisonId) {
+          // Usar endpoint de comparación
+          data = await apiClient.getComparisonResult(documentId);
+        } else {
+          // Usar endpoint de análisis individual
+          data = await apiClient.getAnalysisResult(documentId);
+        }
+        
         setResult(data);
         
         // Si está completado o hay error, dejar de hacer polling
