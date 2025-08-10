@@ -4,9 +4,6 @@ from pathlib import Path
 from typing import List, Dict, Optional, Any
 from datetime import datetime, timedelta
 import uuid
-from collections import defaultdict
-import base64
-import io
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

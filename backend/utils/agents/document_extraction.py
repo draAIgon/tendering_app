@@ -4,7 +4,7 @@ import subprocess
 import logging
 import unicodedata
 from pathlib import Path
-from typing import Optional, List
+from typing import List
 from io import BytesIO
 import os
 
@@ -175,7 +175,6 @@ class DocumentExtractionAgent:
         Returns:
             List of Document objects with extracted text and metadata
         """
-        from langchain_core.documents import Document
         from pathlib import Path
         
         # Import here to avoid circular imports

@@ -1,10 +1,8 @@
-import fitz
 import re
 import logging
 from pathlib import Path
-from typing import List, Dict, Optional, Tuple, Any
-from collections import defaultdict, Counter
-import numpy as np
+from typing import List, Dict, Optional, Tuple
+from collections import defaultdict
 
 # Importar funciones del sistema de embeddings
 import sys
@@ -13,7 +11,6 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
 
 from utils.embedding import (
     get_embeddings_provider, 
-    build_embeddings, 
     txt_to_documents
 )
 from .document_extraction import DocumentExtractionAgent
