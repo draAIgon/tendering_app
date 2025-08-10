@@ -3,7 +3,10 @@ backend/db
 analysis_databases
 db
 temp
+tmp
 __pycache__
 .env
 reports
 test_reports
+node_modules
+test-results
