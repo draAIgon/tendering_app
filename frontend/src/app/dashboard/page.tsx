@@ -339,7 +339,7 @@ export default function Dashboard() {
     }
 
     try {
-      const reportBlob = await apiClient.exportDocument(processedData.documentId, 'pdf');
+      const reportBlob = await apiClient.exportDocument(processedData.documentId, 'json');
       
       // Crear URL para descarga
       const url = window.URL.createObjectURL(reportBlob);
@@ -355,6 +355,40 @@ export default function Dashboard() {
     } catch (error) {
       console.error('Error al exportar:', error);
       showNotification('error', '❌ Error al exportar el reporte: ' + (error instanceof Error ? error.message : 'Error desconocido'));
+    }
+  };
+
+  const handleGenerateReport = async () => {
+    if (!processedData?.documentId) {
+      showNotification('error', 'No hay datos para generar reporte');
+      return;
+    }
+
+    try {
+      showNotification('info', '🔄 Generando reporte PDF...');
+      
+      // Generar reporte en formato PDF
+      const pdfReportBlob = await apiClient.generateReportAsFile(processedData.documentId, {
+        report_type: 'comprehensive',
+        include_charts: true,
+        format: 'pdf'
+      });
+      
+      // Crear URL para descarga del archivo PDF
+      const url = window.URL.createObjectURL(pdfReportBlob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `reporte_licitacion_${processedData.documentId}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      
+      showNotification('success', '✅ Reporte PDF descargado exitosamente');
+      
+    } catch (error) {
+      console.error('Error al generar reporte PDF:', error);
+      showNotification('error', '❌ Error al generar el reporte PDF: ' + (error instanceof Error ? error.message : 'Error desconocido'));
     }
   };
 
@@ -399,6 +433,7 @@ export default function Dashboard() {
           <ResultsSection
             processedData={processedData}
             onExportReport={handleExportReport}
+            onGenerateReport={handleGenerateReport}
             onDetailedAnalysis={handleDetailedAnalysis}
           />
         )}

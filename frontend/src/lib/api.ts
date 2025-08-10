@@ -158,7 +158,12 @@ export interface ReportRequest {
 }
 
 export interface ReportResponse {
-  report_id: string;
+  status?: string;
+  document_id?: string;
+  report_type?: string;
+  report?: Record<string, unknown>;
+  generated_at?: string;
+  report_id?: string;
   download_url?: string;
   content?: Record<string, unknown>;
 }
@@ -312,6 +317,49 @@ class TenderAIApi {
     }
 
     return await response.json();
+  }
+
+  async generateReportAsFile(documentId: string, options: ReportRequest = {}): Promise<Blob> {
+    debugLog('Generando reporte como archivo', { documentId, options });
+    
+    const response = await fetch(`${this.baseUrl}/api/v1/reports/generate/${documentId}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(options),
+    });
+
+    debugLog('Respuesta de reporte recibida', { 
+      status: response.status, 
+      statusText: response.statusText,
+      contentType: response.headers.get('content-type')
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ detail: 'Error desconocido' }));
+      throw new Error(errorData.detail || `Error HTTP: ${response.status}`);
+    }
+
+    // Verificar si la respuesta es un archivo binario (PDF/HTML) o JSON
+    const contentType = response.headers.get('content-type');
+    if (contentType?.includes('application/pdf') || 
+        contentType?.includes('text/html') || 
+        contentType?.includes('application/octet-stream')) {
+      // Es un archivo binario, devolver como blob
+      const blob = await response.blob();
+      debugLog('Reporte archivo recibido como blob', { 
+        size: blob.size, 
+        type: blob.type,
+        contentType: contentType
+      });
+      return blob;
+    } else {
+      // Es JSON, no un archivo descargable
+      const jsonResponse = await response.json();
+      debugLog('Respuesta JSON recibida en lugar de archivo', jsonResponse);
+      throw new Error('El servidor devolvió JSON en lugar de un archivo. Formato no soportado para descarga.');
+    }
   }
 
   async exportDocument(documentId: string, format: string = 'pdf'): Promise<Blob> {

@@ -4,6 +4,7 @@ import { ProcessedData } from '@/types/dashboard';
 interface ResultsSectionProps {
   processedData: ProcessedData;
   onExportReport: () => void;
+  onGenerateReport: () => void;
   onDetailedAnalysis: () => void;
 }
 
@@ -42,6 +43,7 @@ const getRiskLevelColor = (level: string) => {
 export default function ResultsSection({
   processedData,
   onExportReport,
+  onGenerateReport,
   onDetailedAnalysis
 }: ResultsSectionProps) {
   const analysisData = processedData.apiData?.results?.analysis;
@@ -225,6 +227,12 @@ export default function ResultsSection({
 
       <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
         <div className="flex flex-col sm:flex-row gap-4">
+          <button 
+            onClick={onGenerateReport}
+            className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors"
+          >
+            � Generar Reporte PDF
+          </button>
           <button 
             onClick={onExportReport}
             className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors"

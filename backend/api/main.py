@@ -38,6 +38,9 @@ from utils.bidding import BiddingAnalysisSystem, RFPAnalyzer
 # Importar database manager
 from utils.db_manager import get_analysis_path, db_manager
 
+# Importar generador de reportes
+from backend.utils.report_generator import generate_pdf_report, generate_html_from_report_data
+
 # Configurar logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -95,7 +98,7 @@ class ComparisonRequest(BaseModel):
 class ReportRequest(BaseModel):
     report_type: str = Field(default="comprehensive", description="Tipo de reporte")
     include_charts: bool = Field(default=True, description="Incluir gráficos")
-    format: str = Field(default="json", description="Formato de salida")
+    format: str = Field(default="json", description="Formato de salida: json, html, pdf")
 
 class SearchRequest(BaseModel):
     query: str = Field(..., description="Consulta de búsqueda")
@@ -121,6 +124,7 @@ async def root():
             "Búsqueda semántica"
         ],
         "supported_formats": [".pdf", ".doc", ".docx"],
+        "report_formats": ["json", "html", "pdf"],
         "embedding_providers": ["auto", "openai", "ollama"],
         "endpoints": {
             "analysis": "/api/v1/analysis/",
@@ -917,11 +921,34 @@ async def generate_document_report(
         # Guardar reporte si es necesario
         report_filename = f"report_{document_id}_{report_request.report_type}_{int(datetime.now().timestamp())}"
         
-        if report_request.format == "html" and report.get('html_content'):
-            # Guardar como HTML
+        if report_request.format == "pdf":
+            # Generar PDF usando las funciones de utils
+            pdf_path = REPORTS_DIR / f"{report_filename}.pdf"
+            
+            success = generate_pdf_report(report, document_id, report_request.report_type, pdf_path)
+            
+            if not success:
+                raise HTTPException(
+                    status_code=500,
+                    detail="No se pudo generar PDF. Instale WeasyPrint (pip install weasyprint) o ReportLab (pip install reportlab)"
+                )
+            
+            return FileResponse(
+                path=pdf_path,
+                media_type='application/pdf',
+                filename=f"{report_filename}.pdf",
+                headers={"Content-Disposition": f"attachment; filename={report_filename}.pdf"}
+            )
+        
+        elif report_request.format == "html":
+            # Generar HTML usando las funciones de utils
+            html_content = report.get('html_content')
+            if not html_content:
+                html_content = generate_html_from_report_data(report, document_id, report_request.report_type)
+            
             report_path = REPORTS_DIR / f"{report_filename}.html"
             with open(report_path, 'w', encoding='utf-8') as f:
-                f.write(report['html_content'])
+                f.write(html_content)
             
             return FileResponse(
                 path=report_path,
