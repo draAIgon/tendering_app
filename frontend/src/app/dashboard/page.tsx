@@ -22,10 +22,23 @@ export default function Dashboard() {
   const [currentDocumentId, setCurrentDocumentId] = useState<string | null>(null);
   const [isComparison, setIsComparison] = useState(false);
   const [processingError, setProcessingError] = useState<string | null>(null);
+  const [notification, setNotification] = useState<{
+    type: 'success' | 'error' | 'info';
+    message: string;
+    visible: boolean;
+  }>({ type: 'info', message: '', visible: false });
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Hook para polling de resultados
   const { result: analysisResult, isLoading: isPolling, error: pollingError } = useAnalysisPolling(currentDocumentId, isComparison);
+
+  // Función para mostrar notificaciones
+  const showNotification = (type: 'success' | 'error' | 'info', message: string) => {
+    setNotification({ type, message, visible: true });
+    setTimeout(() => {
+      setNotification(prev => ({ ...prev, visible: false }));
+    }, 4000); // Se oculta después de 4 segundos
+  };
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
@@ -71,7 +84,7 @@ export default function Dashboard() {
     }
     
     if (droppedFiles.length > validFiles.length) {
-      alert('Algunos archivos no son compatibles. Solo se aceptan: PDF, DOC, DOCX, TXT, XLS, XLSX');
+      showNotification('error', 'Algunos archivos no son compatibles. Solo se aceptan: PDF, DOC, DOCX, TXT, XLS, XLSX');
     }
   };
 
@@ -321,7 +334,7 @@ export default function Dashboard() {
 
   const handleExportReport = async () => {
     if (!processedData?.documentId) {
-      alert('No hay datos para exportar');
+      showNotification('error', 'No hay datos para exportar');
       return;
     }
 
@@ -338,10 +351,10 @@ export default function Dashboard() {
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
       
-      alert('✅ Reporte exportado exitosamente');
+      showNotification('success', '✅ Reporte exportado exitosamente');
     } catch (error) {
       console.error('Error al exportar:', error);
-      alert('❌ Error al exportar el reporte: ' + (error instanceof Error ? error.message : 'Error desconocido'));
+      showNotification('error', '❌ Error al exportar el reporte: ' + (error instanceof Error ? error.message : 'Error desconocido'));
     }
   };
 
@@ -417,6 +430,52 @@ export default function Dashboard() {
           comparisonData={processedData?.apiData && isComparison ? processedData.apiData as any : undefined}
           onExportReport={handleExportReport}
         />
+      )}
+
+      {/* Componente de Notificación */}
+      {notification.visible && (
+        <div 
+          className={`fixed top-4 right-4 z-50 px-6 py-4 rounded-lg shadow-lg border transform transition-all duration-300 ease-in-out ${
+            notification.type === 'success' 
+              ? 'bg-green-50 border-green-200 text-green-800 dark:bg-green-900 dark:border-green-700 dark:text-green-100' 
+              : notification.type === 'error'
+              ? 'bg-red-50 border-red-200 text-red-800 dark:bg-red-900 dark:border-red-700 dark:text-red-100'
+              : 'bg-blue-50 border-blue-200 text-blue-800 dark:bg-blue-900 dark:border-blue-700 dark:text-blue-100'
+          } ${notification.visible ? 'translate-x-0 opacity-100' : 'translate-x-full opacity-0'}`}
+        >
+          <div className="flex items-center space-x-3">
+            <div className="flex-shrink-0">
+              {notification.type === 'success' && (
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                </svg>
+              )}
+              {notification.type === 'error' && (
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                </svg>
+              )}
+              {notification.type === 'info' && (
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                </svg>
+              )}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium">
+                {notification.message}
+              </p>
+            </div>
+            <button
+              onClick={() => setNotification(prev => ({ ...prev, visible: false }))}
+              className="flex-shrink-0 ml-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+            >
+              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+              </svg>
+            </button>
+          </div>
+        </div>
       )}
     </div>
   );
