@@ -209,8 +209,8 @@ export default function Dashboard() {
             validation.compliance_validation !== null) {
           const complianceValidation = validation.compliance_validation as Record<string, unknown>;
           if (typeof complianceValidation.overall_compliance_percentage === 'number') {
-            const compliance = complianceValidation.overall_compliance_percentage;
-            insights.push(`⚖️ Cumplimiento normativo: ${compliance.toFixed(1)}%`);
+            const compliance = complianceValidation.overall_compliance_percentage.toFixed(3);
+            insights.push(`⚖️ Cumplimiento normativo: ${compliance}%`);
           }
         }
         

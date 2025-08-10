@@ -463,11 +463,11 @@ function TechnicalTab({ analysisData }: { analysisData?: AnalysisData }) {
                     <div className="w-16 bg-gray-200 dark:bg-gray-600 rounded-full h-2">
                       <div 
                         className="bg-blue-600 h-2 rounded-full" 
-                        style={{width: `${Math.min(score * 100, 100)}%`}}
+                        style={{width: `${Math.min(score, 100)}%`}}
                       ></div>
                     </div>
                     <span className="text-xs font-medium text-gray-900 dark:text-white w-10 text-right">
-                      {Math.round(score * 100)}%
+                      {Math.round(score )}%
                     </span>
                   </div>
                 </div>
@@ -657,7 +657,7 @@ function LegalTab({ analysisData }: { analysisData?: AnalysisData }) {
           <h4 className="font-semibold text-green-800 dark:text-green-200 mb-3">✅ Cumplimiento Normativo</h4>
           <div className="grid md:grid-cols-3 gap-4 mb-4">
             <div className="text-center">
-              <p className="text-2xl font-bold text-green-600">{compliance.overall_compliance_percentage}%</p>
+              <p className="text-2xl font-bold text-green-600">{compliance.overall_compliance_percentage.toFixed(1)}%</p>
               <p className="text-sm text-green-700 dark:text-green-300">Cumplimiento general</p>
             </div>
             <div className="text-center">
