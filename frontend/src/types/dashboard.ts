@@ -5,7 +5,13 @@ export interface AnalysisResult {
   progress?: number;
   error?: string;
   results?: {
+    technical_analysis?: Record<string, unknown>;
+    financial_analysis?: Record<string, unknown>;
+    legal_analysis?: Record<string, unknown>;
+    risk_analysis?: Record<string, unknown>;
+    comparison_analysis?: Record<string, unknown>;
     recommendations?: string[];
+    summary?: Record<string, unknown>;
     analysis?: AnalysisData;
   };
   comparison?: {
