@@ -23,16 +23,16 @@ logger = logging.getLogger(__name__)
 
 
 def test_ruc_validation_agent():
-    """Test directo del RUCValidationAgent"""
-    logger.info("🚀 Iniciando test directo del RUCValidationAgent...")
+    """Test directo del ComplianceValidationAgent con validación de RUC"""
+    logger.info("🚀 Iniciando test directo del ComplianceValidationAgent...")
     
     try:
         # Importar el agente
-        from utils.agents.ruc_validator import RUCValidationAgent
+        from utils.agents.validator import ComplianceValidationAgent
         
         # Crear instancia
-        ruc_validator = RUCValidationAgent()
-        logger.info("✅ RUCValidationAgent creado exitosamente")
+        validator = ComplianceValidationAgent()
+        logger.info("✅ ComplianceValidationAgent creado exitosamente")
         
         # Contenido de prueba
         test_content = """
@@ -64,19 +64,19 @@ def test_ruc_validation_agent():
         test_rucs = ["1790123456001", "1712345678001", "1791234567001", "1792345678001"]
         
         for ruc in test_rucs:
-            result = ruc_validator.validate_ruc_format(ruc)
+            result = validator.validate_ruc_format(ruc)
             logger.info(f"   RUC {ruc}: {'✅ VÁLIDO' if result else '❌ INVÁLIDO'}")
         
         # Test 2: Extracción de RUCs del contenido
         logger.info("\n🧪 Test 2: Extracción de RUCs del contenido")
-        extracted_rucs = ruc_validator.extract_ruc_from_content(test_content)
+        extracted_rucs = validator.extract_ruc_from_content(test_content)
         logger.info(f"   RUCs extraídos: {len(extracted_rucs)}")
         for ruc in extracted_rucs:
             logger.info(f"   - {ruc}")
         
         # Test 3: Validación completa
         logger.info("\n🧪 Test 3: Validación completa (CONSTRUCCION)")
-        result = ruc_validator.comprehensive_ruc_validation(
+        result = validator.validate_ruc_in_document(
             content=test_content,
             work_type="CONSTRUCCION"
         )
@@ -93,7 +93,7 @@ def test_ruc_validation_agent():
         work_types = ["SERVICIOS", "SUMINISTROS"]
         for work_type in work_types:
             logger.info(f"\n🧪 Test 4.{work_types.index(work_type)+1}: Validación para {work_type}")
-            result = ruc_validator.comprehensive_ruc_validation(
+            result = validator.validate_ruc_in_document(
                 content=test_content,
                 work_type=work_type
             )
@@ -101,7 +101,7 @@ def test_ruc_validation_agent():
         
         # Test 5: Contenido sin RUCs
         logger.info("\n🧪 Test 5: Contenido sin RUCs")
-        empty_result = ruc_validator.comprehensive_ruc_validation(
+        empty_result = validator.validate_ruc_in_document(
             content="Empresa sin RUC especificado",
             work_type="CONSTRUCCION"
         )
@@ -128,13 +128,13 @@ def test_bidding_system_integration():
         system = BiddingAnalysisSystem()
         logger.info("✅ BiddingAnalysisSystem creado")
         
-        # Verificar que incluye RUCValidationAgent
-        assert hasattr(system, 'ruc_validator'), "Sistema no tiene ruc_validator"
-        logger.info("✅ RUCValidationAgent integrado en el sistema")
+        # Verificar que incluye ComplianceValidationAgent
+        assert hasattr(system, 'validator'), "Sistema no tiene validator"
+        logger.info("✅ ComplianceValidationAgent integrado en el sistema")
         
         # Test básico de funcionalidad
         test_content = "Empresa Test RUC: 1790123456001"
-        result = system.ruc_validator.comprehensive_ruc_validation(
+        result = system.validator.validate_ruc_in_document(
             content=test_content,
             work_type="CONSTRUCCION"
         )

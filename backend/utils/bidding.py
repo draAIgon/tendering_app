@@ -4,14 +4,36 @@ import json
 import logging
 from datetime import datetime
 
-# Importar todos los agentes implementados
-from .agents.document_extraction import DocumentExtractionAgent
-from .agents.document_classification import DocumentClassificationAgent
-from .agents.validator import ComplianceValidationAgent
-from .agents.comparison import ComparisonAgent
-from .agents.risk_analyzer import RiskAnalyzerAgent
-from .agents.reporter import ReportGenerationAgent
-from .agents.ruc_validator import RUCValidationAgent
+# Importar todos los agentes implementados (manejo de errores para dependencias opcionales)
+try:
+    from .agents.document_extraction import DocumentExtractionAgent
+except ImportError:
+    DocumentExtractionAgent = None
+
+try:
+    from .agents.document_classification import DocumentClassificationAgent
+except ImportError:
+    DocumentClassificationAgent = None
+
+try:
+    from .agents.validator import ComplianceValidationAgent
+except ImportError:
+    ComplianceValidationAgent = None
+
+try:
+    from .agents.comparison import ComparisonAgent
+except ImportError:
+    ComparisonAgent = None
+
+try:
+    from .agents.risk_analyzer import RiskAnalyzerAgent
+except ImportError:
+    RiskAnalyzerAgent = None
+
+try:
+    from .agents.reporter import ReportGenerationAgent
+except ImportError:
+    ReportGenerationAgent = None
 
 # Importar database manager
 from .db_manager import get_standard_db_path, get_analysis_path
@@ -40,14 +62,13 @@ class BiddingAnalysisSystem:
         
         logger.info("Inicializando Sistema de Análisis de Licitaciones...")
         
-        # Inicializar todos los agentes
-        self.document_extractor = DocumentExtractionAgent()
-        self.classifier = DocumentClassificationAgent()
-        self.validator = ComplianceValidationAgent()
-        self.comparator = ComparisonAgent()
-        self.risk_analyzer = RiskAnalyzerAgent()
-        self.reporter = ReportGenerationAgent()
-        self.ruc_validator = RUCValidationAgent()
+        # Inicializar todos los agentes disponibles
+        self.document_extractor = DocumentExtractionAgent() if DocumentExtractionAgent else None
+        self.classifier = DocumentClassificationAgent() if DocumentClassificationAgent else None
+        self.validator = ComplianceValidationAgent() if ComplianceValidationAgent else None
+        self.comparator = ComparisonAgent() if ComparisonAgent else None
+        self.risk_analyzer = RiskAnalyzerAgent() if RiskAnalyzerAgent else None
+        self.reporter = ReportGenerationAgent() if ReportGenerationAgent else None
         
         # Estado del sistema
         self.processed_documents = {}
@@ -205,7 +226,7 @@ class BiddingAnalysisSystem:
                 # Determinar tipo de trabajo basado en document_type
                 work_type = self._determine_work_type(content, document_type)
                 
-                ruc_result = self.ruc_validator.comprehensive_ruc_validation(
+                ruc_result = self.validator.validate_ruc_in_document(
                     content=content,
                     work_type=work_type
                 )

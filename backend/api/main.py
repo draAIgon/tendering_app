@@ -1461,7 +1461,7 @@ async def validate_ruc(
             )
         
         # Realizar validación de RUC
-        ruc_result = system.ruc_validator.comprehensive_ruc_validation(
+        ruc_result = system.validator.validate_ruc_in_document(
             content=content,
             work_type=request.work_type
         )
@@ -1535,11 +1535,11 @@ async def validate_ruc_from_content(
         logger.info(f"Validando RUC desde contenido directo, tipo: {work_type}")
         
         # Crear instancia temporal del validador
-        from utils.agents.ruc_validator import RUCValidationAgent
-        ruc_validator = RUCValidationAgent()
+        from utils.agents.validator import ComplianceValidationAgent
+        validator = ComplianceValidationAgent()
         
         # Realizar validación
-        ruc_result = ruc_validator.comprehensive_ruc_validation(
+        ruc_result = validator.validate_ruc_in_document(
             content=content,
             work_type=work_type
         )

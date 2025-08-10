@@ -4,43 +4,55 @@ Agents package for tendering application
 This package contains various AI agents for processing and analyzing tendering documents:
 - DocumentClassificationAgent: Classifies and organizes document content using embeddings
 - DocumentExtractionAgent: Extracts text, images, tables and metadata
-- ComparatorAgent: Compares different proposals
-- ValidatorAgent: Validates document compliance
+- ComparisonAgent: Compares different proposals
+- ComplianceValidationAgent: Validates document compliance and RUC verification
 - RiskAnalyzerAgent: Analyzes risks in proposals
-- ReporterAgent: Generates comprehensive reports
+- ReportGenerationAgent: Generates comprehensive reports
 """
-
-from .document_classification import DocumentClassificationAgent
-from .document_extraction import DocumentExtractionAgent
 
 # Importaciones opcionales (evitar errores si no existen)
 try:
-    from .validator import ValidatorAgent
+    from .document_classification import DocumentClassificationAgent
 except ImportError:
-    pass
+    DocumentClassificationAgent = None
+
+try:
+    from .document_extraction import DocumentExtractionAgent
+except ImportError:
+    DocumentExtractionAgent = None
+
+try:
+    from .validator import ComplianceValidationAgent
+except ImportError:
+    ComplianceValidationAgent = None
+
+try:
+    from .comparison import ComparisonAgent
+except ImportError:
+    ComparisonAgent = None
 
 try:
     from .risk_analyzer import RiskAnalyzerAgent
 except ImportError:
-    pass
+    RiskAnalyzerAgent = None
 
 try:
-    from .reporter import ReporterAgent  
+    from .reporter import ReportGenerationAgent  
 except ImportError:
-    pass
+    ReportGenerationAgent = None
 
-__all__ = [
-    'DocumentClassificationAgent',
-    'DocumentExtractionAgent',
-    # Los demás se agregan dinámicamente si existen
-]
+__all__ = []
 
 # Agregar clases disponibles dinámicamente
-if 'ComparisonAgent' in locals():
+if DocumentClassificationAgent:
+    __all__.append('DocumentClassificationAgent')
+if DocumentExtractionAgent:
+    __all__.append('DocumentExtractionAgent')
+if ComplianceValidationAgent:
+    __all__.append('ComplianceValidationAgent')
+if ComparisonAgent:
     __all__.append('ComparisonAgent')
-if 'ValidatorAgent' in locals():
-    __all__.append('ValidatorAgent')
-if 'RiskAnalyzerAgent' in locals():
+if RiskAnalyzerAgent:
     __all__.append('RiskAnalyzerAgent')
-if 'ReporterAgent' in locals():
-    __all__.append('ReporterAgent')
+if ReportGenerationAgent:
+    __all__.append('ReportGenerationAgent')

@@ -537,3 +537,341 @@ class ComplianceValidationAgent:
         }
         
         return comparative_report
+    
+    # Patrones de RUC para diferentes países
+    RUC_PATTERNS = {
+        'ECUADOR': {
+            'pattern': r'\b\d{10}001\b|\b\d{13}\b',
+            'description': 'RUC Ecuador: 10 dígitos + 001 o 13 dígitos',
+            'validation_url': 'https://srienlinea.sri.gob.ec/sri-catastro-sujeto-servicio-internet/rest/ConsolidadoContribuyente/existePorNumeroRuc',
+            'headers': {'Accept': 'application/json, text/plain, */*'}
+        },
+        'COLOMBIA': {
+            'pattern': r'\b\d{9,10}\b',
+            'description': 'NIT Colombia: 9-10 dígitos',
+            'validation_url': None,
+            'headers': {}
+        },
+        'PERU': {
+            'pattern': r'\b\d{11}\b',
+            'description': 'RUC Perú: 11 dígitos',
+            'validation_url': None,
+            'headers': {}
+        }
+    }
+
+    # Tipos de empresas y su compatibilidad con trabajos de construcción
+    ENTITY_TYPES = {
+        'CONSTRUCCION': {
+            'compatible_activities': [
+                'construcción', 'edificación', 'obra civil', 'ingeniería civil',
+                'arquitectura', 'consultoría técnica', 'supervisión de obras',
+                'construcción de edificios', 'obras de ingeniería civil',
+                'actividades especializadas de construcción'
+            ],
+            'ciiu_codes': ['F41', 'F42', 'F43', 'M71', 'M74'],
+            'required_qualifications': [
+                'registro de construcción', 'certificación técnica',
+                'personal técnico calificado', 'experiencia en construcción'
+            ]
+        },
+        'SERVICIOS': {
+            'compatible_activities': [
+                'servicios profesionales', 'consultoría', 'asesoría técnica',
+                'servicios de ingeniería', 'servicios de arquitectura'
+            ],
+            'ciiu_codes': ['M69', 'M70', 'M71', 'M74'],
+            'required_qualifications': []
+        },
+        'SUMINISTROS': {
+            'compatible_activities': [
+                'comercio al por mayor', 'suministro de materiales',
+                'venta de equipos', 'importación', 'distribución'
+            ],
+            'ciiu_codes': ['G46', 'G47', 'C23', 'C25'],
+            'required_qualifications': []
+        }
+    }
+
+    def extract_ruc_from_content(self, content: str) -> List[Dict[str, Any]]:
+        found_rucs: List[Dict[str, Any]] = []
+        for country, config in self.RUC_PATTERNS.items():
+            pattern = config['pattern']
+            matches = re.finditer(pattern, content, re.IGNORECASE)
+            for match in matches:
+                ruc_number = match.group().strip()
+                context_start = max(0, match.start() - 100)
+                context_end = min(len(content), match.end() + 100)
+                context = content[context_start:context_end]
+                found_rucs.append({
+                    'ruc_number': ruc_number,
+                    'country': country,
+                    'position': match.span(),
+                    'context': context.strip(),
+                    'pattern_description': config['description'],
+                    'validation_status': 'pending'
+                })
+        logger.info(f"RUCs encontrados: {len(found_rucs)}")
+        return found_rucs
+
+    def validate_ruc_format(self, ruc_number: str, country: str = 'ECUADOR') -> Dict[str, Any]:
+        if country not in self.RUC_PATTERNS:
+            return {'valid_format': False, 'error': f'País {country} no soportado'}
+        config = self.RUC_PATTERNS[country]
+        pattern = config['pattern']
+        if re.match(pattern, ruc_number.strip()):
+            validation_result = {
+                'valid_format': True,
+                'country': country,
+                'ruc_number': ruc_number.strip(),
+                'description': config['description']
+            }
+            if country == 'ECUADOR':
+                validation_result.update(self._validate_ecuador_ruc(ruc_number))
+            return validation_result
+        else:
+            return {
+                'valid_format': False,
+                'country': country,
+                'ruc_number': ruc_number,
+                'error': f'Formato inválido para {country}'
+            }
+
+    def _validate_ecuador_ruc(self, ruc: str) -> Dict[str, Any]:
+        ruc = ruc.strip()
+        if len(ruc) not in [10, 13]:
+            return {'ecuador_validation': False, 'error': 'Longitud inválida'}
+        if len(ruc) == 10:
+            return self._validate_ecuador_cedula(ruc)
+        base_ruc = ruc[:10]
+        suffix = ruc[10:]
+        base_validation = self._validate_ecuador_cedula(base_ruc)
+        if not base_validation.get('ecuador_validation', False):
+            return base_validation
+        third_digit = int(ruc[2])
+        if third_digit in [0, 1, 2, 3, 4, 5]:
+            entity_type = 'persona_natural'
+            expected_suffix = '001'
+        elif third_digit == 6:
+            entity_type = 'entidad_publica'
+            expected_suffix = '001'
+        elif third_digit == 9:
+            entity_type = 'persona_juridica'
+            expected_suffix = suffix
+        else:
+            return {'ecuador_validation': False, 'error': 'Tercer dígito inválido'}
+        return {
+            'ecuador_validation': True,
+            'entity_type': entity_type,
+            'base_ruc': base_ruc,
+            'suffix': suffix,
+            'expected_suffix': expected_suffix,
+            'valid_suffix': suffix == expected_suffix or entity_type == 'persona_juridica'
+        }
+
+    def _validate_ecuador_cedula(self, cedula: str) -> Dict[str, Any]:
+        if len(cedula) != 10:
+            return {'ecuador_validation': False, 'error': 'Cédula debe tener 10 dígitos'}
+        try:
+            provincia = int(cedula[:2])
+            if provincia < 1 or provincia > 24:
+                return {'ecuador_validation': False, 'error': 'Código de provincia inválido'}
+            digits = [int(d) for d in cedula]
+            check_digit = digits[9]
+            coefficients = [2, 1, 2, 1, 2, 1, 2, 1, 2]
+            total = 0
+            for i in range(9):
+                product = digits[i] * coefficients[i]
+                if product >= 10:
+                    product = product // 10 + product % 10
+                total += product
+            expected_check = (10 - (total % 10)) % 10
+            if check_digit == expected_check:
+                return {'ecuador_validation': True, 'provincia': provincia, 'check_digit_valid': True}
+            else:
+                return {
+                    'ecuador_validation': False,
+                    'error': 'Dígito verificador inválido',
+                    'expected_check': expected_check,
+                    'provided_check': check_digit
+                }
+        except ValueError:
+            return {'ecuador_validation': False, 'error': 'RUC contiene caracteres no numéricos'}
+
+    def validate_entity_compatibility(self, entity_data: Dict[str, Any], work_type: str = 'CONSTRUCCION') -> Dict[str, Any]:
+        if work_type not in self.ENTITY_TYPES:
+            return {'compatibility_validation': False, 'error': f'Tipo de trabajo {work_type} no reconocido'}
+        work_config = self.ENTITY_TYPES[work_type]
+        compatibility_score = 0
+        compatibility_reasons: List[str] = []
+        warnings: List[str] = []
+        entity_activity = (entity_data.get('actividad_economica') or '').lower()
+        ciiu_code = entity_data.get('ciiu_code', '')
+        for activity in work_config['compatible_activities']:
+            if activity.lower() in entity_activity:
+                compatibility_score += 20
+                compatibility_reasons.append(f"Actividad relacionada: {activity}")
+        for code in work_config['ciiu_codes']:
+            if ciiu_code.startswith(code):
+                compatibility_score += 30
+                compatibility_reasons.append(f"Código CIIU compatible: {code}")
+        entity_qualifications = entity_data.get('qualifications', [])
+        for required_qual in work_config['required_qualifications']:
+            if any(required_qual.lower() in (qual or '').lower() for qual in entity_qualifications):
+                compatibility_score += 25
+                compatibility_reasons.append(f"Calificación requerida: {required_qual}")
+            else:
+                warnings.append(f"Calificación faltante: {required_qual}")
+        if compatibility_score >= 70:
+            compatibility_level = 'ALTA'
+        elif compatibility_score >= 40:
+            compatibility_level = 'MEDIA'
+        else:
+            compatibility_level = 'BAJA'
+            warnings.append('Compatibilidad baja con el tipo de trabajo solicitado')
+        return {
+            'compatibility_validation': True,
+            'work_type': work_type,
+            'compatibility_score': compatibility_score,
+            'compatibility_level': compatibility_level,
+            'reasons': compatibility_reasons,
+            'warnings': warnings,
+            'is_compatible': compatibility_score >= 40,
+            'recommendation': self._generate_compatibility_recommendation(
+                compatibility_score, compatibility_level, warnings
+            )
+        }
+
+    def _generate_compatibility_recommendation(self, score: int, level: str, warnings: List[str]) -> str:
+        if level == 'ALTA':
+            return "Entidad altamente compatible con el tipo de trabajo solicitado"
+        elif level == 'MEDIA':
+            return f"Entidad parcialmente compatible. Verificar: {', '.join(warnings[:2])}" if warnings else \
+                   "Entidad parcialmente compatible."
+        else:
+            return f"Entidad con baja compatibilidad. Riesgos: {', '.join(warnings[:3])}" if warnings else \
+                   "Entidad con baja compatibilidad."
+
+    def validate_ruc_in_document(self, content: str, work_type: str = 'CONSTRUCCION') -> Dict[str, Any]:
+        logger.info("Iniciando validación de RUC en documento")
+        validation_report: Dict[str, Any] = {
+            'timestamp': datetime.now().isoformat(),
+            'work_type': work_type,
+            'rucs_found': [],
+            'validation_summary': {
+                'total_rucs': 0,
+                'valid_format': 0,
+                'compatible_entities': 0,
+                'critical_issues': []
+            },
+            'recommendations': []
+        }
+        found_rucs = self.extract_ruc_from_content(content)
+        validation_report['validation_summary']['total_rucs'] = len(found_rucs)
+        if not found_rucs:
+            validation_report['validation_summary']['critical_issues'].append(
+                "No se encontraron números de RUC en el documento"
+            )
+            validation_report['recommendations'].append(
+                "Verificar que el documento contenga información de identificación del contratista"
+            )
+            return validation_report
+        for ruc_data in found_rucs:
+            ruc_number = ruc_data['ruc_number']
+            country = ruc_data['country']
+            format_validation = self.validate_ruc_format(ruc_number, country)
+            ruc_data['format_validation'] = format_validation
+            if format_validation.get('valid_format', False):
+                validation_report['validation_summary']['valid_format'] += 1
+                entity_data = {
+                    'ruc': ruc_number,
+                    'actividad_economica': '',
+                    'ciiu_code': '',
+                    'qualifications': []
+                }
+                compatibility_validation = self.validate_entity_compatibility(entity_data, work_type)
+                ruc_data['compatibility_validation'] = compatibility_validation
+                if compatibility_validation.get('is_compatible', False):
+                    validation_report['validation_summary']['compatible_entities'] += 1
+            else:
+                validation_report['validation_summary']['critical_issues'].append(
+                    f"RUC {ruc_number}: Formato inválido"
+                )
+            validation_report['rucs_found'].append(ruc_data)
+        validation_report['recommendations'] = self._generate_ruc_validation_recommendations(
+            validation_report['validation_summary']
+        )
+        total_rucs = validation_report['validation_summary']['total_rucs']
+        if total_rucs > 0:
+            format_score = (validation_report['validation_summary']['valid_format'] / total_rucs) * 100
+            compatibility_score = (validation_report['validation_summary']['compatible_entities'] / total_rucs) * 100
+            overall_score = (format_score + compatibility_score) / 2
+        else:
+            overall_score = 0.0
+        validation_report['overall_score'] = round(overall_score, 2)
+        validation_report['validation_level'] = self._get_validation_level(overall_score)
+        logger.info(f"Validación de RUC completada. Score: {overall_score:.1f}%")
+        return validation_report
+
+    def _generate_ruc_validation_recommendations(self, summary: Dict[str, Any]) -> List[str]:
+        recommendations: List[str] = []
+        if summary['total_rucs'] == 0:
+            recommendations.append("Solicitar documentación que contenga RUC del contratista")
+        if summary['valid_format'] < summary['total_rucs']:
+            recommendations.append("Verificar formato correcto de números de RUC")
+        if summary['compatible_entities'] < summary['valid_format']:
+            recommendations.append("Evaluar compatibilidad de actividad económica con trabajo solicitado")
+        if len(summary['critical_issues']) > 0:
+            recommendations.append("Resolver issues críticos antes de continuar evaluación")
+        return recommendations
+
+    def validate_document(self, document_path: Optional[str] = None, content: Optional[str] = None, document_type: str = "RFP") -> Dict[str, Any]:
+        if not content and not document_path:
+            raise ValueError("Debe proporcionar content o document_path")
+        if document_path and not content:
+            try:
+                from document_extraction import DocumentExtractionAgent
+                extractor = DocumentExtractionAgent(document_path)
+                content = extractor.extract_text()
+            except Exception as e:
+                logger.error(f"Error extrayendo contenido de {document_path}: {e}")
+                return {"error": f"No se pudo extraer contenido: {e}"}
+        logger.info(f"Iniciando validación de documento tipo {document_type}")
+        # Validaciones principales
+        structural_validation = self.validate_document_structure(content, document_type)
+        compliance_validation = self.validate_compliance_rules(content)
+        dates_validation = self.validate_dates_and_deadlines(content)
+        ruc_validation = self.validate_ruc_in_document(content)
+        # Score general
+        structural_score = structural_validation["completion_percentage"]
+        compliance_score = compliance_validation["overall_compliance_percentage"]
+        dates_score = 100 if dates_validation["has_adequate_dates"] else 50
+        ruc_score = ruc_validation["overall_score"] if "overall_score" in ruc_validation else 0
+        overall_score = (structural_score + compliance_score + dates_score + ruc_score) / 4
+        # Recomendaciones
+        recommendations = self._generate_recommendations(
+            structural_validation, compliance_validation, dates_validation
+        ) + ruc_validation.get("recommendations", [])
+        validation_report = {
+            "document_type": document_type,
+            "validation_timestamp": datetime.now().isoformat(),
+            "overall_score": round(overall_score, 2),
+            "validation_level": self._get_validation_level(overall_score),
+            "structural_validation": structural_validation,
+            "compliance_validation": compliance_validation,
+            "dates_validation": dates_validation,
+            "ruc_validation": ruc_validation,
+            "recommendations": recommendations,
+            "summary": {
+                "total_issues": len(structural_validation.get("structural_issues", [])) + 
+                              compliance_validation["failed_rules"] + 
+                              len(dates_validation.get("date_issues", [])) + 
+                              len(ruc_validation.get("validation_summary", {}).get("critical_issues", [])),
+                "critical_issues": self._count_critical_issues(structural_validation, compliance_validation),
+                "document_length": len(content),
+                "validation_success": overall_score >= 70
+            }
+        }
+        self.validation_results = validation_report
+        logger.info(f"Validación completada. Score: {overall_score:.1f}%")
+        return validation_report
