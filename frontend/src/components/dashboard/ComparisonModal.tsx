@@ -1,4 +1,5 @@
 import React from 'react';
+import { RecommendationType, normalizeRecommendations } from '@/types/dashboard';
 
 // Interface específica para datos de comparación
 interface ComparisonData {
@@ -53,7 +54,7 @@ interface ComparisonData {
             structural_validation: Record<string, unknown>;
             compliance_validation: Record<string, unknown>;
             dates_validation: Record<string, unknown>;
-            recommendations: string[];
+            recommendations: RecommendationType;
             summary: Record<string, unknown>;
           };
         };
@@ -66,7 +67,7 @@ interface ComparisonData {
             category_risks: Record<string, unknown>;
             overall_assessment: Record<string, unknown>;
             critical_risks: string[];
-            mitigation_recommendations: string[];
+            mitigation_recommendations: RecommendationType;
             risk_matrix: Record<string, unknown>;
           };
         };
@@ -76,8 +77,8 @@ interface ComparisonData {
         completed_stages: number;
         failed_stages: number;
         overall_status: string;
-        key_findings: string[];
-        recommendations: string[];
+        key_findings: RecommendationType;
+        recommendations: RecommendationType;
       };
       errors: string[];
     }>;
@@ -307,11 +308,11 @@ function ComparisonDetailsTab({ comparisonData }: { comparisonData?: ComparisonD
                 </div>
               </div>
 
-              {result.summary.key_findings.length > 0 && (
+              {Array.isArray(result.summary.key_findings) && result.summary.key_findings.length > 0 && (
                 <div className="mt-3">
                   <h5 className="text-sm font-medium text-gray-900 dark:text-white mb-2">🔍 Hallazgos:</h5>
                   <ul className="space-y-1">
-                    {result.summary.key_findings.slice(0, 3).map((finding, idx) => (
+                    {normalizeRecommendations(result.summary.key_findings).slice(0, 3).map((finding, idx) => (
                       <li key={idx} className="text-xs text-gray-600 dark:text-gray-400 flex items-start">
                         <span className="w-1.5 h-1.5 bg-blue-500 rounded-full mt-1.5 mr-2 flex-shrink-0"></span>
                         {finding}
@@ -372,11 +373,11 @@ function DocumentsTab({ comparisonData }: { comparisonData?: ComparisonData }) {
               </div>
 
               {/* Hallazgos clave */}
-              {result.summary.key_findings.length > 0 && (
+              {Array.isArray(result.summary.key_findings) && result.summary.key_findings.length > 0 && (
                 <div className="mb-4">
                   <h5 className="font-medium text-gray-900 dark:text-white mb-2">🔍 Hallazgos Clave</h5>
                   <ul className="space-y-1">
-                    {result.summary.key_findings.map((finding, idx) => (
+                    {normalizeRecommendations(result.summary.key_findings).map((finding, idx) => (
                       <li key={idx} className="text-sm text-gray-600 dark:text-gray-400 flex items-start">
                         <span className="w-2 h-2 bg-blue-500 rounded-full mt-1.5 mr-2 flex-shrink-0"></span>
                         {finding}
@@ -387,11 +388,11 @@ function DocumentsTab({ comparisonData }: { comparisonData?: ComparisonData }) {
               )}
 
               {/* Recomendaciones */}
-              {result.summary.recommendations.length > 0 && (
+              {Array.isArray(result.summary.recommendations) && result.summary.recommendations.length > 0 && (
                 <div className="mb-4">
                   <h5 className="font-medium text-gray-900 dark:text-white mb-2">💡 Recomendaciones</h5>
                   <ul className="space-y-1">
-                    {result.summary.recommendations.map((rec, idx) => (
+                    {normalizeRecommendations(result.summary.recommendations).map((rec, idx) => (
                       <li key={idx} className="text-sm text-gray-600 dark:text-gray-400 flex items-start">
                         <span className="w-2 h-2 bg-green-500 rounded-full mt-1.5 mr-2 flex-shrink-0"></span>
                         {rec}
@@ -493,11 +494,11 @@ function ComparisonRisksTab({ comparisonData }: { comparisonData?: ComparisonDat
                   </div>
                 )}
 
-                {riskData.mitigation_recommendations && riskData.mitigation_recommendations.length > 0 && (
+                {riskData.mitigation_recommendations && Array.isArray(riskData.mitigation_recommendations) && riskData.mitigation_recommendations.length > 0 && (
                   <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
                     <h5 className="font-semibold text-blue-800 dark:text-blue-200 mb-2">💡 Recomendaciones de Mitigación</h5>
                     <ul className="space-y-1">
-                      {riskData.mitigation_recommendations.map((rec, idx) => (
+                      {normalizeRecommendations(riskData.mitigation_recommendations).map((rec, idx) => (
                         <li key={idx} className="text-sm text-blue-700 dark:text-blue-300 flex items-start">
                           <span className="w-2 h-2 bg-blue-500 rounded-full mt-1.5 mr-2 flex-shrink-0"></span>
                           {rec}
@@ -529,7 +530,8 @@ function RecommendationsTab({ comparisonData }: { comparisonData?: ComparisonDat
     const docType = result.document_type;
     
     // Función helper para agregar recomendaciones al map
-    const addRecommendations = (category: string, recs: string[]) => {
+    const addRecommendations = (category: string, recs: RecommendationType) => {
+      const normalizedRecs = normalizeRecommendations(recs);
       const key = `${docType}-${category}`;
       if (!recommendationsMap.has(key)) {
         recommendationsMap.set(key, {
@@ -538,7 +540,7 @@ function RecommendationsTab({ comparisonData }: { comparisonData?: ComparisonDat
           recommendations: new Set()
         });
       }
-      recs.forEach(rec => {
+      normalizedRecs.forEach(rec => {
         if (rec && rec.trim()) { // Solo agregar recomendaciones no vacías
           recommendationsMap.get(key)!.recommendations.add(rec.trim());
         }
@@ -553,13 +555,13 @@ function RecommendationsTab({ comparisonData }: { comparisonData?: ComparisonDat
     // Recomendaciones de validación
     if (result.stages.validation?.data?.recommendations && 
         Array.isArray(result.stages.validation.data.recommendations)) {
-      addRecommendations('Validación', result.stages.validation.data.recommendations as string[]);
+      addRecommendations('Validación', result.stages.validation.data.recommendations);
     }
     
     // Recomendaciones de análisis de riesgos
     if (result.stages.risk_analysis?.data?.mitigation_recommendations && 
         Array.isArray(result.stages.risk_analysis.data.mitigation_recommendations)) {
-      addRecommendations('Mitigación de Riesgos', result.stages.risk_analysis.data.mitigation_recommendations as string[]);
+      addRecommendations('Mitigación de Riesgos', result.stages.risk_analysis.data.mitigation_recommendations);
     }
     
     // Revisar si hay recomendaciones en clasificación
@@ -569,7 +571,7 @@ function RecommendationsTab({ comparisonData }: { comparisonData?: ComparisonDat
       
       // Buscar recomendaciones en diferentes posibles ubicaciones
       if (classData.recommendations && Array.isArray(classData.recommendations)) {
-        addRecommendations('Clasificación', classData.recommendations as string[]);
+        addRecommendations('Clasificación', classData.recommendations);
       }
       
       // Revisar si hay recomendaciones en key_requirements

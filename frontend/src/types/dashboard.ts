@@ -1,3 +1,38 @@
+// Nuevo tipo para recomendaciones con estructura de objeto
+export interface RecommendationObject {
+  category?: string;
+  priority?: string | number;
+  recommendation?: string;
+  dspy_enhanced?: boolean;
+  context_based?: boolean;
+}
+
+// Tipo para manejar recomendaciones que pueden ser string[] o RecommendationObject[]
+export type RecommendationType = string[] | RecommendationObject[] | Record<string, unknown>[];
+
+// Función helper para extraer texto de recomendaciones
+export const extractRecommendationText = (rec: string | RecommendationObject | Record<string, unknown>): string => {
+  if (typeof rec === 'string') {
+    return rec;
+  }
+  if (typeof rec === 'object' && rec !== null) {
+    const recObj = rec as RecommendationObject;
+    return recObj.recommendation || 
+           recObj.category || 
+           String((rec as Record<string, unknown>).text) || 
+           JSON.stringify(rec);
+  }
+  return String(rec);
+};
+
+// Función helper para convertir cualquier tipo de recomendación a array de strings
+export const normalizeRecommendations = (recommendations: RecommendationType | undefined): string[] => {
+  if (!recommendations) return [];
+  if (!Array.isArray(recommendations)) return [];
+  
+  return recommendations.map(extractRecommendationText).filter(Boolean);
+};
+
 export interface AnalysisResult {
   document_id?: string;
   comparison_id?: string;
@@ -10,7 +45,7 @@ export interface AnalysisResult {
     legal_analysis?: Record<string, unknown>;
     risk_analysis?: Record<string, unknown>;
     comparison_analysis?: Record<string, unknown>;
-    recommendations?: string[];
+    recommendations?: RecommendationType;
     summary?: Record<string, unknown>;
     analysis?: AnalysisData;
   };
@@ -92,8 +127,8 @@ export interface AnalysisSummary {
   completed_stages: number;
   failed_stages: number;
   overall_status: string;
-  key_findings: string[];
-  recommendations: string[];
+  key_findings: RecommendationType;
+  recommendations: RecommendationType;
 }
 
 export interface ValidationData {
@@ -119,7 +154,7 @@ export interface ValidationData {
     failed_rules?: number;
     compliance_level?: string;
   };
-  recommendations: string[];
+  recommendations: RecommendationType;
 }
 
 export interface RiskAnalysisData {
@@ -145,7 +180,7 @@ export interface RiskAnalysisData {
     weight?: number;
   }>;
   critical_risks?: string[];
-  mitigation_recommendations?: string[];
+  mitigation_recommendations?: RecommendationType;
 }
 
 export interface ClassificationData {

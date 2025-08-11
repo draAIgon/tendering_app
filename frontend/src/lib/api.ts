@@ -362,6 +362,49 @@ class TenderAIApi {
     }
   }
 
+  async generateComparisonReportAsFile(comparisonId: string, options: ReportRequest = {}): Promise<Blob> {
+    debugLog('Generando reporte de comparación como archivo', { comparisonId, options });
+    
+    const response = await fetch(`${this.baseUrl}/api/v1/reports/comparison/${comparisonId}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(options),
+    });
+
+    debugLog('Respuesta de reporte de comparación recibida', { 
+      status: response.status, 
+      statusText: response.statusText,
+      contentType: response.headers.get('content-type')
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ detail: 'Error desconocido' }));
+      throw new Error(errorData.detail || `Error HTTP: ${response.status}`);
+    }
+
+    // Verificar si la respuesta es un archivo binario (PDF/HTML) o JSON
+    const contentType = response.headers.get('content-type');
+    if (contentType?.includes('application/pdf') || 
+        contentType?.includes('text/html') || 
+        contentType?.includes('application/octet-stream')) {
+      // Es un archivo binario, devolver como blob
+      const blob = await response.blob();
+      debugLog('Reporte de comparación recibido como blob', { 
+        size: blob.size, 
+        type: blob.type,
+        contentType: contentType
+      });
+      return blob;
+    } else {
+      // Es JSON, no un archivo descargable
+      const jsonResponse = await response.json();
+      debugLog('Respuesta JSON recibida en lugar de archivo de comparación', jsonResponse);
+      throw new Error('El servidor devolvió JSON en lugar de un archivo. Formato no soportado para descarga.');
+    }
+  }
+
   async exportDocument(documentId: string, format: string = 'pdf'): Promise<Blob> {
     const response = await fetch(`${this.baseUrl}/api/v1/documents/export/${documentId}`, {
       method: 'POST',

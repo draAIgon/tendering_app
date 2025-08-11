@@ -1003,23 +1003,68 @@ async def generate_comparison_report(
 ):
     """Generar reporte de comparación de propuestas"""
     
-    if comparison_id not in system_cache:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Comparación '{comparison_id}' no encontrada"
-        )
+    system = None
     
-    try:
+    # Primero intentar obtener desde caché
+    if comparison_id in system_cache:
         system = system_cache[comparison_id]
-        
-        # Obtener todos los document_ids del análisis
-        document_ids = list(system.analysis_results.keys())
-        
-        if not document_ids:
+    else:
+        # Si no está en caché, intentar cargar desde disco
+        try:
+            comparison_db_path = ANALYSIS_DB_DIR / comparison_id
+            if comparison_db_path.exists():
+                # Recrear el sistema desde disco
+                system = BiddingAnalysisSystem(data_dir=str(comparison_db_path))
+                system.initialize_system()
+                
+                # Cargar resultados desde disco si existen
+                comparison_files = list(comparison_db_path.glob("*comparison*"))
+                analysis_files = list(comparison_db_path.glob("*analysis_result*"))
+                
+                if not (comparison_files or analysis_files):
+                    raise HTTPException(
+                        status_code=404,
+                        detail=f"No se encontraron datos de comparación para '{comparison_id}'"
+                    )
+                
+                logger.info(f"Sistema de comparación cargado desde disco: {comparison_id}")
+            else:
+                raise HTTPException(
+                    status_code=404,
+                    detail=f"Comparación '{comparison_id}' no encontrada"
+                )
+        except Exception as e:
+            logger.error(f"Error cargando comparación desde disco: {e}")
             raise HTTPException(
                 status_code=404,
-                detail="No hay documentos analizados disponibles para el reporte"
+                detail=f"Comparación '{comparison_id}' no encontrada o no se pudo cargar"
             )
+    
+    try:
+        # Obtener todos los document_ids del análisis
+        document_ids = list(system.analysis_results.keys()) if hasattr(system, 'analysis_results') and system.analysis_results else []
+        
+        if not document_ids:
+            # Si no hay analysis_results, intentar obtener desde archivos en disco
+            comparison_db_path = ANALYSIS_DB_DIR / comparison_id
+            if comparison_db_path.exists():
+                analysis_files = list(comparison_db_path.glob("*analysis_result*"))
+                document_folders = [d for d in comparison_db_path.iterdir() if d.is_dir()]
+                
+                if analysis_files or document_folders:
+                    # Crear documento_ids ficticio para el reporte
+                    document_ids = [f"doc_{i+1}" for i in range(len(analysis_files) + len(document_folders))]
+                    logger.info(f"Usando {len(document_ids)} documentos identificados desde disco")
+                else:
+                    raise HTTPException(
+                        status_code=404,
+                        detail="No hay documentos analizados disponibles para el reporte"
+                    )
+            else:
+                raise HTTPException(
+                    status_code=404,
+                    detail="No hay documentos analizados disponibles para el reporte"
+                )
         
         logger.info(f"Generando reporte de comparación para {len(document_ids)} documentos")
         

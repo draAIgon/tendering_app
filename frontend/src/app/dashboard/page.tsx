@@ -343,28 +343,46 @@ export default function Dashboard() {
     try {
       showNotification('info', '🔄 Generando reporte PDF...');
       
-      // Generar reporte en formato PDF
-      const pdfReportBlob = await apiClient.generateReportAsFile(processedData.documentId, {
-        report_type: 'comprehensive',
-        include_charts: true,
-        format: 'pdf'
-      });
+      let pdfReportBlob: Blob;
+      let reportFileName: string;
+      
+      // Decidir qué endpoint usar basado en si es comparación o análisis individual
+      if (isComparison) {
+        // Usar endpoint de comparación para múltiples documentos
+        pdfReportBlob = await apiClient.generateComparisonReportAsFile(processedData.documentId, {
+          report_type: 'comparison',
+          include_charts: true,
+          format: 'pdf'
+        });
+        reportFileName = `reporte_comparacion_${processedData.documentId}.pdf`;
+        
+        showNotification('success', '✅ Reporte de comparación PDF descargado exitosamente');
+      } else {
+        // Usar endpoint regular para documento individual
+        pdfReportBlob = await apiClient.generateReportAsFile(processedData.documentId, {
+          report_type: 'comprehensive',
+          include_charts: true,
+          format: 'pdf'
+        });
+        reportFileName = `reporte_licitacion_${processedData.documentId}.pdf`;
+        
+        showNotification('success', '✅ Reporte PDF descargado exitosamente');
+      }
       
       // Crear URL para descarga del archivo PDF
       const url = window.URL.createObjectURL(pdfReportBlob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `reporte_licitacion_${processedData.documentId}.pdf`;
+      a.download = reportFileName;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
       
-      showNotification('success', '✅ Reporte PDF descargado exitosamente');
-      
     } catch (error) {
       console.error('Error al generar reporte PDF:', error);
-      showNotification('error', '❌ Error al generar el reporte PDF: ' + (error instanceof Error ? error.message : 'Error desconocido'));
+      const errorType = isComparison ? 'comparación' : 'documento';
+      showNotification('error', `❌ Error al generar el reporte PDF de ${errorType}: ` + (error instanceof Error ? error.message : 'Error desconocido'));
     }
   };
 

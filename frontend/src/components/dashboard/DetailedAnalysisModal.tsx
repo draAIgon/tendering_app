@@ -1,4 +1,5 @@
 import React from 'react';
+import { RecommendationType, normalizeRecommendations } from '@/types/dashboard';
 
 // Interfaces para el análisis
 interface AnalysisData {
@@ -84,7 +85,7 @@ interface AnalysisData {
             date_issues: string[];
             has_adequate_dates: boolean;
           };
-          recommendations: string[];
+          recommendations: RecommendationType;
           summary: {
             total_issues: number;
             critical_issues: number;
@@ -118,7 +119,7 @@ interface AnalysisData {
             assessment_summary: string;
           };
           critical_risks: string[];
-          mitigation_recommendations: string[];
+          mitigation_recommendations: RecommendationType;
           risk_matrix: {
             low_impact: Array<{
               category: string;
@@ -147,8 +148,8 @@ interface AnalysisData {
       completed_stages: number;
       failed_stages: number;
       overall_status: string;
-      key_findings: string[];
-      recommendations: string[];
+      key_findings: RecommendationType;
+      recommendations: RecommendationType;
     };
     errors: string[];
   };
@@ -323,11 +324,11 @@ function OverviewTab({ uploadedFiles, analysisData }: { uploadedFiles: File[]; a
       )}
       
       {/* Resumen de hallazgos clave */}
-      {analysis?.summary?.key_findings && analysis.summary.key_findings.length > 0 && (
+      {analysis?.summary?.key_findings && Array.isArray(analysis.summary.key_findings) && analysis.summary.key_findings.length > 0 && (
         <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
           <h3 className="font-semibold text-blue-800 dark:text-blue-200 mb-3">🔍 Hallazgos Clave</h3>
           <ul className="space-y-2">
-            {analysis.summary.key_findings.map((finding, index) => (
+            {normalizeRecommendations(analysis.summary.key_findings).map((finding, index) => (
               <li key={index} className="flex items-start space-x-2">
                 <span className="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0"></span>
                 <span className="text-sm text-blue-700 dark:text-blue-300">{finding}</span>
@@ -559,11 +560,11 @@ function FinancialTab({ analysisData }: { analysisData?: AnalysisData }) {
       </div>
 
       {/* Recomendaciones relacionadas con finanzas */}
-      {analysis?.summary?.recommendations && analysis.summary.recommendations.length > 0 && (
+      {analysis?.summary?.recommendations && Array.isArray(analysis.summary.recommendations) && analysis.summary.recommendations.length > 0 && (
         <div className="bg-gray-50 dark:bg-gray-700/50 p-4 rounded-lg">
           <h4 className="font-semibold text-gray-900 dark:text-white mb-3">💡 Recomendaciones</h4>
           <ul className="space-y-2">
-            {analysis.summary.recommendations.map((recommendation, index) => (
+            {normalizeRecommendations(analysis.summary.recommendations).map((recommendation, index) => (
               <li key={index} className="flex items-start space-x-2">
                 <span className="w-2 h-2 bg-gray-500 rounded-full mt-2 flex-shrink-0"></span>
                 <span className="text-sm text-gray-700 dark:text-gray-300">{recommendation}</span>
@@ -762,11 +763,11 @@ function LegalTab({ analysisData }: { analysisData?: AnalysisData }) {
       )}
 
       {/* Recomendaciones */}
-      {validation?.recommendations && validation.recommendations.length > 0 && (
+      {validation?.recommendations && Array.isArray(validation.recommendations) && validation.recommendations.length > 0 && (
         <div className="bg-gray-50 dark:bg-gray-700/50 p-4 rounded-lg">
           <h4 className="font-semibold text-gray-900 dark:text-white mb-3">💡 Recomendaciones Legales</h4>
           <ul className="space-y-2">
-            {validation.recommendations.map((recommendation, index) => (
+            {normalizeRecommendations(validation.recommendations).map((recommendation, index) => (
               <li key={index} className="flex items-start space-x-2">
                 <span className="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0"></span>
                 <span className="text-sm text-gray-700 dark:text-gray-300">{recommendation}</span>
@@ -1136,11 +1137,11 @@ function RisksTab({ analysisData }: { analysisData?: AnalysisData }) {
       )}
 
       {/* Recomendaciones de mitigación */}
-      {riskAnalysis?.mitigation_recommendations && riskAnalysis.mitigation_recommendations.length > 0 && (
+      {riskAnalysis?.mitigation_recommendations && Array.isArray(riskAnalysis.mitigation_recommendations) && riskAnalysis.mitigation_recommendations.length > 0 && (
         <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
           <h4 className="font-semibold text-blue-800 dark:text-blue-200 mb-3">💡 Recomendaciones de Mitigación</h4>
           <ul className="space-y-2">
-            {riskAnalysis.mitigation_recommendations.map((recommendation, index) => (
+            {normalizeRecommendations(riskAnalysis.mitigation_recommendations).map((recommendation, index) => (
               <li key={index} className="flex items-start space-x-2">
                 <span className="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0"></span>
                 <span className="text-sm text-blue-700 dark:text-blue-300">{recommendation}</span>
