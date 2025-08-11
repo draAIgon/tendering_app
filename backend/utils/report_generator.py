@@ -1654,3 +1654,567 @@ def generate_pdf_report(report_data: Dict[str, Any], document_id: str, report_ty
     # Fallback a ReportLab
     logger.info("Usando ReportLab como alternativa para generar PDF")
     return generate_pdf_with_reportlab(report_data, document_id, report_type, output_path)
+
+def format_data_for_pdf(data, max_length=300):
+    """
+    Formatear datos complejos para mostrar en PDF de manera legible
+    
+    Args:
+        data: Datos a formatear (dict, list, str, etc.)
+        max_length: Longitud máxima del texto resultante
+        
+    Returns:
+        String formateado para mostrar en PDF
+    """
+    if isinstance(data, dict):
+        if not data:
+            return "No hay datos disponibles"
+        
+        # Formatear diccionario como lista de elementos
+        items = []
+        for key, value in data.items():
+            # Formatear la clave
+            formatted_key = key.replace('_', ' ').title()
+            
+            # Formatear el valor
+            if isinstance(value, (dict, list)):
+                formatted_value = format_data_for_pdf(value, max_length=100)
+            else:
+                formatted_value = str(value)
+            
+            items.append(f"• {formatted_key}: {formatted_value}")
+        
+        result = '\n'.join(items)
+        
+    elif isinstance(data, list):
+        if not data:
+            return "No hay elementos"
+        
+        # Formatear lista como elementos con viñetas
+        items = []
+        for i, item in enumerate(data[:10]):  # Limitar a 10 elementos
+            if isinstance(item, (dict, list)):
+                formatted_item = format_data_for_pdf(item, max_length=100)
+            else:
+                formatted_item = str(item)
+            items.append(f"• {formatted_item}")
+        
+        if len(data) > 10:
+            items.append(f"• ... y {len(data) - 10} elementos más")
+        
+        result = '\n'.join(items)
+        
+    else:
+        result = str(data)
+    
+    # Truncar si es muy largo
+    if len(result) > max_length:
+        result = result[:max_length] + "..."
+    
+    return result
+
+def format_data_for_html(data):
+    """
+    Formatear datos complejos para mostrar en HTML de manera legible
+    
+    Args:
+        data: Datos a formatear (dict, list, str, etc.)
+        
+    Returns:
+        String HTML formateado
+    """
+    if isinstance(data, dict):
+        if not data:
+            return "<em>No hay datos disponibles</em>"
+        
+        items = []
+        for key, value in data.items():
+            formatted_key = key.replace('_', ' ').title()
+            
+            if isinstance(value, dict):
+                # Sub-diccionario: mostrar como lista anidada
+                sub_items = []
+                for sub_key, sub_value in value.items():
+                    sub_items.append(f"  ◦ {sub_key.replace('_', ' ').title()}: {sub_value}")
+                formatted_value = "<br>" + "<br>".join(sub_items)
+            elif isinstance(value, list):
+                # Lista: mostrar primeros elementos
+                if len(value) <= 5:
+                    formatted_value = ", ".join([str(v) for v in value])
+                else:
+                    formatted_value = ", ".join([str(v) for v in value[:5]]) + f"... (+{len(value)-5} más)"
+            else:
+                formatted_value = str(value)
+            
+            items.append(f"<strong>{formatted_key}:</strong> {formatted_value}")
+        
+        return "<br>".join(items)
+        
+    elif isinstance(data, list):
+        if not data:
+            return "<em>No hay elementos</em>"
+        
+        items = []
+        for item in data[:8]:  # Mostrar hasta 8 elementos
+            if isinstance(item, (dict, list)):
+                formatted_item = str(item)[:50] + ("..." if len(str(item)) > 50 else "")
+            else:
+                formatted_item = str(item)
+            items.append(f"• {formatted_item}")
+        
+        if len(data) > 8:
+            items.append(f"<em>... y {len(data) - 8} elementos más</em>")
+        
+        return "<br>".join(items)
+        
+    else:
+        return str(data)
+
+def generate_comparison_pdf_report(report_data: Dict[str, Any], comparison_id: str, output_path: Path) -> bool:
+    """
+    Función especializada para generar PDF de reportes de comparación
+    
+    Args:
+        report_data: Datos del reporte de comparación
+        comparison_id: ID de la comparación
+        output_path: Ruta donde guardar el PDF
+        
+    Returns:
+        True si se generó correctamente, False en caso contrario
+    """
+    try:
+        # Generar HTML especializado para comparación
+        html_content = generate_comparison_html(report_data, comparison_id)
+        
+        # Intentar con WeasyPrint primero
+        if generate_pdf_with_weasyprint(html_content, output_path):
+            return True
+        
+        # Fallback a ReportLab para comparaciones
+        logger.info("Usando ReportLab como alternativa para generar PDF de comparación")
+        return generate_comparison_pdf_with_reportlab(report_data, comparison_id, output_path)
+        
+    except Exception as e:
+        logger.error(f"Error generando PDF de comparación: {e}")
+        return False
+
+def generate_comparison_html(report_data: Dict[str, Any], comparison_id: str) -> str:
+    """
+    Generar HTML especializado para reportes de comparación
+    
+    Args:
+        report_data: Datos del reporte de comparación
+        comparison_id: ID de la comparación
+        
+    Returns:
+        Contenido HTML del reporte de comparación
+    """
+    # Extraer información específica de comparación
+    documents_count = report_data.get('documents_included', 0)
+    comparison_summary = report_data.get('comparison_summary', {})
+    detailed_analysis = report_data.get('detailed_analysis', {})
+    recommendations = report_data.get('recommendations', [])
+    
+    html_template = f"""
+    <!DOCTYPE html>
+    <html lang="es">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Reporte de Comparación - {comparison_id}</title>
+        <style>
+            body {{
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+                line-height: 1.6;
+                color: #333;
+                max-width: 1200px;
+                margin: 0 auto;
+                padding: 20px;
+                background: #f8fafc;
+            }}
+            .header {{
+                text-align: center;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+                padding: 40px 20px;
+                border-radius: 12px;
+                margin-bottom: 30px;
+                box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            }}
+            .header h1 {{
+                margin: 0 0 10px 0;
+                font-size: 2.5em;
+                font-weight: 300;
+            }}
+            .header .subtitle {{
+                font-size: 1.2em;
+                opacity: 0.9;
+            }}
+            .comparison-summary {{
+                background: white;
+                padding: 30px;
+                border-radius: 12px;
+                margin-bottom: 30px;
+                box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            }}
+            .section {{
+                background: white;
+                margin-bottom: 25px;
+                border-radius: 12px;
+                overflow: hidden;
+                box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            }}
+            .section-header {{
+                background: #4f46e5;
+                color: white;
+                padding: 20px 30px;
+                font-size: 1.3em;
+                font-weight: 600;
+            }}
+            .section-content {{
+                padding: 30px;
+            }}
+            .comparison-table {{
+                width: 100%;
+                border-collapse: collapse;
+                margin: 20px 0;
+            }}
+            .comparison-table th,
+            .comparison-table td {{
+                padding: 15px;
+                text-align: left;
+                border-bottom: 1px solid #e5e7eb;
+            }}
+            .comparison-table th {{
+                background: #f9fafb;
+                font-weight: 600;
+                color: #374151;
+            }}
+            .comparison-table tr:hover {{
+                background: #f9fafb;
+            }}
+            .score-high {{ 
+                color: #059669; 
+                font-weight: bold; 
+            }}
+            .score-medium {{ 
+                color: #d97706; 
+                font-weight: bold; 
+            }}
+            .score-low {{ 
+                color: #dc2626; 
+                font-weight: bold; 
+            }}
+            .recommendation {{
+                background: #f0f9ff;
+                border-left: 4px solid #0ea5e9;
+                padding: 20px;
+                margin: 15px 0;
+                border-radius: 0 8px 8px 0;
+            }}
+            .metric-card {{
+                background: #f8fafc;
+                border: 1px solid #e2e8f0;
+                border-radius: 8px;
+                padding: 20px;
+                margin: 15px 0;
+            }}
+            .metric-value {{
+                font-size: 2em;
+                font-weight: bold;
+                color: #4f46e5;
+                margin-bottom: 5px;
+            }}
+            .metric-label {{
+                color: #64748b;
+                font-size: 0.9em;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+            }}
+        </style>
+    </head>
+    <body>
+        <div class="header">
+            <h1>📊 Reporte de Comparación</h1>
+            <div class="subtitle">Análisis Comparativo de Propuestas • {comparison_id}</div>
+            <div style="margin-top: 15px; font-size: 1em;">
+                {documents_count} documentos comparados • {datetime.now().strftime('%d/%m/%Y %H:%M')}
+            </div>
+        </div>
+
+        <div class="comparison-summary">
+            <h2>📋 Resumen Ejecutivo</h2>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin: 20px 0;">
+                <div class="metric-card">
+                    <div class="metric-value">{documents_count}</div>
+                    <div class="metric-label">Documentos Analizados</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">{len(comparison_summary)}</div>
+                    <div class="metric-label">Criterios Evaluados</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">{len(recommendations)}</div>
+                    <div class="metric-label">Recomendaciones</div>
+                </div>
+            </div>
+        </div>
+    """
+    
+    # Agregar tabla de comparación si hay datos de resumen
+    if comparison_summary:
+        html_template += f"""
+        <div class="section">
+            <div class="section-header">🔍 Comparación Detallada</div>
+            <div class="section-content">
+                <table class="comparison-table">
+                    <thead>
+                        <tr>
+                            <th>Criterio</th>
+                            <th>Valores</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+        """
+        
+        for key, value in comparison_summary.items():
+            formatted_value = format_data_for_html(value)
+            
+            html_template += f"""
+                        <tr>
+                            <td><strong>{key.replace('_', ' ').title()}</strong></td>
+                            <td>{formatted_value}</td>
+                        </tr>
+            """
+        
+        html_template += """
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        """
+    
+    # Agregar análisis detallado
+    if detailed_analysis:
+        html_template += f"""
+        <div class="section">
+            <div class="section-header">📈 Análisis Detallado</div>
+            <div class="section-content">
+        """
+        
+        for section_name, section_data in detailed_analysis.items():
+            html_template += f"""
+                <h3>{section_name.replace('_', ' ').title()}</h3>
+            """
+            
+            if isinstance(section_data, dict):
+                for key, value in section_data.items():
+                    formatted_value = format_data_for_html(value)
+                    html_template += f"""
+                        <div class="metric-card">
+                            <strong>{key.replace('_', ' ').title()}:</strong><br>
+                            {formatted_value}
+                        </div>
+                    """
+            else:
+                html_template += f"""
+                    <div class="metric-card">{section_data}</div>
+                """
+        
+        html_template += """
+            </div>
+        </div>
+        """
+    
+    # Agregar recomendaciones
+    if recommendations:
+        html_template += f"""
+        <div class="section">
+            <div class="section-header">💡 Recomendaciones</div>
+            <div class="section-content">
+        """
+        
+        for i, recommendation in enumerate(recommendations, 1):
+            html_template += f"""
+                <div class="recommendation">
+                    <strong>Recomendación {i}:</strong><br>
+                    {recommendation}
+                </div>
+            """
+        
+        html_template += """
+            </div>
+        </div>
+        """
+    
+    # Agregar pie de página
+    html_template += f"""
+        <div style="text-align: center; margin-top: 40px; padding: 20px; color: #64748b; border-top: 1px solid #e2e8f0;">
+            <p>Reporte generado el {datetime.now().strftime('%d de %B de %Y a las %H:%M:%S')}</p>
+            <p>Sistema de Análisis de Licitaciones • Versión 1.0</p>
+        </div>
+    </body>
+    </html>
+    """
+    
+    return html_template
+
+def generate_comparison_pdf_with_reportlab(report_data: Dict[str, Any], comparison_id: str, output_path: Path) -> bool:
+    """
+    Generar PDF de comparación usando ReportLab como fallback
+    
+    Args:
+        report_data: Datos del reporte de comparación
+        comparison_id: ID de la comparación
+        output_path: Ruta donde guardar el PDF
+        
+    Returns:
+        True si se generó correctamente, False en caso contrario
+    """
+    try:
+        from reportlab.lib.pagesizes import letter, A4
+        from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+        from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+        from reportlab.lib import colors
+        from reportlab.lib.units import inch
+        
+        # Crear documento
+        doc = SimpleDocTemplate(str(output_path), pagesize=A4)
+        story = []
+        styles = getSampleStyleSheet()
+        
+        # Estilos personalizados
+        title_style = ParagraphStyle(
+            'CustomTitle',
+            parent=styles['Heading1'],
+            fontSize=24,
+            spaceAfter=30,
+            textColor=colors.HexColor('#4f46e5'),
+            alignment=1  # Centrado
+        )
+        
+        subtitle_style = ParagraphStyle(
+            'CustomSubtitle',
+            parent=styles['Normal'],
+            fontSize=14,
+            spaceAfter=20,
+            textColor=colors.HexColor('#64748b'),
+            alignment=1  # Centrado
+        )
+        
+        section_style = ParagraphStyle(
+            'SectionHeader',
+            parent=styles['Heading2'],
+            fontSize=16,
+            spaceBefore=20,
+            spaceAfter=12,
+            textColor=colors.HexColor('#1e40af'),
+            borderWidth=0,
+            borderColor=colors.HexColor('#e2e8f0'),
+            borderPadding=10
+        )
+        
+        # Título principal
+        story.append(Paragraph(f"📊 Reporte de Comparación", title_style))
+        story.append(Paragraph(f"Análisis Comparativo • {comparison_id}", subtitle_style))
+        story.append(Paragraph(f"Generado el {datetime.now().strftime('%d/%m/%Y %H:%M')}", subtitle_style))
+        story.append(Spacer(1, 30))
+        
+        # Resumen ejecutivo
+        documents_count = report_data.get('documents_included', 0)
+        story.append(Paragraph("📋 Resumen Ejecutivo", section_style))
+        
+        summary_data = [
+            ['Métrica', 'Valor'],
+            ['Documentos Analizados', str(documents_count)],
+            ['Criterios Evaluados', str(len(report_data.get('comparison_summary', {})))],
+            ['Recomendaciones', str(len(report_data.get('recommendations', [])))]
+        ]
+        
+        summary_table = Table(summary_data, colWidths=[3*inch, 2*inch])
+        summary_table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#f9fafb')),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.HexColor('#374151')),
+            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, 0), 12),
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+            ('BACKGROUND', (0, 1), (-1, -1), colors.white),
+            ('GRID', (0, 0), (-1, -1), 1, colors.HexColor('#e5e7eb'))
+        ]))
+        story.append(summary_table)
+        story.append(Spacer(1, 20))
+        
+        # Comparación detallada
+        comparison_summary = report_data.get('comparison_summary', {})
+        if comparison_summary:
+            story.append(Paragraph("🔍 Comparación Detallada", section_style))
+            
+            comparison_data = [['Criterio', 'Detalles']]
+            for key, value in comparison_summary.items():
+                formatted_value = format_data_for_pdf(value, max_length=250)
+                comparison_data.append([
+                    key.replace('_', ' ').title(),
+                    formatted_value
+                ])
+            
+            comparison_table = Table(comparison_data, colWidths=[2*inch, 4*inch])
+            comparison_table.setStyle(TableStyle([
+                ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#f9fafb')),
+                ('TEXTCOLOR', (0, 0), (-1, 0), colors.HexColor('#374151')),
+                ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                ('FONTSIZE', (0, 0), (-1, 0), 12),
+                ('FONTSIZE', (0, 1), (-1, -1), 10),
+                ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+                ('BACKGROUND', (0, 1), (-1, -1), colors.white),
+                ('GRID', (0, 0), (-1, -1), 1, colors.HexColor('#e5e7eb')),
+                ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+                ('WORDWRAP', (0, 0), (-1, -1), 'LTR')
+            ]))
+            story.append(comparison_table)
+            story.append(Spacer(1, 20))
+        
+        # Análisis detallado
+        detailed_analysis = report_data.get('detailed_analysis', {})
+        if detailed_analysis:
+            story.append(Paragraph("📈 Análisis Detallado", section_style))
+            
+            for section_name, section_data in detailed_analysis.items():
+                story.append(Paragraph(section_name.replace('_', ' ').title(), 
+                                     ParagraphStyle('SubSection', parent=styles['Heading3'], 
+                                                  fontSize=14, spaceBefore=15, spaceAfter=10)))
+                
+                if isinstance(section_data, dict):
+                    for key, value in section_data.items():
+                        story.append(Paragraph(f"<b>{key.replace('_', ' ').title()}:</b>", styles['Normal']))
+                        formatted_value = format_data_for_pdf(value, max_length=400)
+                        story.append(Paragraph(formatted_value, styles['Normal']))
+                        story.append(Spacer(1, 10))
+                else:
+                    story.append(Paragraph(str(section_data)[:500] + ("..." if len(str(section_data)) > 500 else ""), 
+                                         styles['Normal']))
+                
+                story.append(Spacer(1, 15))
+        
+        # Recomendaciones
+        recommendations = report_data.get('recommendations', [])
+        if recommendations:
+            story.append(Paragraph("💡 Recomendaciones", section_style))
+            
+            for i, recommendation in enumerate(recommendations, 1):
+                story.append(Paragraph(f"<b>Recomendación {i}:</b>", styles['Normal']))
+                story.append(Paragraph(str(recommendation), styles['Normal']))
+                story.append(Spacer(1, 12))
+        
+        # Generar PDF
+        doc.build(story)
+        logger.info(f"PDF de comparación generado exitosamente: {output_path}")
+        return True
+        
+    except ImportError:
+        logger.error("ReportLab no está instalado. No se puede generar PDF de comparación.")
+        return False
+    except Exception as e:
+        logger.error(f"Error generando PDF de comparación con ReportLab: {e}")
+        return False

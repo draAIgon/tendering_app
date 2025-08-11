@@ -332,31 +332,7 @@ export default function Dashboard() {
     setActiveTab('overview');
   };
 
-  const handleExportReport = async () => {
-    if (!processedData?.documentId) {
-      showNotification('error', 'No hay datos para exportar');
-      return;
-    }
 
-    try {
-      const reportBlob = await apiClient.exportDocument(processedData.documentId, 'pdf');
-      
-      // Crear URL para descarga
-      const url = window.URL.createObjectURL(reportBlob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `reporte_licitacion_${processedData.documentId}.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
-      
-      showNotification('success', '✅ Reporte exportado exitosamente');
-    } catch (error) {
-      console.error('Error al exportar:', error);
-      showNotification('error', '❌ Error al exportar el reporte: ' + (error instanceof Error ? error.message : 'Error desconocido'));
-    }
-  };
 
   const handleGenerateReport = async () => {
     if (!processedData?.documentId) {
@@ -432,7 +408,6 @@ export default function Dashboard() {
         {processedData && (
           <ResultsSection
             processedData={processedData}
-            onExportReport={handleExportReport}
             onGenerateReport={handleGenerateReport}
             onDetailedAnalysis={handleDetailedAnalysis}
           />
@@ -449,7 +424,6 @@ export default function Dashboard() {
           uploadedFiles={uploadedFiles}
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           analysisData={processedData?.apiData && !isComparison ? processedData.apiData as any : undefined}
-          onExportReport={handleExportReport}
         />
       )}
 
@@ -463,7 +437,6 @@ export default function Dashboard() {
           uploadedFiles={uploadedFiles}
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           comparisonData={processedData?.apiData && isComparison ? processedData.apiData as any : undefined}
-          onExportReport={handleExportReport}
         />
       )}
 
