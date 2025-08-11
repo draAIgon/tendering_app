@@ -274,15 +274,30 @@ def generate_html_from_report_data(report_data: Dict[str, Any], document_id: str
                 border-radius: 8px;
                 border: 1px solid var(--border-color);
                 overflow: hidden;
+                margin: 10px 0;
             }}
             
             .list-item {{
                 padding: 12px 16px;
                 border-bottom: 1px solid var(--border-color);
                 transition: background-color 0.3s ease;
-                display: flex;
-                align-items: center;
-                gap: 10px;
+                display: block;
+                word-wrap: break-word;
+                overflow-wrap: break-word;
+                line-height: 1.6;
+                position: relative;
+            }}
+            
+            .list-item i {{
+                margin-right: 8px;
+                color: var(--primary-color);
+                display: inline-block;
+                width: 16px;
+            }}
+            
+            .list-item span {{
+                display: inline;
+                vertical-align: top;
             }}
             
             .list-item:last-child {{
@@ -290,7 +305,7 @@ def generate_html_from_report_data(report_data: Dict[str, Any], document_id: str
             }}
             
             .list-item:hover {{
-                background: var(--light-bg);
+                background-color: #f8fafc;
             }}
             
             .badge {{
@@ -675,6 +690,219 @@ def generate_stats_grid(section_value: dict) -> str:
     stats_html += '</div>'
     return stats_html
 
+def format_scoring_criteria(value: dict, context_key: str = '') -> str:
+    """
+    Formatear criterios de evaluación de manera más legible
+    
+    Args:
+        value: Diccionario con criterios de evaluación
+        context_key: Clave del contexto
+        
+    Returns:
+        HTML formateado para criterios de evaluación
+    """
+    if not isinstance(value, dict):
+        return str(value)
+    
+    # Detectar si es un criterio de evaluación técnica o económica
+    if 'weight_percentage' in value or 'max_points' in value or 'subcriteria' in value:
+        html = '<div class="evaluation-criteria">'
+        
+        # Mostrar peso y puntos máximos
+        if 'weight_percentage' in value:
+            html += f'''
+            <div class="criteria-header">
+                <div class="criteria-weight">
+                    <i class="fas fa-percentage"></i>
+                    <span class="weight-label">Peso:</span>
+                    <span class="weight-value">{value['weight_percentage']}%</span>
+                </div>
+            '''
+        
+        if 'max_points' in value:
+            html += f'''
+                <div class="criteria-points">
+                    <i class="fas fa-star"></i>
+                    <span class="points-label">Puntos máximos:</span>
+                    <span class="points-value">{value['max_points']}</span>
+                </div>
+            </div>
+            '''
+        
+        # Mostrar subcriterios si existen
+        if 'subcriteria' in value and isinstance(value['subcriteria'], dict):
+            html += '''
+            <div class="subcriteria-section">
+                <h4><i class="fas fa-list-ul"></i> Subcriterios:</h4>
+                <div class="subcriteria-grid">
+            '''
+            
+            for sub_name, sub_points in value['subcriteria'].items():
+                html += f'''
+                <div class="subcriteria-item">
+                    <div class="subcriteria-name">{sub_name.replace('_', ' ').title()}</div>
+                    <div class="subcriteria-points">{sub_points} pts</div>
+                </div>
+                '''
+            
+            html += '</div></div>'
+        
+        # Mostrar método de evaluación si existe
+        if 'evaluation_method' in value:
+            html += f'''
+            <div class="evaluation-method">
+                <i class="fas fa-calculator"></i>
+                <span class="method-label">Método de evaluación:</span>
+                <span class="method-value">{value['evaluation_method']}</span>
+            </div>
+            '''
+        
+        # Mostrar otros campos
+        other_fields = {k: v for k, v in value.items() 
+                       if k not in ['weight_percentage', 'max_points', 'subcriteria', 'evaluation_method']}
+        
+        if other_fields:
+            html += '<div class="other-criteria">'
+            for field_key, field_value in other_fields.items():
+                html += f'''
+                <div class="criteria-field">
+                    <span class="field-label">{field_key.replace('_', ' ').title()}:</span>
+                    <span class="field-value">{field_value}</span>
+                </div>
+                '''
+            html += '</div>'
+        
+        html += '</div>'
+        
+        # Agregar estilos CSS específicos para criterios
+        html += '''
+        <style>
+        .evaluation-criteria {
+            background: linear-gradient(135deg, #f8fafc 0%, #e0f2fe 100%);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            margin: 10px 0;
+        }
+        
+        .criteria-header {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .criteria-weight, .criteria-points {
+            background: var(--card-bg);
+            padding: 10px 15px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: var(--shadow);
+        }
+        
+        .weight-value, .points-value {
+            font-weight: 700;
+            color: var(--primary-color);
+            font-size: 1.1rem;
+        }
+        
+        .subcriteria-section h4 {
+            color: var(--text-primary);
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .subcriteria-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+        }
+        
+        .subcriteria-item {
+            background: var(--card-bg);
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s ease;
+        }
+        
+        .subcriteria-item:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow);
+        }
+        
+        .subcriteria-name {
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+        
+        .subcriteria-points {
+            background: var(--accent-color);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+        
+        .evaluation-method {
+            background: var(--light-bg);
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            border-left: 4px solid var(--success-color);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .method-value {
+            background: var(--success-color);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-weight: 500;
+        }
+        
+        .other-criteria {
+            margin-top: 15px;
+        }
+        
+        .criteria-field {
+            background: var(--card-bg);
+            padding: 8px 12px;
+            margin-bottom: 5px;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+            display: flex;
+            gap: 10px;
+        }
+        
+        .field-label {
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+        
+        .field-value {
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+        </style>
+        '''
+        
+        return html
+    
+    # Si no es un criterio de evaluación específico, usar formato JSON mejorado
+    return f'<div class="json-content">{json.dumps(value, indent=2, ensure_ascii=False, default=str)}</div>'
+
 def format_value_for_html_enhanced(value: Any, context_key: str = '') -> str:
     """
     Formatear un valor para mostrar en HTML con mejoras visuales
@@ -728,6 +956,14 @@ def format_value_for_html_enhanced(value: Any, context_key: str = '') -> str:
             return f'<span>{value}</span>'
     
     if isinstance(value, dict):
+        # Formateo especial para criterios de evaluación
+        if ('evaluation' in context_key.lower() or 
+            'criteria' in context_key.lower() or
+            'weight_percentage' in value or 
+            'max_points' in value or 
+            'subcriteria' in value):
+            return format_scoring_criteria(value, context_key)
+        
         if len(value) > 20:  # Diccionario muy grande
             preview_items = list(value.items())[:5]
             preview_html = '<div class="json-content">'
@@ -742,22 +978,160 @@ def format_value_for_html_enhanced(value: Any, context_key: str = '') -> str:
     if isinstance(value, list):
         if len(value) > 20:  # Lista muy larga
             preview_items = value[:10]
-            preview_html = '<div class="list-container">'
+            preview_html = '<div class="list-container">\n'
             for item in preview_items:
-                preview_html += f'<div class="list-item"><i class="fas fa-arrow-right"></i> {str(item)[:150]}{"..." if len(str(item)) > 150 else ""}</div>'
-            preview_html += f'<div class="list-item" style="font-style: italic; color: var(--text-secondary);"><i class="fas fa-ellipsis-h"></i> ... y {len(value)-10} elementos más</div>'
-            preview_html += '</div>'
+                # No truncar el texto, mostrarlo completo
+                item_text = str(item) if len(str(item)) <= 300 else str(item)[:300] + "..."
+                preview_html += f'                <div class="list-item">\n                    <i class="fas fa-arrow-right" style="margin-right: 8px; color: var(--primary-color);"></i>\n                    <span>{item_text}</span>\n                </div>\n'
+            preview_html += f'                <div class="list-item" style="font-style: italic; color: var(--text-secondary);">\n                    <i class="fas fa-ellipsis-h"></i> ... y {len(value)-10} elementos más\n                </div>\n'
+            preview_html += '            </div>'
             return preview_html
         elif len(value) > 0:
-            items_html = '<div class="list-container">'
-            for item in value:
-                items_html += f'<div class="list-item"><i class="fas fa-arrow-right"></i> {format_value_for_html_enhanced(item, context_key)}</div>'
-            items_html += '</div>'
+            items_html = '<div class="list-container">\n'
+            for i, item in enumerate(value):
+                # Formatear cada elemento de la lista sin truncar
+                if isinstance(item, str):
+                    item_text = item  # Mostrar texto completo
+                else:
+                    item_text = format_value_for_html_enhanced(item, f"{context_key}_item_{i}")
+                items_html += f'                <div class="list-item">\n                    <i class="fas fa-arrow-right" style="margin-right: 8px; color: var(--primary-color);"></i>\n                    <span>{item_text}</span>\n                </div>\n'
+            items_html += '            </div>'
             return items_html
         else:
             return '<span class="badge" style="background: var(--text-secondary);"><i class="fas fa-list"></i> Lista vacía</span>'
     
     return f'<span>{str(value)}</span>'
+
+def create_table_paragraph(text: str, style):
+    """
+    Crear un párrafo para usar en celdas de tabla con manejo de saltos de línea
+    
+    Args:
+        text: Texto a formatear
+        style: Estilo base a usar
+        
+    Returns:
+        Paragraph formateado para tabla
+    """
+    from reportlab.platypus import Paragraph
+    from reportlab.lib.styles import ParagraphStyle
+    
+    # Crear estilo específico para celdas de tabla
+    cell_style = ParagraphStyle(
+        'TableCell',
+        parent=style,
+        fontSize=9,
+        leading=12,  # Interlineado para texto multilínea
+        textColor=style.textColor,
+        fontName='Helvetica',
+        alignment=0,  # Alineación izquierda
+        spaceBefore=0,
+        spaceAfter=0,
+        leftIndent=0,
+        rightIndent=0
+    )
+    
+    # Reemplazar saltos de línea con <br/> para HTML
+    formatted_text = text.replace('\n', '<br/>')
+    
+    return Paragraph(formatted_text, cell_style)
+
+def format_list_for_pdf(value: list, content_style, max_items: int = 20) -> list:
+    """
+    Formatear una lista para PDF con manejo inteligente de texto largo
+    
+    Args:
+        value: Lista a formatear
+        content_style: Estilo a aplicar
+        max_items: Número máximo de elementos a mostrar
+        
+    Returns:
+        Lista de elementos formateados para ReportLab
+    """
+    from reportlab.platypus import Paragraph, Spacer, Table, TableStyle
+    from reportlab.lib import colors
+    from reportlab.lib.units import inch
+    
+    formatted_items = []
+    items_to_show = min(len(value), max_items)
+    
+    # Crear estilo específico para listas con ancho controlado
+    list_style = content_style.__class__(
+        'ListContent',
+        parent=content_style,
+        fontSize=content_style.fontSize,
+        leftIndent=15,  # Sangría para viñetas
+        rightIndent=10,
+        spaceBefore=2,
+        spaceAfter=2,
+        bulletIndent=5,
+        bulletFontName='Symbol',
+        wordWrap='LTR'
+    )
+    
+    # Crear una tabla para controlar mejor el ancho del contenido
+    table_data = []
+    for i, item in enumerate(value[:items_to_show]):
+        item_text = str(item)
+        
+        # Manejar texto muy largo de manera inteligente
+        if len(item_text) > 300:
+            # Buscar un punto de corte natural
+            cut_point = item_text.rfind('. ', 0, 300)
+            if cut_point == -1:
+                cut_point = item_text.rfind(' ', 0, 300)
+            if cut_point == -1:
+                cut_point = 300
+            item_text = item_text[:cut_point] + "..."
+        
+        # Agregar a la tabla con viñeta
+        table_data.append(['•', item_text])
+    
+    # Crear tabla con formato de lista
+    if table_data:
+        list_table = Table(table_data, colWidths=[0.2*inch, 5.5*inch])
+        list_table.setStyle(TableStyle([
+            # Estilo de texto
+            ('FONTNAME', (0, 0), (0, -1), 'Symbol'),  # Viñetas
+            ('FONTNAME', (1, 0), (1, -1), 'Helvetica'),  # Contenido
+            ('FONTSIZE', (0, 0), (-1, -1), content_style.fontSize),
+            ('TEXTCOLOR', (0, 0), (0, -1), colors.HexColor('#2563eb')),  # Color viñetas
+            ('TEXTCOLOR', (1, 0), (1, -1), content_style.textColor),
+            
+            # Alineación y espaciado
+            ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+            ('ALIGN', (0, 0), (0, -1), 'CENTER'),  # Centrar viñetas
+            ('ALIGN', (1, 0), (1, -1), 'LEFT'),
+            ('TOPPADDING', (0, 0), (-1, -1), 3),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 3),
+            ('LEFTPADDING', (0, 0), (-1, -1), 5),
+            ('RIGHTPADDING', (0, 0), (-1, -1), 5),
+            
+            # Sin bordes para efecto de lista
+            ('GRID', (0, 0), (-1, -1), 0, colors.white),
+            
+            # Permitir ajuste de texto
+            ('WORDWRAP', (1, 0), (1, -1), 'LTR'),
+            ('SPLITLONGWORDS', (1, 0), (1, -1), True),
+        ]))
+        formatted_items.append(list_table)
+    
+    # Agregar nota si hay más elementos
+    if len(value) > max_items:
+        remaining_count = len(value) - max_items
+        note_style = content_style.__class__(
+            'ListNote',
+            parent=content_style,
+            textColor=colors.HexColor('#9ca3af'),
+            fontName='Helvetica-Oblique',
+            fontSize=content_style.fontSize - 1,
+            leftIndent=15,
+            spaceBefore=5
+        )
+        note_text = f"... y {remaining_count} elemento{'s' if remaining_count > 1 else ''} más"
+        formatted_items.append(Paragraph(note_text, note_style))
+    
+    return formatted_items
 
 def format_value_for_html(value: Any) -> str:
     """
@@ -973,12 +1347,15 @@ def generate_pdf_with_reportlab(report_data: Dict[str, Any], document_id: str, r
         content_style = ParagraphStyle(
             'ModernContent',
             parent=styles['Normal'],
-            fontSize=11,
+            fontSize=10,  # Reducir ligeramente el tamaño de fuente
             spaceAfter=8,
             textColor=colors.HexColor('#374151'),
             fontName='Helvetica',
-            leading=14,
-            alignment=TA_JUSTIFY
+            leading=13,  # Ajustar interlineado
+            alignment=TA_JUSTIFY,
+            leftIndent=0,
+            rightIndent=0,
+            wordWrap='LTR'  # Permitir ajuste de texto
         )
         
         # === PROCESAMIENTO DE SECCIONES ===
@@ -998,11 +1375,31 @@ def generate_pdf_with_reportlab(report_data: Dict[str, Any], document_id: str, r
             if isinstance(value, dict):
                 # Crear tabla para datos estructurados
                 table_data = []
-                for sub_key, sub_value in list(value.items())[:10]:  # Limitar elementos
-                    # Formatear clave
-                    formatted_key = f"🔹 {sub_key.replace('_', ' ').title()}"
+                for sub_key, sub_value in list(value.items())[:15]:  # Aumentar límite de elementos mostrados
+                    # Formatear clave con manejo de nombres largos
+                    key_title = sub_key.replace('_', ' ').title()
                     
-                    # Formatear valor
+                    # Si la clave es muy larga, dividirla inteligentemente
+                    if len(key_title) > 25:
+                        # Buscar puntos naturales de división en títulos largos
+                        words = key_title.split()
+                        if len(words) > 2:
+                            # Dividir aproximadamente por la mitad
+                            mid_point = len(words) // 2
+                            first_line = ' '.join(words[:mid_point])
+                            second_line = ' '.join(words[mid_point:])
+                            formatted_key = f"🔹 {first_line}\n{second_line}"
+                        else:
+                            # Solo 1-2 palabras pero muy largas
+                            if ' ' in key_title:
+                                parts = key_title.split(' ', 1)
+                                formatted_key = f"🔹 {parts[0]}\n{parts[1]}"
+                            else:
+                                formatted_key = f"🔹 {key_title}"
+                    else:
+                        formatted_key = f"🔹 {key_title}"
+                    
+                    # Formatear valor con manejo especial para listas
                     if isinstance(sub_value, bool):
                         formatted_value = "✅ Sí" if sub_value else "❌ No"
                     elif isinstance(sub_value, (int, float)):
@@ -1012,14 +1409,119 @@ def generate_pdf_with_reportlab(report_data: Dict[str, Any], document_id: str, r
                             formatted_value = f"${sub_value:,.2f}"
                         else:
                             formatted_value = f"{sub_value:,}"
-                    elif isinstance(sub_value, str) and len(sub_value) > 100:
-                        formatted_value = f"{sub_value[:100]}..."
+                    elif isinstance(sub_value, list):
+                        # Manejo especial para listas en tablas - mantenerlas dentro del contenedor
+                        if len(sub_value) <= 2:
+                            # Listas muy cortas: una línea por elemento
+                            formatted_items = []
+                            for item in sub_value:
+                                item_str = str(item)[:150]  # Limitar longitud por elemento
+                                formatted_items.append(f"• {item_str}")
+                            formatted_value = "\n".join(formatted_items)
+                        elif len(sub_value) <= 5:
+                            # Listas medianas: formato compacto
+                            formatted_items = []
+                            for item in sub_value:
+                                item_str = str(item)[:120]  # Texto más corto para más elementos
+                                formatted_items.append(f"• {item_str}")
+                            formatted_value = "\n".join(formatted_items)
+                        else:
+                            # Listas largas: mostrar solo los primeros elementos más contador
+                            formatted_items = []
+                            for item in sub_value[:3]:
+                                item_str = str(item)[:100]
+                                formatted_items.append(f"• {item_str}")
+                            formatted_items.append(f"• ... y {len(sub_value)-3} elementos más")
+                            formatted_value = "\n".join(formatted_items)
+                    elif isinstance(sub_value, str) and len(sub_value) > 300:
+                        # Buscar un punto de corte más natural (final de palabra)
+                        cut_point = sub_value.rfind(' ', 0, 300)
+                        if cut_point == -1:
+                            cut_point = 300
+                        formatted_value = f"{sub_value[:cut_point]}..."
+                    elif isinstance(sub_value, dict):
+                        # Manejar diccionarios anidados de manera estructurada
+                        if len(sub_value) <= 5:
+                            # Diccionarios pequeños: formatear como lista de elementos
+                            dict_items = []
+                            for dict_key, dict_val in sub_value.items():
+                                key_formatted = dict_key.replace('_', ' ').title()
+                                if isinstance(dict_val, dict):
+                                    # Diccionario anidado - procesarlo recursivamente
+                                    nested_items = []
+                                    for nested_key, nested_val in dict_val.items():
+                                        nested_key_formatted = nested_key.replace('_', ' ').title()
+                                        nested_items.append(f"  - {nested_key_formatted}: {nested_val}")
+                                    dict_items.append(f"• {key_formatted}:\n" + "\n".join(nested_items))
+                                elif isinstance(dict_val, (int, float)):
+                                    dict_items.append(f"• {key_formatted}: {dict_val}")
+                                elif isinstance(dict_val, bool):
+                                    dict_items.append(f"• {key_formatted}: {'Sí' if dict_val else 'No'}")
+                                else:
+                                    dict_items.append(f"• {key_formatted}: {str(dict_val)}")
+                            formatted_value = "\n".join(dict_items)
+                        else:
+                            # Diccionarios grandes: mostrar solo algunos elementos
+                            dict_items = []
+                            for i, (dict_key, dict_val) in enumerate(list(sub_value.items())[:3]):
+                                key_formatted = dict_key.replace('_', ' ').title()
+                                if isinstance(dict_val, (int, float)):
+                                    dict_items.append(f"• {key_formatted}: {dict_val}")
+                                else:
+                                    dict_items.append(f"• {key_formatted}: {str(dict_val)[:50]}")
+                            if len(sub_value) > 3:
+                                dict_items.append(f"• ... y {len(sub_value)-3} elementos más")
+                            formatted_value = "\n".join(dict_items)
+                    elif isinstance(sub_value, str):
+                        # Manejo especial para fechas, timestamps y strings largos
+                        if ' al ' in sub_value:
+                            # Formato de rango de fechas - dividir en dos líneas
+                            parts = sub_value.split(' al ')
+                            if len(parts) == 2:
+                                formatted_value = f"{parts[0]}\nal {parts[1]}"
+                            else:
+                                formatted_value = sub_value
+                        elif ':' in sub_value and len(sub_value) > 16:
+                            # Timestamps con hora (formato: YYYY-MM-DD HH:MM:SS)
+                            if ' ' in sub_value:
+                                date_part, time_part = sub_value.split(' ', 1)
+                                formatted_value = f"{date_part}\n{time_part}"
+                            else:
+                                formatted_value = sub_value
+                        elif len(sub_value) > 18:
+                            # Strings largos en general
+                            if len(sub_value) > 40:
+                                # String muy largo - buscar punto de división natural
+                                cut_point = sub_value.rfind(' ', 20, 40)
+                                if cut_point == -1:
+                                    cut_point = sub_value.rfind('-', 20, 40)
+                                if cut_point == -1:
+                                    cut_point = 35
+                                formatted_value = f"{sub_value[:cut_point]}\n{sub_value[cut_point:].strip()}"
+                            else:
+                                # String mediano - dividir aproximadamente por la mitad
+                                mid_point = len(sub_value) // 2
+                                cut_point = sub_value.rfind(' ', mid_point - 5, mid_point + 5)
+                                if cut_point == -1:
+                                    cut_point = sub_value.rfind('-', mid_point - 5, mid_point + 5)
+                                if cut_point == -1:
+                                    cut_point = mid_point
+                                formatted_value = f"{sub_value[:cut_point]}\n{sub_value[cut_point:].strip()}"
+                        elif len(sub_value) > 300:
+                            # Strings muy largos - truncar con ellipsis
+                            cut_point = sub_value.rfind(' ', 0, 300)
+                            if cut_point == -1:
+                                cut_point = 300
+                            formatted_value = f"{sub_value[:cut_point]}..."
+                        else:
+                            formatted_value = sub_value
                     else:
                         formatted_value = str(sub_value)
                     
-                    table_data.append([formatted_key, formatted_value])
+                    table_data.append([create_table_paragraph(formatted_key, content_style), create_table_paragraph(formatted_value, content_style)])
                 
                 if table_data:
+                    # Ajustar anchos de columna - más espacio para etiquetas largas
                     content_table = Table(table_data, colWidths=[2.5*inch, 3.5*inch])
                     content_table.setStyle(TableStyle([
                         # Alternating row colors
@@ -1030,48 +1532,43 @@ def generate_pdf_with_reportlab(report_data: Dict[str, Any], document_id: str, r
                         # Text formatting
                         ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
                         ('FONTNAME', (1, 0), (1, -1), 'Helvetica'),
-                        ('FONTSIZE', (0, 0), (-1, -1), 10),
+                        ('FONTSIZE', (0, 0), (-1, -1), 9),  # Reducir tamaño de fuente para más contenido
                         ('TEXTCOLOR', (0, 0), (0, -1), primary_color),
                         ('TEXTCOLOR', (1, 0), (1, -1), colors.HexColor('#374151')),
                         
-                        # Alignment and padding
+                        # Alignment and padding - aumentar padding vertical para texto multilínea
                         ('VALIGN', (0, 0), (-1, -1), 'TOP'),
                         ('ALIGN', (0, 0), (0, -1), 'LEFT'),
                         ('ALIGN', (1, 0), (1, -1), 'LEFT'),
-                        ('TOPPADDING', (0, 0), (-1, -1), 8),
-                        ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
+                        ('TOPPADDING', (0, 0), (-1, -1), 10),  # Más padding superior
+                        ('BOTTOMPADDING', (0, 0), (-1, -1), 10),  # Más padding inferior
                         ('LEFTPADDING', (0, 0), (-1, -1), 10),
                         ('RIGHTPADDING', (0, 0), (-1, -1), 10),
                         
                         # Borders
                         ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#e5e7eb')),
+                        
+                        # Permitir que el texto se ajuste en múltiples líneas en ambas columnas
+                        ('WORDWRAP', (0, 0), (-1, -1), 'LTR'),
+                        # Ajustar altura de filas automáticamente para contenido de múltiples líneas
+                        ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+                        ('SPLITLONGWORDS', (0, 0), (-1, -1), True),
+                        # Permitir ajuste automático de altura de fila
+                        ('ROWMINHEIGHT', (0, 0), (-1, -1), 25),  # Altura mínima mayor para texto multilínea
                     ]))
                     story.append(content_table)
                     
-                if len(value) > 10:
+                if len(value) > 15:
                     story.append(Spacer(1, 8))
-                    story.append(Paragraph(f"<i>... y {len(value)-10} elementos adicionales</i>", 
+                    story.append(Paragraph(f"<i>... y {len(value)-15} elementos adicionales</i>", 
                                          ParagraphStyle('Italic', parent=content_style, 
                                                       textColor=colors.HexColor('#9ca3af'))))
                     
             elif isinstance(value, list):
-                # Mostrar lista con viñetas elegantes
-                list_items = []
-                for i, item in enumerate(value[:12]):  # Limitar elementos
-                    item_text = str(item)
-                    if len(item_text) > 200:
-                        item_text = item_text[:200] + "..."
-                    list_items.append(f"• {item_text}")
-                
-                if list_items:
-                    for item in list_items:
-                        story.append(Paragraph(item, content_style))
-                        story.append(Spacer(1, 4))
-                        
-                if len(value) > 12:
-                    story.append(Paragraph(f"<i>... y {len(value)-12} elementos más</i>", 
-                                         ParagraphStyle('Italic', parent=content_style, 
-                                                      textColor=colors.HexColor('#9ca3af'))))
+                # Usar la nueva función especializada para listas
+                formatted_list_items = format_list_for_pdf(value, content_style, max_items=20)
+                for item in formatted_list_items:
+                    story.append(item)
             else:
                 # Contenido simple en párrafo
                 content = str(value)
