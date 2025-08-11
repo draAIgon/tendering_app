@@ -399,12 +399,14 @@ class BiddingAnalysisSystem:
         if self.comparator and len(proposal_paths) == 2:
             try:
                 self.comparator.clear_documents()
-                for i, prop_path in enumerate(proposal_paths):
-                    with open(prop_path, "r", encoding="utf-8") as f:
-                        content = f.read()
-                        self.comparator.add_proposal(
-                            f"proposal_{i+1}", content, metadata={"path": str(prop_path)}
-                        )
+                for i, proposal_id in enumerate(proposal_analyses.keys()):
+                    content = proposal_analyses[proposal_id]["stages"]["extraction"]["data"].get("content", "")
+                    self.comparator.add_proposal(
+                        proposal_id,
+                        content,
+                        metadata={"path": str(proposal_paths[i])}
+                    )
+
 
                 self.comparator.setup_vector_database()
                 standard_comparison = self.comparator.compare_proposals()
@@ -849,7 +851,15 @@ class RFPAnalyzer:
         }
 
         try:
-            comparator = ComparisonAgent()
+            comparator = self.bidding_system.comparator or ComparisonAgent()
+
+            if getattr(comparator, "embeddings_provider", None) is None:
+                ok = comparator.initialize_embeddings(provider="auto", model=None)
+                if not ok:
+                    logger.warning("No se pudieron inicializar embeddings; se hará comparación básica.")
+
+            # Limpia cualquier estado previo por si se reutiliza el comparador del sistema
+            comparator.clear_documents()
 
             current_content = ""
             if "extraction" in current_analysis["stages"]:
@@ -857,7 +867,10 @@ class RFPAnalyzer:
 
             if current_content:
                 comparator.add_document(
-                    doc_id="current_rfp", content=current_content, doc_type="rfp", metadata={"path": current_rfp_path}
+                    doc_id="current_rfp",
+                    content=current_content,
+                    doc_type="rfp",
+                    metadata={"path": current_rfp_path},
                 )
 
             for i, prev_analysis in enumerate(previous_analyses):
@@ -873,8 +886,10 @@ class RFPAnalyzer:
                         metadata={"path": previous_rfp_paths[i]},
                     )
 
-            if len(previous_analyses) > 0:
+            if previous_analyses:
+                # ⚠️ Sólo tiene efecto “semántico” si embeddings se inicializaron
                 comparator.setup_vector_database()
+
                 for i in range(len(previous_analyses)):
                     comparison = comparator.comprehensive_comparison("current_rfp", f"previous_rfp_{i}")
                     comparison_result["comparisons"].append(comparison)
