@@ -11,7 +11,7 @@ from langchain_core.documents import Document
 
 # Importar utilidades del paquete (ajusta las rutas relativas según tu estructura)
 from ..db_manager import get_standard_db_path
-from ..utils.embedding import get_embeddings_provider, detect_section_boundaries_semantic
+from ..embedding import get_embeddings_provider, detect_section_boundaries_semantic
 
 logger = logging.getLogger(__name__)
 
