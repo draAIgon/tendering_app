@@ -40,8 +40,10 @@ def main():
         (tests_dir / "test_document_extraction.py", "Document Extraction Agent"),
         (tests_dir / "test_risk_analyzer.py", "Risk Analyzer Agent"),
         (tests_dir / "test_reporter.py", "Report Generation Agent"),
+        (tests_dir / "test_ruc_validator.py", "RUC Validation Agent"),
         (tests_dir / "test_validator.py", "Compliance Validation Agent"),
         (tests_dir / "test_comparison.py", "Comparison Agent"),
+        (tests_dir / "test_integrated_analysis.py", "Integrated Analysis Agent"),
     ]
     
     passed = 0

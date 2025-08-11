@@ -5,6 +5,7 @@ Tests risk identification, analysis, and scoring capabilities
 """
 
 import sys
+import tempfile
 from pathlib import Path
 
 # Agregar paths necesarios
@@ -422,54 +423,64 @@ def test_risk_scoring_validation():
     """Test específico de validación del algoritmo de scoring"""
     logger.info("\n=== Test de Validación del Algoritmo de Scoring ===")
     
-    # Contenido con términos de muy alto riesgo repetidos
+    # Contenido realista con indicadores de riesgo sutiles (omisiones, ambigüedades, inconsistencias)
     high_risk_content = """
-    DOCUMENTO DE LICITACIÓN EXTREMADAMENTE RIESGOSO
+    PROPUESTA TÉCNICA Y ECONÓMICA
+    SISTEMA INTEGRADO DE GESTIÓN EMPRESARIAL
     
-    RIESGOS TÉCNICOS CRÍTICOS:
-    Tecnología no probada tecnología no probada tecnología no probada
-    Especificaciones ambiguas especificaciones ambiguas especificaciones ambiguas 
-    Compatibilidad dudosa compatibilidad dudosa compatibilidad dudosa
-    Falta de estándares falta de estándares falta de estándares
-    Dependencia tecnológica dependencia tecnológica dependencia tecnológica
-    Integración compleja integración compleja integración compleja
-    Obsolescencia técnica obsolescencia técnica obsolescencia técnica
+    1. RESUMEN EJECUTIVO
+    Nuestra empresa propone implementar una solución innovadora que revolucionará
+    sus procesos de negocio. Utilizaremos tecnología de vanguardia.
     
-    RIESGOS ECONÓMICOS CRÍTICOS:
-    Precio excesivamente bajo precio excesivamente bajo precio excesivamente bajo
-    Costos ocultos costos ocultos costos ocultos costos ocultos
-    Variación de precios variación de precios variación de precios
-    Moneda extranjera moneda extranjera moneda extranjera
-    Garantías insuficientes garantías insuficientes garantías insuficientes
-    Penalidades excesivas penalidades excesivas penalidades excesivas
-    Flujo de caja negativo flujo de caja negativo flujo de caja negativo
+    2. ESPECIFICACIONES TÉCNICAS
+    - Arquitectura basada en microservicios
+    - Base de datos distribuida
+    - Interfaz web responsiva
+    - API REST para integraciones
+    [FALTA: Detalles específicos de versiones, compatibilidad, requisitos hardware]
     
-    RIESGOS LEGALES CRÍTICOS:
-    Normatividad cambiante normatividad cambiante normatividad cambiante
-    Regulación no clara regulación no clara regulación no clara
-    Conflicto de leyes conflicto de leyes conflicto de leyes
-    Jurisdicción multiple jurisdicción multiple jurisdicción multiple
-    Licencias pendientes licencias pendientes licencias pendientes
-    Propiedad intelectual propiedad intelectual propiedad intelectual
-    Responsabilidad civil responsabilidad civil responsabilidad civil
+    3. METODOLOGÍA DE IMPLEMENTACIÓN
+    Fase 1: Análisis (duración aproximada)
+    Fase 2: Desarrollo (tiempo estimado)  
+    Fase 3: Pruebas (según sea necesario)
+    Fase 4: Despliegue (fecha por confirmar)
+    [PROBLEMÁTICO: Cronograma impreciso, sin hitos específicos ni fechas]
     
-    RIESGOS OPERACIONALES CRÍTICOS:
-    Recursos insuficientes recursos insuficientes recursos insuficientes
-    Personal no calificado personal no calificado personal no calificado
-    Cronograma apretado cronograma apretado cronograma apretado
-    Dependencias externas dependencias externas dependencias externas
-    Coordinación compleja coordinación compleja coordinación compleja
-    Comunicación deficiente comunicación deficiente comunicación deficiente
-    Control de calidad control de calidad control de calidad
+    4. EQUIPO DE TRABAJO
+    - Jefe de Proyecto: A definir
+    - Desarrolladores: Equipo externo contratado según demanda
+    - Especialista en base de datos: Por asignar
+    [RIESGO: Personal no definido, dependencia de terceros]
     
-    RIESGOS DE PROVEEDOR CRÍTICOS:
-    Proveedor único proveedor único proveedor único
-    Experiencia limitada experiencia limitada experiencia limitada
-    Estabilidad financiera dudosa estabilidad financiera dudosa
-    Referencias negativas referencias negativas referencias negativas
-    Ubicación remota ubicación remota ubicación remota
-    Idioma diferente idioma diferente idioma diferente
-    Zona de conflicto zona de conflicto zona de conflicto
+    5. PRESUPUESTO
+    Costo total estimado: $XXX,XXX USD (sujeto a variaciones)
+    * No incluye licencias de software de terceros
+    * Costos de infraestructura cloud por separado
+    * Mantenimiento posterior no contemplado en este presupuesto
+    [PROBLEMÁTICO: Precio incompleto, costos ocultos evidentes]
+    
+    6. INTEGRACIÓN CON SISTEMAS EXISTENTES
+    La solución será compatible con la mayoría de sistemas estándar.
+    Se realizarán las adaptaciones necesarias durante la implementación.
+    [VAGO: No especifica qué sistemas, cómo se integrará]
+    
+    7. GARANTÍAS Y SOPORTE
+    Garantía de funcionamiento básico por período estándar.
+    Soporte técnico disponible en horario comercial.
+    [INSUFICIENTE: Términos vagos, no define responsabilidades]
+    
+    8. EXPERIENCIA PREVIA
+    Hemos trabajado en proyectos similares en el sector.
+    Referencias disponibles bajo solicitud.
+    [DUDOSO: No proporciona casos específicos ni contactos verificables]
+    
+    9. CUMPLIMIENTO REGULATORIO
+    La solución cumplirá con las normativas aplicables.
+    [INCOMPLETO: No especifica cuáles normativas ni cómo las cumplirá]
+    
+    10. PLAN DE CONTINGENCIA
+    En caso de problemas, se implementarán medidas correctivas apropiadas.
+    [INEXISTENTE: No hay plan específico de riesgos ni mitigación]
     """
     
     try:
@@ -544,6 +555,149 @@ def test_risk_scoring_validation():
         traceback.print_exc()
         return False
 
+def test_pliego_licitacion_comparison():
+    """Test de comparación entre pliego_licitacion.pdf y pliego_licitacion_riesgoso.pdf"""
+    logger.info("\n=== Test de Comparación Pliegos de Licitación ===")
+    
+    backend_dir = Path(__file__).parent.parent
+    
+    # Buscar ambos documentos de pliego
+    pliego_normal_paths = [
+        backend_dir / ".." / "documents" / "pliego_licitacion.pdf",
+        backend_dir / "documents" / "pliego_licitacion.pdf",
+        Path("/home/hackiathon/workspace/tendering_app/documents/pliego_licitacion.pdf")
+    ]
+    
+    pliego_riesgoso_paths = [
+        backend_dir / ".." / "documents" / "pliego_licitacion_riesgoso.pdf",
+        backend_dir / "documents" / "pliego_licitacion_riesgoso.pdf",
+        Path("/home/hackiathon/workspace/tendering_app/documents/pliego_licitacion_riesgoso.pdf")
+    ]
+    
+    pliego_normal_path = None
+    pliego_riesgoso_path = None
+    
+    # Buscar pliego normal
+    for path in pliego_normal_paths:
+        if path.exists():
+            pliego_normal_path = str(path)
+            logger.info(f"📄 Pliego normal encontrado: {path.name}")
+            break
+    
+    # Buscar pliego riesgoso
+    for path in pliego_riesgoso_paths:
+        if path.exists():
+            pliego_riesgoso_path = str(path)
+            logger.info(f"⚠️ Pliego riesgoso encontrado: {path.name}")
+            break
+    
+    if not pliego_normal_path or not pliego_riesgoso_path:
+        logger.warning(f"No se encontraron ambos documentos:")
+        logger.warning(f"  Normal: {pliego_normal_path is not None}")
+        logger.warning(f"  Riesgoso: {pliego_riesgoso_path is not None}")
+        return False
+    
+    try:
+        # Crear agente de análisis de riesgos
+        db_path = backend_dir / "db" / "test_pliego_comparison"
+        agent = RiskAnalyzerAgent(vector_db_path=db_path)
+        
+        # Inicializar embeddings y DSPy
+        if not agent.initialize_dspy_and_embeddings():
+            logger.warning("No se pudo inicializar DSPy, usando análisis básico")
+        
+        logger.info("🔍 Analizando pliego normal...")
+        # Analizar pliego normal
+        risk_normal = agent.analyze_document_risks_dspy(
+            document_path=pliego_normal_path,
+            document_type="RFP",
+            analysis_level="comprehensive"
+        )
+        
+        if "error" in risk_normal:
+            logger.error(f"Error analizando pliego normal: {risk_normal['error']}")
+            return False
+        
+        logger.info("🔍 Analizando pliego riesgoso...")
+        # Analizar pliego riesgoso
+        risk_riesgoso = agent.analyze_document_risks_dspy(
+            document_path=pliego_riesgoso_path,
+            document_type="RFP", 
+            analysis_level="comprehensive"
+        )
+        
+        if "error" in risk_riesgoso:
+            logger.error(f"Error analizando pliego riesgoso: {risk_riesgoso['error']}")
+            return False
+        
+        # Obtener scores de riesgo
+        score_normal = risk_normal.get('overall_assessment', {}).get('total_risk_score', 0)
+        score_riesgoso = risk_riesgoso.get('overall_assessment', {}).get('total_risk_score', 0)
+        
+        level_normal = risk_normal.get('overall_assessment', {}).get('risk_level', 'UNKNOWN')
+        level_riesgoso = risk_riesgoso.get('overall_assessment', {}).get('risk_level', 'UNKNOWN')
+        
+        logger.info(f"\n📊 Resultados de la comparación:")
+        logger.info(f"  📄 Pliego normal: {score_normal:.2f}% ({level_normal})")
+        logger.info(f"  ⚠️ Pliego riesgoso: {score_riesgoso:.2f}% ({level_riesgoso})")
+        logger.info(f"  📈 Diferencia: {score_riesgoso - score_normal:.2f} puntos")
+        
+        # Comparar categorías de riesgo
+        logger.info(f"\n🔍 Comparación por categorías:")
+        
+        categories_normal = risk_normal.get('category_risks', {})
+        categories_riesgoso = risk_riesgoso.get('category_risks', {})
+        
+        category_differences = {}
+        
+        for category in ['TECHNICAL_RISKS', 'ECONOMIC_RISKS', 'LEGAL_RISKS', 'OPERATIONAL_RISKS', 'SUPPLIER_RISKS']:
+            score_n = categories_normal.get(category, {}).get('risk_score', 0)
+            score_r = categories_riesgoso.get(category, {}).get('risk_score', 0)
+            difference = score_r - score_n
+            category_differences[category] = difference
+            
+            category_name = category.replace('_', ' ')
+            logger.info(f"  • {category_name}: Normal {score_n:.1f}% | Riesgoso {score_r:.1f}% | Diff +{difference:.1f}%")
+        
+        # Verificar que el documento riesgoso tiene mayor score
+        if score_riesgoso > score_normal:
+            difference_threshold = 5.0  # Umbral mínimo de diferencia
+            if score_riesgoso - score_normal >= difference_threshold:
+                logger.info(f"✅ Validación exitosa: Pliego riesgoso tiene {score_riesgoso - score_normal:.1f}% más riesgo")
+                
+                # Mostrar riesgos críticos de cada documento
+                critical_normal = len(risk_normal.get('critical_risks', []))
+                critical_riesgoso = len(risk_riesgoso.get('critical_risks', []))
+                
+                logger.info(f"\n🚨 Riesgos críticos:")
+                logger.info(f"  📄 Pliego normal: {critical_normal}")
+                logger.info(f"  ⚠️ Pliego riesgoso: {critical_riesgoso}")
+                
+                # Mostrar recomendaciones principales
+                recommendations_riesgoso = risk_riesgoso.get('mitigation_recommendations', [])
+                if recommendations_riesgoso:
+                    logger.info(f"\n💡 Principales recomendaciones para pliego riesgoso:")
+                    for i, rec in enumerate(recommendations_riesgoso[:3], 1):
+                        priority = rec.get('priority', 'MEDIUM')
+                        category = rec.get('category', '').replace('_', ' ')
+                        recommendation = rec.get('recommendation', '')[:60] + "..."
+                        dspy_enhanced = "🤖" if rec.get('dspy_enhanced', False) else "📝"
+                        logger.info(f"    {i}. [{priority}] {dspy_enhanced} {category}: {recommendation}")
+                
+                return True
+            else:
+                logger.warning(f"⚠️ Diferencia insuficiente: solo {score_riesgoso - score_normal:.1f}% (mínimo {difference_threshold}%)")
+                return False
+        else:
+            logger.error(f"❌ Error: Pliego riesgoso ({score_riesgoso:.1f}%) tiene menor o igual riesgo que normal ({score_normal:.1f}%)")
+            return False
+        
+    except Exception as e:
+        logger.error(f"Error en comparación de pliegos: {e}")
+        import traceback
+        traceback.print_exc()
+        return False
+
 def main():
     """Función principal del test"""
     logger.info("🚀 Iniciando tests del RiskAnalyzerAgent")
@@ -552,6 +706,7 @@ def main():
         ("Análisis Básico de Riesgos", test_basic_risk_analysis),
         ("Categorización de Riesgos", test_risk_categorization),
         ("Puntuación de Riesgos", test_risk_scoring),
+        ("Comparación Pliegos de Licitación", test_pliego_licitacion_comparison),
         ("Documento Sintético Alto Riesgo", test_synthetic_high_risk_document),
         ("Validación Algoritmo Scoring", test_risk_scoring_validation),
         ("Sugerencias de Mitigación", test_mitigation_suggestions)

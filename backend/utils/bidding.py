@@ -253,16 +253,92 @@ class BiddingAnalysisSystem:
         if analysis_level == "comprehensive" and content and self.risk_analyzer:
             try:
                 logger.info("Etapa 5: Analizando riesgos...")
-
-                risk_result = self.risk_analyzer.analyze_document_risks(
-                    content=content, document_type=document_type, doc_id=document_id
-                )
-
-                analysis_result["stages"]["risk_analysis"] = {
-                    "status": "completed",
-                    "data": risk_result,
+                
+                # Preparar contexto adicional de etapas anteriores para el análisis de riesgos
+                additional_context = {}
+                
+                # Incluir resultados de clasificación si están disponibles
+                if 'classification' in analysis_result['stages'] and analysis_result['stages']['classification']['status'] == 'completed':
+                    classification_data = analysis_result['stages']['classification']['data']
+                    
+                    # Verificar que classification_data es un diccionario
+                    if isinstance(classification_data, dict):
+                        additional_context['classification'] = {
+                            'sections': classification_data.get('sections', []),
+                            'document_structure': classification_data.get('document_structure', {}),
+                            'confidence_scores': [section.get('confidence', 0) for section in classification_data.get('sections', []) if isinstance(section, dict)],
+                            'missing_sections': classification_data.get('missing_sections', [])
+                        }
+                        logger.info(f"Contexto de clasificación añadido: {len(classification_data.get('sections', []))} secciones identificadas")
+                    else:
+                        logger.warning(f"Datos de clasificación no son un diccionario: {type(classification_data)}")
+                        additional_context['classification'] = {'error': 'Formato de datos inválido'}
+                
+                # Incluir resultados de validación si están disponibles
+                if 'validation' in analysis_result['stages'] and analysis_result['stages']['validation']['status'] == 'completed':
+                    validation_data = analysis_result['stages']['validation']['data']
+                    
+                    # Verificar que validation_data es un diccionario
+                    if isinstance(validation_data, dict):
+                        additional_context['validation'] = {
+                            'compliance_score': validation_data.get('overall_compliance_score', 0),
+                            'compliance_details': validation_data.get('compliance_details', {}),
+                            'violations': validation_data.get('violations', []),
+                            'missing_requirements': validation_data.get('missing_requirements', []),
+                            'validation_warnings': validation_data.get('warnings', [])
+                        }
+                        logger.info(f"Contexto de validación añadido: {validation_data.get('overall_compliance_score', 0)}% de cumplimiento")
+                    else:
+                        logger.warning(f"Datos de validación no son un diccionario: {type(validation_data)}")
+                        additional_context['validation'] = {'error': 'Formato de datos inválido'}
+                
+                # Incluir resultados de validación RUC si están disponibles
+                if 'ruc_validation' in analysis_result['stages'] and analysis_result['stages']['ruc_validation']['status'] == 'completed':
+                    ruc_data = analysis_result['stages']['ruc_validation']['data']
+                    
+                    # Verificar que ruc_data es un diccionario
+                    if isinstance(ruc_data, dict):
+                        additional_context['ruc_validation'] = {
+                            'overall_score': ruc_data.get('overall_score', 0),
+                            'validation_level': ruc_data.get('validation_level', 'UNKNOWN'),
+                            'total_rucs': ruc_data.get('validation_summary', {}).get('total_rucs', 0),
+                            'verified_rucs': ruc_data.get('validation_summary', {}).get('verified_online', 0),
+                            'ruc_issues': ruc_data.get('issues_found', [])
+                        }
+                        logger.info(f"Contexto de RUC añadido: {ruc_data.get('overall_score', 0)}% validación")
+                    else:
+                        logger.warning(f"Datos de RUC no son un diccionario: {type(ruc_data)}")
+                        additional_context['ruc_validation'] = {'error': 'Formato de datos inválido'}
+                
+                # Llamar al analizador de riesgos con contexto adicional
+                if hasattr(self.risk_analyzer, 'analyze_document_risks_with_context'):
+                    # Si el método mejorado existe, úsalo
+                    risk_result = self.risk_analyzer.analyze_document_risks_with_context(
+                        content=content,
+                        document_type=document_type,
+                        doc_id=document_id,
+                        additional_context=additional_context
+                    )
+                else:
+                    # Fallback al método original
+                    risk_result = self.risk_analyzer.analyze_document_risks(
+                        content=content,
+                        document_type=document_type,
+                        doc_id=document_id
+                    )
+                    # Añadir contexto manualmente al resultado
+                    if risk_result and not isinstance(risk_result, dict):
+                        risk_result = {'error': 'Invalid risk analysis result'}
+                    elif risk_result:
+                        risk_result['additional_context'] = additional_context
+                
+                analysis_result['stages']['risk_analysis'] = {
+                    'status': 'completed',
+                    'data': risk_result
                 }
-
+                
+                logger.info("Análisis de riesgos completado con contexto enriquecido")
+                
             except Exception as e:
                 error_msg = f"Error en análisis de riesgo: {e}"
                 logger.error(error_msg)
