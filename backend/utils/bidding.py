@@ -441,7 +441,7 @@ class BiddingAnalysisSystem:
                             self.comparator.add_document(
                                 doc_id=proposal_id,
                                 content=content,
-                                doc_type="proposal",
+                                document_type="proposal",
                                 metadata={
                                     "path": proposal_paths[int(proposal_id.split("_")[1]) - 1],
                                     "analysis_summary": analysis.get("summary", {}),

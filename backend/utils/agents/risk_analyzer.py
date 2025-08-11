@@ -492,7 +492,7 @@ class RiskAnalyzerAgent:
             logger.error(f"Error configurando base de datos vectorial: {e}")
             return False
     
-    def detect_risk_indicators_dspy(self, content: str, risk_category: str) -> Dict[str, Any]:
+    def detect_risk_indicators(self, content: str, risk_category: str) -> Dict[str, Any]:
         """
         Detecta indicadores de riesgo usando DSPy y ChromaDB
         
@@ -577,10 +577,10 @@ class RiskAnalyzerAgent:
             'total_mentions': len(risk_mentions)
         }
     
-    def analyze_document_risks_dspy(self, document_path: Optional[str] = None, 
-                                  content: Optional[str] = None,
-                                  document_type: str = "RFP",
-                                  analysis_level: str = "comprehensive") -> Dict[str, Any]:
+    def analyze_document_risks(self, document_path: Optional[str] = None, 
+                              content: Optional[str] = None,
+                              document_type: str = "RFP",
+                              analysis_level: str = "comprehensive") -> Dict[str, Any]:
         """
         Análisis completo de riesgos de un documento usando DSPy
         
@@ -635,7 +635,7 @@ class RiskAnalyzerAgent:
         # Análisis por categorías usando DSPy
         for category in self.RISK_TAXONOMY.keys():
             try:
-                category_analysis = self.detect_risk_indicators_dspy(content, category)
+                category_analysis = self.detect_risk_indicators(content, category)
                 
                 # Asegurar que indicators_detected está presente como conteo
                 if 'detected_indicators' in category_analysis:
@@ -753,7 +753,7 @@ class RiskAnalyzerAgent:
         
         return risk_analysis
     
-    def compare_risk_profiles_dspy(self, documents: List[Dict[str, Any]]) -> Dict[str, Any]:
+    def compare_risk_profiles(self, documents: List[Dict[str, Any]]) -> Dict[str, Any]:
         """
         Compara perfiles de riesgo entre múltiples documentos usando DSPy
         
@@ -775,7 +775,7 @@ class RiskAnalyzerAgent:
         for doc in documents:
             doc_id = doc.get('id', f"doc_{len(document_risks)}")
             try:
-                risk_analysis = self.analyze_document_risks_dspy(
+                risk_analysis = self.analyze_document_risks(
                     document_path=doc.get('path'),
                     content=doc.get('content'),
                     document_type=doc.get('type', 'RFP')
@@ -1180,26 +1180,6 @@ class RiskAnalyzerAgent:
         """Método de compatibilidad - delega a la versión DSPy"""
         return self.initialize_dspy_and_embeddings(provider, model)
     
-    def detect_risk_indicators(self, content: str, risk_category: str) -> Dict[str, Any]:
-        """Método de compatibilidad - delega a la versión DSPy"""
-        return self.detect_risk_indicators_dspy(content, risk_category)
-    
-    def analyze_document_risks(self, document_path: Optional[str] = None, 
-                             content: Optional[str] = None,
-                             document_type: str = "RFP",
-                             doc_type: Optional[str] = None,
-                             doc_id: Optional[str] = None) -> Dict[str, Any]:
-        """Método de compatibilidad - delega a la versión DSPy"""
-        # Support both parameter names for compatibility
-        if doc_type:
-            document_type = doc_type
-            
-        return self.analyze_document_risks_dspy(document_path, content, document_type)
-    
-    def compare_risk_profiles(self, documents: List[Dict[str, Any]]) -> Dict[str, Any]:
-        """Método de compatibilidad - delega a la versión DSPy"""
-        return self.compare_risk_profiles_dspy(documents)
-    
     def identify_risk_patterns(self, content: str, pattern_type: str = "temporal") -> Dict[str, Any]:
         """
         Identifica patrones de riesgo específicos en el contenido
@@ -1262,20 +1242,11 @@ class RiskAnalyzerAgent:
         logger.info("Iniciando análisis de riesgos con contexto enriquecido")
         
         # Realizar análisis base
-        base_analysis = None
-        if hasattr(self, 'analyze_document_risks_dspy') and self.dspy_module:
-            base_analysis = self.analyze_document_risks_dspy(
-                document_path=document_path,
-                content=content,
-                document_type=document_type
-            )
-        else:
-            base_analysis = self.analyze_document_risks(
-                document_path=document_path,
-                content=content,
-                document_type=document_type,
-                doc_id=doc_id
-            )
+        base_analysis = self.analyze_document_risks(
+            document_path=document_path,
+            content=content,
+            document_type=document_type
+        )
         
         # Verificar que el análisis base es válido
         if not base_analysis or not isinstance(base_analysis, dict):

@@ -608,7 +608,7 @@ def test_pliego_licitacion_comparison():
         
         logger.info("🔍 Analizando pliego normal...")
         # Analizar pliego normal
-        risk_normal = agent.analyze_document_risks_dspy(
+        risk_normal = agent.analyze_document_risks(
             document_path=pliego_normal_path,
             document_type="RFP",
             analysis_level="comprehensive"
@@ -620,7 +620,7 @@ def test_pliego_licitacion_comparison():
         
         logger.info("🔍 Analizando pliego riesgoso...")
         # Analizar pliego riesgoso
-        risk_riesgoso = agent.analyze_document_risks_dspy(
+        risk_riesgoso = agent.analyze_document_risks(
             document_path=pliego_riesgoso_path,
             document_type="RFP", 
             analysis_level="comprehensive"
