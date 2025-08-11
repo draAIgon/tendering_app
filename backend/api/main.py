@@ -39,7 +39,7 @@ from utils.bidding import BiddingAnalysisSystem, RFPAnalyzer
 from utils.db_manager import get_analysis_path, db_manager
 
 # Importar generador de reportes
-from backend.utils.report_generator import generate_pdf_report, generate_html_from_report_data
+from backend.utils.report_generator import generate_pdf_report, generate_html_from_report_data, generate_comparison_pdf_report, generate_comparison_html
 
 # Configurar logging
 logging.basicConfig(level=logging.INFO)
@@ -1029,13 +1029,73 @@ async def generate_comparison_report(
             report_type="comparison"
         )
         
-        return JSONResponse(content={
-            "status": "success",
+        if report.get('error'):
+            raise HTTPException(status_code=500, detail=report['error'])
+        
+        # Agregar información adicional de comparación al reporte
+        enhanced_report = {
+            **report,
             "comparison_id": comparison_id,
             "documents_included": len(document_ids),
-            "report": report,
             "generated_at": datetime.now().isoformat()
-        })
+        }
+        
+        # Guardar reporte y manejar diferentes formatos
+        report_filename = f"comparison_report_{comparison_id}_{report_request.report_type}_{int(datetime.now().timestamp())}"
+        
+        if report_request.format == "pdf":
+            # Generar PDF usando las funciones especializadas de comparación
+            pdf_path = REPORTS_DIR / f"{report_filename}.pdf"
+            
+            success = generate_comparison_pdf_report(enhanced_report, comparison_id, pdf_path)
+            
+            if not success:
+                raise HTTPException(
+                    status_code=500,
+                    detail="No se pudo generar PDF de comparación. Instale WeasyPrint (pip install weasyprint) o ReportLab (pip install reportlab)"
+                )
+            
+            return FileResponse(
+                path=pdf_path,
+                media_type='application/pdf',
+                filename=f"{report_filename}.pdf",
+                headers={"Content-Disposition": f"attachment; filename={report_filename}.pdf"}
+            )
+        
+        elif report_request.format == "html":
+            # Generar HTML usando las funciones especializadas de comparación
+            html_content = generate_comparison_html(enhanced_report, comparison_id)
+            
+            report_path = REPORTS_DIR / f"{report_filename}.html"
+            with open(report_path, 'w', encoding='utf-8') as f:
+                f.write(html_content)
+            
+            return FileResponse(
+                path=report_path,
+                media_type='text/html',
+                filename=f"{report_filename}.html",
+                headers={"Content-Disposition": f"attachment; filename={report_filename}.html"}
+            )
+        
+        elif report_request.format == "json":
+            # Respuesta JSON
+            return JSONResponse(content={
+                "status": "success",
+                "comparison_id": comparison_id,
+                "documents_included": len(document_ids),
+                "report": enhanced_report,
+                "generated_at": datetime.now().isoformat()
+            })
+        
+        else:
+            # Formato por defecto (JSON)
+            return JSONResponse(content={
+                "status": "success",
+                "comparison_id": comparison_id,
+                "documents_included": len(document_ids),
+                "report": enhanced_report,
+                "generated_at": datetime.now().isoformat()
+            })
         
     except Exception as e:
         logger.error(f"Error generando reporte de comparación: {e}")

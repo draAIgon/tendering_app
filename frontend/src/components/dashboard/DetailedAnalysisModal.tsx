@@ -162,7 +162,6 @@ interface DetailedAnalysisModalProps {
   setActiveTab: (tab: string) => void;
   uploadedFiles: File[];
   analysisData?: AnalysisData; // Datos del análisis del backend
-  onExportReport: () => void;
 }
 
 export default function DetailedAnalysisModal({
@@ -171,8 +170,7 @@ export default function DetailedAnalysisModal({
   activeTab,
   setActiveTab,
   uploadedFiles,
-  analysisData,
-  onExportReport
+  analysisData
 }: DetailedAnalysisModalProps) {
   if (!showModal) return null;
 
@@ -253,12 +251,6 @@ export default function DetailedAnalysisModal({
             Análisis generado el {new Date().toLocaleDateString('es-ES')} a las {new Date().toLocaleTimeString('es-ES', {hour: '2-digit', minute: '2-digit'})}
           </span>
           <div className="flex space-x-3">
-            <button
-              onClick={onExportReport}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-            >
-              📋 Exportar
-            </button>
             <button
               onClick={onClose}
               className="border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 px-4 py-2 rounded-lg text-sm font-medium transition-colors"
