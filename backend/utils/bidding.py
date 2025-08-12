@@ -451,8 +451,43 @@ class BiddingAnalysisSystem:
                 # Vector DB y comparación
                 self.comparator.setup_vector_database()
                 proposal_ids = list(proposal_analyses.keys())
+                
+                # Prepare classification and validation contexts
+                classification_contexts = {}
+                validation_contexts = {}
+                
+                for proposal_id, analysis in proposal_analyses.items():
+                    # Extract classification results
+                    if ("classification" in analysis.get("stages", {}) and 
+                        analysis["stages"]["classification"]["status"] == "completed"):
+                        classification_contexts[proposal_id] = {
+                            "classification_results": analysis["stages"]["classification"]["data"],
+                            "document_sections": analysis["stages"]["classification"]["data"].get("sections", {}),
+                            "classification_confidence": analysis["stages"]["classification"]["data"].get("confidence", 0.5)
+                        }
+                    
+                    # Extract validation results
+                    if ("validation" in analysis.get("stages", {}) and 
+                        analysis["stages"]["validation"]["status"] == "completed"):
+                        validation_contexts[proposal_id] = {
+                            "compliance_results": analysis["stages"]["validation"]["data"],
+                            "validation_score": analysis["stages"]["validation"]["data"].get("overall_compliance", 0.5),
+                            "regulatory_issues": analysis["stages"]["validation"]["data"].get("issues", [])
+                        }
+                    
+                    # Add risk assessment context if available
+                    if ("risk_assessment" in analysis.get("stages", {}) and 
+                        analysis["stages"]["risk_assessment"]["status"] == "completed"):
+                        if proposal_id not in classification_contexts:
+                            classification_contexts[proposal_id] = {}
+                        classification_contexts[proposal_id]["risk_assessment"] = analysis["stages"]["risk_assessment"]["data"]
+
+                # Use the new DSPy-enhanced comparison method
                 multi_comparison = self.comparator.compare_multiple_documents(
-                    doc_ids=proposal_ids, comparison_type="comprehensive"
+                    doc_paths=[Path(proposal_paths[int(pid.split("_")[1]) - 1]) for pid in proposal_ids],
+                    comparison_type="comprehensive",
+                    classification_contexts=classification_contexts,
+                    validation_contexts=validation_contexts
                 )
 
                 comparison_result["advanced_comparison"] = multi_comparison
