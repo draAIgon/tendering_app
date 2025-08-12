@@ -28,12 +28,62 @@ from langchain_chroma import Chroma
 from langchain_core.documents import Document
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 
+# Import metadata filtering utility
+try:
+    from langchain_community.vectorstores.utils import filter_complex_metadata
+except ImportError:
+    # Fallback function if import fails
+    def filter_complex_metadata(documents, allowed_types=(str, int, float, bool, type(None))):
+        """Fallback function to filter complex metadata"""
+        filtered_docs = []
+        for doc in documents:
+            filtered_metadata = {}
+            for key, value in doc.metadata.items():
+                if isinstance(value, allowed_types):
+                    filtered_metadata[key] = value
+                elif isinstance(value, dict):
+                    filtered_metadata[f"{key}_json"] = json.dumps(value, ensure_ascii=False, default=str)
+                elif isinstance(value, (list, tuple)):
+                    filtered_metadata[f"{key}_json"] = json.dumps(value, ensure_ascii=False, default=str)
+                else:
+                    filtered_metadata[key] = str(value)
+            
+            filtered_doc = Document(page_content=doc.page_content, metadata=filtered_metadata)
+            filtered_docs.append(filtered_doc)
+        return filtered_docs
+
 # Importar utilidades del paquete
 from ..db_manager import get_standard_db_path
-from ..embedding import get_embeddings_provider
+from ..dspy_service import initialize_dspy_and_embeddings, get_embeddings_instance, get_provider_info
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+
+def sanitize_dspy_result(obj):
+    """Convert DSPy Prediction objects and other non-serializable objects to JSON-compatible format."""
+    if hasattr(obj, '__dict__'):
+        # Handle DSPy Prediction objects
+        if hasattr(obj, 'toDict'):
+            return obj.toDict()
+        elif hasattr(obj, '_asdict'):
+            return obj._asdict()
+        else:
+            # Convert object with __dict__ to dict, recursively sanitizing
+            result = {}
+            for key, value in obj.__dict__.items():
+                if not key.startswith('_'):  # Skip private attributes
+                    result[key] = sanitize_dspy_result(value)
+            return result
+    elif isinstance(obj, dict):
+        return {k: sanitize_dspy_result(v) for k, v in obj.items()}
+    elif isinstance(obj, (list, tuple)):
+        return [sanitize_dspy_result(item) for item in obj]
+    elif isinstance(obj, (str, int, float, bool, type(None))):
+        return obj
+    else:
+        # For any other type, convert to string
+        return str(obj)
 
 
 # DSPy Signatures for enhanced comparison analysis
@@ -285,69 +335,44 @@ class ComparisonAgent:
         self.documents: Dict[str, Any] = {}
         self.comparison_results: Dict[str, Any] = {}
         self.cached_embeddings: Dict[str, Any] = {}
+        self.llm_provider = llm_provider
         
         # Initialize integrated agents
         self.risk_analyzer = None
         self.validator = None
         self.dspy_module = None
         
-        # Initialize DSPy LLM
-        self._initialize_dspy_llm(llm_provider)
+        # Initialize DSPy and embeddings using centralized service
+        self._initialize_system(llm_provider)
         
         logger.info(f"Enhanced ComparisonAgent iniciado con DB: {self.vector_db_path}")
-
-    def _initialize_dspy_llm(self, provider: str = "auto"):
-        """Initialize DSPy with appropriate LLM"""
+        
+    def _initialize_system(self, provider: str = "auto"):
+        """Initialize DSPy and embeddings using centralized service"""
         try:
-            if provider == "auto" or provider == "ollama":
-                # Try Ollama first for local processing
-                try:
-                    lm = dspy.LM(model="ollama/llama3.2:3b", api_base="http://localhost:11434")
-                    dspy.settings.configure(lm=lm)
-                    logger.info("DSPy configured with Ollama local LLM")
-                    return
-                except Exception as e:
-                    logger.warning(f"Failed to initialize Ollama for DSPy: {e}")
-            
-            if provider == "auto" or provider == "openai":
-                # Fallback to OpenAI
-                import os
-                if os.getenv("OPENAI_API_KEY"):
-                    lm = dspy.LM(model="gpt-3.5-turbo", max_tokens=2000)
-                    dspy.settings.configure(lm=lm)
-                    logger.info("DSPy configured with OpenAI GPT-3.5-turbo")
-                    return
-                else:
-                    logger.warning("OpenAI API key not found")
-            
-            # Fallback to a simple dummy LLM for testing
-            logger.warning("No LLM available, using dummy LLM for DSPy")
-            lm = dspy.LM(model="dummy")  # Use dummy model for testing
-            dspy.settings.configure(lm=lm)
-            
+            success, info = initialize_dspy_and_embeddings(llm_provider=provider)
+            if success:
+                self.embeddings_provider = get_embeddings_instance()
+                self.provider_info = info
+                logger.info(f"DSPy y embeddings inicializados para ComparisonAgent: {info}")
+            else:
+                logger.warning(f"No se pudo inicializar DSPy completamente: {info}")
         except Exception as e:
-            logger.error(f"Error initializing DSPy LLM: {e}")
-            # Use dummy for testing
-            try:
-                lm = dspy.LM(model="dummy")
-                dspy.settings.configure(lm=lm)
-            except Exception as e2:
-                logger.error(f"Failed to initialize dummy LLM: {e2}")
-                # If all else fails, don't configure DSPy
-                pass
+            logger.warning(f"Error inicializando sistema centralizado: {e}")
+            logger.info("ComparisonAgent continuará con funcionalidad limitada")
 
     def initialize_embeddings(self, provider: str = "auto", model: Optional[str] = None) -> bool:
-        """Inicializa embeddings y agentes integrados."""
+        """Inicializa embeddings usando el servicio centralizado"""
         try:
-            # Initialize embeddings
-            embeddings_result = get_embeddings_provider(provider=provider, model=model)
-            if isinstance(embeddings_result, tuple):
-                self.embeddings_provider = embeddings_result[0]
+            success, info = initialize_dspy_and_embeddings(provider=provider, model=model, llm_provider=self.llm_provider)
+            if success:
+                self.embeddings_provider = get_embeddings_instance()
+                self.provider_info = info
+                logger.info("Enhanced sistema de embeddings inicializado usando servicio centralizado")
+                return True
             else:
-                self.embeddings_provider = embeddings_result
-                
-            logger.info("Enhanced sistema de embeddings inicializado")
-            return True
+                logger.error(f"Error inicializando embeddings: {info}")
+                return False
         except Exception as e:
             logger.error(f"Error inicializando embeddings y agentes: {e}")
             return False
@@ -542,7 +567,7 @@ class ComparisonAgent:
             result_key = f"{doc1_name}_vs_{doc2_name}"
             self.comparison_results[result_key] = comprehensive_comparison
             
-            return comprehensive_comparison
+            return sanitize_dspy_result(comprehensive_comparison)
             
         except Exception as e:
             logger.error(f"Error in DSPy document comparison: {e}")
@@ -1016,12 +1041,28 @@ class ComparisonAgent:
 
         for i, chunk in enumerate(chunks):
             if len(chunk.strip()) > 50:  # Solo chunks “sustanciosos”
+                # Sanitize metadata for ChromaDB compatibility
+                # ChromaDB only accepts str, int, float, bool, or None values
+                sanitized_metadata = {}
+                for key, value in metadata.items():
+                    if isinstance(value, (str, int, float, bool, type(None))):
+                        sanitized_metadata[key] = value
+                    elif isinstance(value, dict):
+                        # Convert dict to JSON string
+                        sanitized_metadata[f"{key}_json"] = json.dumps(value, ensure_ascii=False, default=str)
+                    elif isinstance(value, (list, tuple)):
+                        # Convert list/tuple to JSON string
+                        sanitized_metadata[f"{key}_json"] = json.dumps(value, ensure_ascii=False, default=str)
+                    else:
+                        # Convert other types to string
+                        sanitized_metadata[key] = str(value)
+                
                 doc_metadata = {
                     'doc_id': doc_id,
                     'doc_type': doc_type,
                     'chunk_id': i,
                     'chunk_count': len(chunks),
-                    **metadata
+                    **sanitized_metadata
                 }
                 documents.append(Document(page_content=chunk, metadata=doc_metadata))
 
@@ -1052,6 +1093,19 @@ class ComparisonAgent:
         if not self.documents:
             raise ValueError("No hay documentos cargados")
 
+        # Additional safety check for embeddings provider type
+        if not hasattr(self.embeddings_provider, 'embed_documents'):
+            logger.error(f"Embeddings provider is not valid: {type(self.embeddings_provider)}")
+            logger.error("Re-initializing embeddings provider...")
+            try:
+                success = self.initialize_embeddings()
+                if not success or not hasattr(self.embeddings_provider, 'embed_documents'):
+                    logger.error("Failed to re-initialize embeddings provider, using text-only comparison")
+                    return True
+            except Exception as e:
+                logger.error(f"Re-initialization failed: {e}")
+                return True
+
         # Recolectar todos los documentos
         all_documents: List[Document] = []
         ids: List[str] = []
@@ -1061,6 +1115,10 @@ class ComparisonAgent:
                 all_documents.append(d)
                 raw = (f"{doc_id}|{d.metadata.get('chunk_id')}|{d.page_content}").encode("utf-8")
                 ids.append(hashlib.sha1(raw).hexdigest())
+
+        # Filter complex metadata before adding to ChromaDB
+        if all_documents:
+            all_documents = filter_complex_metadata(all_documents)
 
         try:
             Path(self.vector_db_path).mkdir(parents=True, exist_ok=True)
@@ -1587,7 +1645,130 @@ class ComparisonAgent:
 
         self.comparison_results[comprehensive_comparison['comparison_id']] = comprehensive_comparison
         logger.info(f"Comparación completada. Ganador: {comprehensive_comparison['winner']}")
-        return comprehensive_comparison
+        return sanitize_dspy_result(comprehensive_comparison)
+
+    def compare_multiple_documents_with_content(self, doc_contents: Dict[str, str],
+                                               comparison_type: str = "comprehensive",
+                                               classification_contexts: Dict[str, Dict] = None,
+                                               validation_contexts: Dict[str, Dict] = None) -> Dict[str, Any]:
+        """Enhanced multiple document comparison using DSPy intelligence with pre-extracted content."""
+        if len(doc_contents) < 2:
+            raise ValueError("Se necesitan al menos 2 documentos para comparar")
+
+        logger.info(f"Comparando {len(doc_contents)} documentos con DSPy: {list(doc_contents.keys())}")
+        
+        if not self.dspy_module:
+            self._initialize_dspy_module()
+
+        multi_comparison: Dict[str, Any] = {
+            'comparison_id': f"dspy_multi_{int(datetime.now().timestamp())}",
+            'document_ids': list(doc_contents.keys()),
+            'total_documents': len(doc_contents),
+            'comparison_type': comparison_type,
+            'comparison_timestamp': datetime.now().isoformat(),
+            'comparison_method': "DSPy Enhanced Multi-Document Analysis",
+            'individual_analyses': {},
+            'pairwise_comparisons': {},
+            'ranking': [],
+            'cluster_analysis': {},
+            'summary_statistics': {}
+        }
+
+        # Step 1: Analyze each document individually with context
+        document_analyses = {}
+        for doc_id, content in doc_contents.items():
+            try:
+                classification_ctx = classification_contexts.get(doc_id) if classification_contexts else None
+                validation_ctx = validation_contexts.get(doc_id) if validation_contexts else None
+                
+                analysis = self.analyze_document(
+                    content, doc_id, 
+                    classification_ctx, validation_ctx
+                )
+                document_analyses[doc_id] = analysis
+                multi_comparison['individual_analyses'][doc_id] = analysis
+                logger.info(f"Analyzed document {doc_id} with DSPy intelligence")
+            except Exception as e:
+                logger.error(f"Error analyzing document {doc_id}: {e}")
+                document_analyses[doc_id] = {"error": str(e)}
+                multi_comparison['individual_analyses'][doc_id] = {"error": str(e)}
+
+        # Step 2: Pairwise comparisons using DSPy
+        comparison_scores: Dict[str, List[float]] = defaultdict(list)
+        
+        doc_ids = list(doc_contents.keys())
+        for i, doc1_id in enumerate(doc_ids):
+            for j, doc2_id in enumerate(doc_ids):
+                if i < j:
+                    try:
+                        classification_ctx1 = classification_contexts.get(doc1_id) if classification_contexts else None
+                        validation_ctx1 = validation_contexts.get(doc1_id) if validation_contexts else None
+                        classification_ctx2 = classification_contexts.get(doc2_id) if classification_contexts else None
+                        validation_ctx2 = validation_contexts.get(doc2_id) if validation_contexts else None
+                        
+                        # Get the analyses for comparison
+                        doc1_analysis = document_analyses.get(doc1_id)
+                        doc2_analysis = document_analyses.get(doc2_id)
+                        
+                        comparison = self.compare_documents(
+                            doc_contents[doc1_id], doc_contents[doc2_id], 
+                            doc1_id, doc2_id,
+                            comparison_type,
+                            doc1_analysis, doc2_analysis
+                        )
+                        
+                        key = f"{doc1_id}_vs_{doc2_id}"
+                        multi_comparison['pairwise_comparisons'][key] = comparison
+                        
+                        # Extract scores for ranking
+                        if 'enhanced_scoring' in comparison:
+                            scoring = comparison['enhanced_scoring']
+                            if 'overall' in scoring:
+                                doc1_score = scoring['overall'].get('document1_total', 0)
+                                doc2_score = scoring['overall'].get('document2_total', 0)
+                                comparison_scores[doc1_id].append(doc1_score)
+                                comparison_scores[doc2_id].append(doc2_score)
+                        
+                        logger.info(f"Compared {doc1_id} vs {doc2_id} with DSPy")
+                    except Exception as e:
+                        logger.error(f"Error comparing {doc1_id} vs {doc2_id}: {e}")
+
+        # Step 3: Generate ranking based on DSPy comparisons
+        if comparison_scores:
+            avg_scores: List[tuple] = []
+            for doc_id in doc_ids:
+                if comparison_scores.get(doc_id):
+                    avg_score = sum(comparison_scores[doc_id]) / len(comparison_scores[doc_id])
+                    avg_scores.append((doc_id, avg_score))
+                else:
+                    avg_scores.append((doc_id, 0.0))
+
+            avg_scores.sort(key=lambda x: x[1], reverse=True)
+            multi_comparison['ranking'] = [
+                {
+                    'rank': i + 1, 
+                    'document_id': doc_id, 
+                    'average_score': round(score, 2),
+                    'analysis_quality': document_analyses.get(doc_id, {}).get('dspy_analysis', {}),
+                    'risk_profile': document_analyses.get(doc_id, {}).get('risk_analysis', {}),
+                    'compliance_status': document_analyses.get(doc_id, {}).get('compliance_validation', {})
+                }
+                for i, (doc_id, score) in enumerate(avg_scores)
+            ]
+
+        # Step 4: Enhanced cluster analysis using DSPy intelligence
+        if len(doc_ids) >= 3:
+            multi_comparison['cluster_analysis'] = self._analyze_document_clusters_dspy(
+                document_analyses
+            )
+
+        # Step 5: Generate summary statistics
+        multi_comparison['summary_statistics'] = self._calculate_dspy_multi_comparison_stats(
+            multi_comparison
+        )
+
+        logger.info(f"DSPy multi-document comparison completed. Top document: {multi_comparison['ranking'][0]['document_id'] if multi_comparison['ranking'] else 'None'}")
+        return sanitize_dspy_result(multi_comparison)
 
     def compare_multiple_documents(self, doc_paths: List[Path],
                                    comparison_type: str = "comprehensive",
@@ -1624,8 +1805,13 @@ class ComparisonAgent:
                 classification_ctx = classification_contexts.get(doc_name) if classification_contexts else None
                 validation_ctx = validation_contexts.get(doc_name) if validation_contexts else None
                 
+                # We need content from the document, not the path
+                # This should be passed from the calling system that has already extracted content
+                # For now, use a placeholder approach
+                content_placeholder = f"Document content from {doc_name}"
+                
                 analysis = self.analyze_document(
-                    doc_path, doc_name, 
+                    content_placeholder, doc_name, 
                     classification_ctx, validation_ctx
                 )
                 document_analyses[doc_name] = analysis
@@ -1708,7 +1894,7 @@ class ComparisonAgent:
         )
 
         logger.info(f"DSPy multi-document comparison completed. Top document: {multi_comparison['ranking'][0]['document_name'] if multi_comparison['ranking'] else 'None'}")
-        return multi_comparison
+        return sanitize_dspy_result(multi_comparison)
 
     def compare_proposals(self, rfp_requirements: Optional[List[str]] = None) -> Dict[str, Any]:
         """Compara todas las propuestas cargadas (modo licitación)."""
@@ -1808,7 +1994,7 @@ class ComparisonAgent:
         # Nota: aquí self.comparison_results se usa como “último resultado de propuestas”
         self.comparison_results = comparison_results
         logger.info("Comparación de propuestas completada")
-        return comparison_results
+        return sanitize_dspy_result(comparison_results)
 
     def _identify_strengths(self, technical: Dict, economic: float, compliance: Dict) -> List[str]:
         strengths: List[str] = []
@@ -2143,7 +2329,7 @@ class ComparisonAgent:
             with open(output_path, 'w', encoding='utf-8') as f:
                 json.dump(results, f, ensure_ascii=False, indent=2)
             logger.info(f"Resultados exportados a: {output_path}")
-        return results
+        return sanitize_dspy_result(results)
 
     def clear_documents(self):
         """Limpia documentos y comparaciones almacenadas."""

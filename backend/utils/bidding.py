@@ -441,7 +441,7 @@ class BiddingAnalysisSystem:
                             self.comparator.add_document(
                                 doc_id=proposal_id,
                                 content=content,
-                                document_type="proposal",
+                                doc_type="proposal",
                                 metadata={
                                     "path": proposal_paths[int(proposal_id.split("_")[1]) - 1],
                                     "analysis_summary": analysis.get("summary", {}),
@@ -482,9 +482,18 @@ class BiddingAnalysisSystem:
                             classification_contexts[proposal_id] = {}
                         classification_contexts[proposal_id]["risk_assessment"] = analysis["stages"]["risk_assessment"]["data"]
 
-                # Use the new DSPy-enhanced comparison method
-                multi_comparison = self.comparator.compare_multiple_documents(
-                    doc_paths=[Path(proposal_paths[int(pid.split("_")[1]) - 1]) for pid in proposal_ids],
+                # Use the new DSPy-enhanced comparison method with extracted content
+                doc_contents = {}
+                for proposal_id, analysis in proposal_analyses.items():
+                    if ("extraction" in analysis.get("stages", {}) and 
+                        analysis["stages"]["extraction"]["status"] == "completed"):
+                        content = analysis["stages"]["extraction"]["data"].get("content", "")
+                        doc_contents[proposal_id] = content
+                    else:
+                        doc_contents[proposal_id] = ""
+                
+                multi_comparison = self.comparator.compare_multiple_documents_with_content(
+                    doc_contents=doc_contents,
                     comparison_type="comprehensive",
                     classification_contexts=classification_contexts,
                     validation_contexts=validation_contexts

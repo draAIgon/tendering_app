@@ -35,6 +35,9 @@ if root_dir not in sys.path:
 
 from utils.bidding import BiddingAnalysisSystem, RFPAnalyzer
 
+# Importar función de sanitización DSPy
+from utils.agents.comparison import sanitize_dspy_result
+
 # Importar database manager
 from utils.db_manager import get_analysis_path, db_manager
 
@@ -784,7 +787,7 @@ async def upload_and_compare_proposals(
         
         # Crear sistema de análisis
         system = BiddingAnalysisSystem(data_dir=str(ANALYSIS_DB_DIR / comparison_id))
-        system.initialize_system()
+        system.initialize_system(provider="auto")  # Specify provider to avoid initialization issues
         
         logger.info(f"Iniciando comparación de {len(files)} propuestas")
         
@@ -804,15 +807,21 @@ async def upload_and_compare_proposals(
         
         # Guardar resultado de comparación en disco
         try:
+            # Sanitize DSPy results before saving
+            sanitized_result = sanitize_dspy_result(comparison_result)
+            
             comparison_result_file = ANALYSIS_DB_DIR / comparison_id / "comparison_result.json"
             comparison_result_file.parent.mkdir(parents=True, exist_ok=True)
             
             with open(comparison_result_file, 'w', encoding='utf-8') as f:
-                json.dump(comparison_result, f, indent=2, ensure_ascii=False, default=str)
+                json.dump(sanitized_result, f, indent=2, ensure_ascii=False, default=str)
             
             logger.info(f"Resultado de comparación guardado en: {comparison_result_file}")
         except Exception as e:
-            logger.warning(f"Error guardando resultado de comparación: {e}")
+            logger.error(f"Error guardando resultado de comparación: {e}")
+            # Ensure we have sanitized result even if saving fails
+            if 'sanitized_result' not in locals():
+                sanitized_result = sanitize_dspy_result(comparison_result)
         
         # Cachear sistema
         system_cache[comparison_id] = system
@@ -822,7 +831,7 @@ async def upload_and_compare_proposals(
             "status": "success",
             "comparison_id": comparison_id,
             "files_compared": file_names,
-            "comparison_result": comparison_result,
+            "comparison_result": sanitized_result,
             "processing_time": datetime.now().isoformat()
         }
         
@@ -1265,6 +1274,9 @@ async def compare_rfp_with_previous(
         for temp_path in previous_temp_paths:
             os.unlink(temp_path)
         
+        # Sanitize DSPy results
+        sanitized_result = sanitize_dspy_result(comparison_result)
+        
         # Cachear analizador
         rfp_analyzer_cache[comparison_id] = rfp_analyzer
         
@@ -1273,7 +1285,7 @@ async def compare_rfp_with_previous(
             "comparison_id": comparison_id,
             "current_rfp": current_rfp.filename,
             "previous_rfps_count": len(previous_rfps),
-            "comparison_result": comparison_result,
+            "comparison_result": sanitized_result,
             "compared_at": datetime.now().isoformat()
         })
         

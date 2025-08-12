@@ -9,15 +9,13 @@ import json
 import dspy
 from dspy import Retrieve, Predict, Module, Signature, InputField, OutputField
 
-# Importar funciones del sistema de embeddings
+# Importar funciones del sistema de embeddings y DSPy
 import sys
 import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
 
-from utils.embedding import (
-    get_embeddings_provider, 
-    txt_to_documents,
-)
+from utils.dspy_service import initialize_dspy_and_embeddings, get_embeddings_instance, get_provider_info
+from utils.embedding import txt_to_documents
 from .document_extraction import DocumentExtractionAgent
 from langchain_chroma import Chroma
 
@@ -383,92 +381,26 @@ class DocumentClassificationAgent:
         logger.info(f"DSPy DocumentClassificationAgent iniciado con DB: {self.vector_db_path}")
         
     def initialize_dspy_and_embeddings(self, provider="auto", model=None):
-        """Inicializa DSPy con el modelo apropiado y los embeddings"""
+        """Inicializa DSPy con el modelo apropiado y los embeddings usando el servicio centralizado"""
         try:
-            # Initialize embeddings first
-            embeddings, used_provider, used_model = get_embeddings_provider(provider=provider, model=model)
-            self.embeddings_provider = embeddings
-            self.provider_info = {"provider": used_provider, "model": used_model}
-            logger.info(f"Proveedor de embeddings inicializado: {used_provider} ({used_model})")
+            success, info = initialize_dspy_and_embeddings(
+                provider=provider, 
+                model=model, 
+                llm_provider=self.llm_provider
+            )
             
-            # Initialize DSPy based on provider preference
-            if self.llm_provider == "auto":
-                if used_provider == "ollama":
-                    self._initialize_dspy_ollama()
-                else:
-                    self._initialize_dspy_openai()
-            elif self.llm_provider == "ollama":
-                self._initialize_dspy_ollama()
-            elif self.llm_provider == "openai":
-                self._initialize_dspy_openai()
+            if success:
+                self.embeddings_provider = get_embeddings_instance()
+                self.provider_info = info
+                logger.info(f"DSPy y embeddings inicializados: {info}")
+                return True
             else:
-                raise ValueError(f"Unsupported LLM provider: {self.llm_provider}")
+                logger.error(f"Error inicializando DSPy y embeddings: {info}")
+                return False
                 
-            return True
         except Exception as e:
             logger.error(f"Error inicializando DSPy y embeddings: {e}")
             return False
-    
-    def _initialize_dspy_ollama(self):
-        """Initialize DSPy with Ollama LLM using new API"""
-        try:
-            # Check available Ollama models
-            import requests
-            response = requests.get("http://localhost:11434/api/tags", timeout=5)
-            
-            if response.status_code == 200:
-                models = response.json()
-                available_models = [model["name"] for model in models.get("models", [])]
-                
-                # Filter out embedding models and choose appropriate language model
-                language_models = [model for model in available_models 
-                                 if not any(embed_keyword in model.lower() 
-                                           for embed_keyword in ['embed', 'embedding'])]
-                
-                # Choose appropriate language model
-                if self.llm_model and self.llm_model in language_models:
-                    chosen_model = self.llm_model
-                elif any("llama" in model.lower() for model in language_models):
-                    chosen_model = next(model for model in language_models if "llama" in model.lower())
-                elif language_models:
-                    chosen_model = language_models[0]
-                else:
-                    # If no language models available, download a lightweight one
-                    logger.info("No language models found. Downloading llama3.2:1b...")
-                    import subprocess
-                    subprocess.run(["ollama", "pull", "llama3.2:1b"], check=True)
-                    chosen_model = "llama3.2:1b"
-                
-                # Initialize DSPy with new LM class for Ollama
-                from dspy import LM
-                lm = LM(model=f"ollama/{chosen_model}", api_base="http://localhost:11434")
-                dspy.settings.configure(lm=lm)
-                
-                logger.info(f"DSPy inicializado con Ollama: {chosen_model}")
-            else:
-                raise ConnectionError("No se puede conectar a Ollama")
-                
-        except Exception as e:
-            logger.error(f"Error inicializando DSPy con Ollama: {e}")
-            # Fallback to OpenAI if available
-            self._initialize_dspy_openai()
-    
-    def _initialize_dspy_openai(self):
-        """Initialize DSPy with OpenAI LLM using new API"""
-        try:
-            if not os.getenv("OPENAI_API_KEY"):
-                raise ValueError("OPENAI_API_KEY no configurado")
-            
-            from dspy import LM
-            model_name = self.llm_model or "gpt-3.5-turbo"
-            lm = LM(model=f"openai/{model_name}", max_tokens=2000)
-            dspy.settings.configure(lm=lm)
-            
-            logger.info(f"DSPy inicializado con OpenAI: {model_name}")
-            
-        except Exception as e:
-            logger.error(f"Error inicializando DSPy con OpenAI: {e}")
-            raise
     
     def load_or_create_vector_db(self, force_rebuild=False):
         """Carga o crea la base de datos vectorial con chunking estándar"""
