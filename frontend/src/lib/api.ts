@@ -1,7 +1,7 @@
 // API Client para TenderAI
 import React from 'react';
 
-const API_BASE_URL = 'https://tenderai-dev-api.nimblersoft.org';
+const API_BASE_URL = 'https://tenderai-api.nimblersoft.org';
 
 // Flag de debug - cambiar a false en producción
 const DEBUG_MODE = true;
